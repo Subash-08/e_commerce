@@ -75,3 +75,37 @@ Precreating indexes alone does not disable the adapter's createIndex calls. Do n
 
 Recommendation: retain REOPEN ADR 0003 and finish database acceptance independently. Do not switch libraries or relax index/credential rules solely to unblock installation. After the 4B test review, resolve this narrow architecture choice before auth implementation. Catalog and all later slices still require their own authorization.
 
+
+## AUTH-DECIDE: concrete proposal for approval
+
+Status: PROPOSED, not adopted. Prepared after 4B acceptance. The user requested following the staged feature plan and stopped further UI work.
+
+Recommendation: retain Better Auth as the candidate and approve a narrowly scoped compatibility exercise with an explicit exception for the official adapter's auth-index creation commands. This changes the current index policy; it cannot be represented as compliance with an automatic-indexing ban.
+
+### Proposed policy amendment
+
+- Commerce collections keep reviewed manual index application and no automatic runtime index creation.
+- The pinned official Better Auth adapter may issue its normal createIndex commands only for the reviewed auth collection/index set. Do not patch or intercept the driver, remove uniqueness metadata, or implement passwords ourselves.
+- Derive and review the exact auth index manifest from the selected configuration and pinned source before exposing auth routes. Precreate those indexes through reviewed tooling.
+- Auth initialization checks the manifest and fails closed on missing/mismatched indexes. Precreation does not remove the adapter calls. If an index disappears after successful initialization, the adapter may recreate it: that residual behavior is part of this proposed exception, not something the preflight prevents.
+- Pin adapter/library versions; changes to the auth schema, enabled plugins or index set require review and migration evidence. No automatic drops, replacement of conflicting indexes or silent upgrades.
+- Use the same application MongoClient and configured database. Auth transactions remain separate from commerce transactions.
+- Confirm actual database privileges and all emitted index commands in the exercise; reject unexpected collections or definitions before accepting the candidate. This verification is not a claim of an application-enforced per-command sandbox.
+
+### Bounded implementation authorization requested
+
+Only after this proposal is approved: recheck stable releases, advisories and peers; install exact reviewed better-auth and @better-auth/mongo-adapter versions under the existing dependency plan; run a local replica-set compatibility exercise. The previously inspected candidates were 1.7.7, not an unconditional future pin.
+
+No Atlas access, production credentials, outgoing mail, payments, catalog models or new UI. Generate disposable test secrets locally. Capture reset delivery inside a test fixture without logging tokens. This exercise does not publish usable application auth routes.
+
+Exercise evidence:
+1. Native/Mongoose/auth client and database identity; database sessions and ordinary signup/signin/signout.
+2. Command-monitoring evidence for cold starts, concurrent instances and fresh transaction wrappers: every index command matches the approved manifest.
+3. Missing/mismatched index preflight rejection, a deliberate post-initialization missing-index case, unique constraint races and clean rollback.
+4. Supported session hook/authVersion behavior, password-reset session invalidation, role/deactivation revocation and narrow supported revocation access. No broad admin plugin endpoints without route restrictions and bypass tests.
+5. Exact versions/advisories, real test counts, lifecycle cleanup and written APPROVED FOR AUTH SLICE or REOPEN ADR 0003 result.
+
+A passing exercise allows the next separately authorized AUTH-CORE/AUTH-GUARDS work; it does not itself accept auth implementation. If it fails, stop and report the precise incompatibility; do not weaken invariants to obtain a pass.
+
+If the user declines this policy exception, retain the current block and evaluate a credential-owning external identity provider under a new architecture decision. Auth.js credentials alone does not supply the required password/recovery lifecycle.
+

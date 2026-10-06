@@ -10,6 +10,8 @@ The user separately authorized reusable UI foundations: Button, Badge, Alert, Ca
 
 Auth remains REOPEN ADR 0003; no auth installation or catalog implementation. Atlas configuration was documented but no supplied URI was saved or used, and no Atlas collections were created. Rotate the disclosed password and configure the replacement locally per [credential setup](development/CREDENTIAL-SETUP.md).
 
+The user stopped further UI work and requested returning to the staged sequence. Uncommitted preview fixtures were removed; committed primitives remain. AUTH-DECIDE now has a [concrete policy proposal](database/AUTH-COMPATIBILITY-REPORT.md) for a bounded local compatibility exercise. It is proposed only; auth installation still needs explicit approval. 
+
 ### Post-report acceptance evidence, 2026-10-06
 
 - Fixed configured-database selection through public Mongoose useDb with the original connection owning shutdown, BSON-preserving index comparison, and fixture startup/teardown cleanup error reporting. See [resolved review](database/STAGE-4B-CODE-REVIEW.md).
