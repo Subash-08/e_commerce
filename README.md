@@ -1,17 +1,21 @@
 # Reusable e-commerce base
 
-A reusable single-tenant Next.js + MongoDB commerce foundation for India/INR physical goods. One deployment and database per client. This repository currently contains **documentation only**.
+Single-tenant Next.js foundation for India/INR physical goods. Stage 3 provides visible route placeholders, configuration and validation tooling. Commerce, authentication, database access and provider integrations are not implemented.
 
-Stage 1 was approved with amendments on 2026-10-06. Stage 2 specifies the system; Stage 3 scaffolding needs separate approval. No application, dependencies, credentials, schemas or commerce code have been installed/implemented.
+Use Node **24.21.0** and npm **11.19.0**, then:
 
-Start with [documentation index](docs/README.md), [progress](docs/PROGRESS.md) and [approved architecture](docs/architecture/ARCHITECTURE-DECISIONS.md). Review pricing, lifecycles, collections, change impact and routes before approving scaffolding.
+```sh
+npm ci
+npm run dev
+npm run verify
+```
 
-## Intended stack
+Open http://localhost:3000. All pages are marked as placeholders; API placeholders return 501. No environment file or credentials are needed for the scaffold. Admin pages are unprotected empty placeholders and are not ready for deployment.
 
-Next.js App Router, TypeScript, Tailwind/shadcn, MongoDB/Mongoose, conditional Better Auth, Cloudinary, Razorpay. npm; supported Node LTS selected at installation. VPS and Vercel are both deployment targets. Exact versions are not pinned yet.
+`verify` runs lint, typecheck, production build, Markdown links, secret patterns, canonical enum definitions, eleven Mermaid renders and Chromium route checks. The route check starts its own local production server on port 3217. Mermaid installs its required Chromium browser into the ignored `.cache/puppeteer` directory; validation artifacts go into `.validation`.
 
-There are deliberately no npm run instructions yet. Stage 3 will add verified setup commands and a lockfile; see [scaffold contract](docs/development/STAGE-3-SCAFFOLD.md). Business implementation starts only after the foundation is separately accepted.
+Use `npm run format` / `npm run format:check` for formatting. Source-of-truth contracts: [progress](docs/PROGRESS.md), [architecture](docs/architecture/ARCHITECTURE-DECISIONS.md), [routes](docs/storefront/ROUTES.md), [module boundaries](docs/architecture/MODULE-BOUNDARIES.md). Earlier Stage 2 reports describe historical state; progress records the current gate.
 
-## Reuse
+Client design/configuration belongs in `src/client`. Transactional invariants stay in the base template; see [reuse strategy](docs/development/TEMPLATE-REUSE.md). Seed-settings, admin bootstrap and client initialization commands remain future work.
 
-Client design/configuration belongs in a narrow client layer. Transactional invariants stay in the base template and require ADRs to change. See [reuse strategy](docs/development/TEMPLATE-REUSE.md).
+Stage 4 requires separate authorization. Its first work is Vitest plus the pure pricing engine and state-machine functions, with documentation updated alongside code.

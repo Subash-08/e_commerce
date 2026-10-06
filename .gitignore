@@ -9,3 +9,7 @@ playwright-report/
 *.tsbuildinfo
 .vercel/
 *.log
+.tools/
+.validation/
+.cache/
+next-env.d.ts

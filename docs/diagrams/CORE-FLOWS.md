@@ -109,7 +109,7 @@ sequenceDiagram
   else Status only lines
     App->>DB: Validate availability without reservations
   end
-  App->>DB: Snapshot order, coupon claim, required jobs; commit
+  App->>DB: Snapshot order, coupon claim, required jobs, then commit
   App->>Pay: Create provider order outside DB transaction
   alt Response known
     Pay-->>App: Provider order ID
@@ -117,7 +117,7 @@ sequenceDiagram
     App-->>Buyer: Open payment
   else Timeout after possible remote success
     App->>DB: Mark binding UNKNOWN and reconcile
-    App-->>Buyer: Pending; no blind duplicate creation
+    App-->>Buyer: Pending, no blind duplicate creation
   end
 ```
 

@@ -3,7 +3,7 @@
 ## Read before working
 - Read docs/PROGRESS.md for the current gate and outstanding work.
 - Read docs/architecture/ARCHITECTURE-DECISIONS.md and relevant ADRs.
-- Stage 2 is documentation only. Stage 3 requires explicit approval.
+- Stage 3 scaffolding is explicitly approved. Stop after its verified commit; Stage 4 requires separate authorization.
 - Commerce implementation needs separate explicit authorization after scaffolding.
 - Preserve existing work. Work on a stage branch, commit each completed stage, never force-push or use destructive Git.
 - Never read .env* files except .env.example; never print environment values.
