@@ -54,3 +54,24 @@ No auth runtime, reset, hook, role-revocation or endpoint-bypass tests ran. Rele
 - [OAuth Proxy advisory](https://github.com/better-auth/better-auth/security/advisories/GHSA-r4xp-prcw-77qf)
 
 Exact package metadata: public npm registry for mongoose, mongodb, mongodb-memory-server, better-auth and @better-auth/mongo-adapter. Published tarball source was extracted under ignored .tools/auth-research for inspection; it is not an application dependency.
+
+## Follow-up decision review: 2026-10-06
+
+This is a source/documentation review while Antigravity runs 4B verification. No auth packages or runtime configuration changed.
+
+The [public plugin schema documentation](https://better-auth.com/docs/concepts/plugins) exposes disableMigration for plugin tables. However, [the 1.7.7 core table builder](https://raw.githubusercontent.com/better-auth/better-auth/v1.7.7/packages/core/src/db/get-tables.ts) copies that flag into plugin schema metadata but reconstructs user, session, account and verification tables without forwarding it. Therefore a plugin that merely sets this flag on those core tables is not an established solution. Do not weaken unique field definitions to prevent index creation.
+
+[Auth.js credentials documentation](https://authjs.dev/getting-started/authentication/credentials) states that credential persistence and password/reset logic are application responsibilities. Our assessment: Auth.js credentials is not a drop-in replacement for the approved library-owned credential lifecycle. An external identity provider could own those responsibilities, but would introduce a separate architecture and service decision; none is selected here.
+
+| Option | Assessment under current requirements |
+| --- | --- |
+| Better Auth with a supported switch covering every selected table | Preferred resolution if a compatible released API and runtime evidence become available; not established for inspected 1.7.7 |
+| Better Auth with an exception allowing its index commands | Requires an explicit ADR policy amendment; not approved by this report |
+| Auth.js credentials with application-owned password/reset code | Does not satisfy current credential ownership requirements; not recommended as an automatic fallback |
+| External managed identity provider | Requires service, cost, portability and authority review; not selected |
+| Private adapter patch, intercepted createIndex, or removal of uniqueness metadata | Reject: obscures library behavior or weakens the contract |
+
+Precreating indexes alone does not disable the adapter's createIndex calls. Do not assume that identical existing indexes, a warmed process cache, or restricted database privileges will make all fresh-process auth flows succeed. Any proposed index-policy exception needs command-monitoring evidence on signup, signin, session refresh, password reset and revocation; an exact reviewed manifest; cold-start/concurrent-instance tests; and deliberate missing/mismatched-index failure behavior. This is proposed acceptance evidence, not authorization to run an auth slice.
+
+Recommendation: retain REOPEN ADR 0003 and finish database acceptance independently. Do not switch libraries or relax index/credential rules solely to unblock installation. After the 4B test review, resolve this narrow architecture choice before auth implementation. Catalog and all later slices still require their own authorization.
+
