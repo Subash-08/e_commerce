@@ -23,9 +23,14 @@
     "verify": "npm run test && npm run lint && npm run typecheck && npm run build && npm run check:docs && npm run check:secrets && npm run check:enums && npm run check:diagrams && npm run check:routes",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate:states": "node scripts/generate-states.mjs --write"
+    "generate:states": "node scripts/generate-states.mjs --write",
+    "db:dev": "node scripts/local-replica.mjs",
+    "db:indexes:check": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts check",
+    "db:indexes:apply": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts apply"
   },
   "dependencies": {
+    "mongodb": "7.7.0",
+    "mongoose": "9.11.0",
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -40,10 +45,18 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.8",
+    "mongodb-memory-server": "11.3.0",
     "postcss": "8.5.29",
     "prettier": "3.9.9",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vitest": "5.0.3"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "disablePostinstall": true,
+      "version": "8.2.6",
+      "downloadDir": ".cache/mongodb-binaries"
+    }
   }
 }

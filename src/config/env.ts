@@ -6,7 +6,7 @@ const foundationEnv = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   APP_ENV: z
-    .enum(["development", "staging", "production"])
+    .enum(["development", "test", "staging", "production"])
     .default("development"),
   APP_URL: z.url().optional(),
 });

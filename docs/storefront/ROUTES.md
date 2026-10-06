@@ -53,8 +53,8 @@ No separate attribute route is required for normal editing; inline editor calls 
 | /api/media/sign | POST | Staff/admin; allowlisted upload parameters |
 | /api/imports | POST | Staff/admin private upload/confirm intent; CSRF; background when large |
 | /api/jobs/run | POST | Scheduler secret, bounded work/time, no-store; optional authenticated GET host adapter only if needed |
-| /api/health | GET | Minimal liveness, no secrets/config |
-| /api/ready | GET | Internal/protected readiness dependencies; do not expose topology |
+| /api/health | GET | Implemented liveness: 200, status ok only; no DB dependency; no-store |
+| /api/ready | GET | Implemented minimal readiness: 200 ok or 503 degraded, status only; two-second deadline; no-store; no topology |
 
 Server Actions handle first-party profile/address/catalog/content/admin mutations; each validates authorization and input anew. HTTP list is not permission to implement handlers in Stage 3. Unimplemented placeholder APIs return explicit 501/no-store, never fake success or echo secrets.
 

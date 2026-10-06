@@ -1,10 +1,4 @@
-export function GET() {
-  return Response.json(
-    {
-      placeholder: true,
-      error: "NOT_IMPLEMENTED",
-      message: "Stage 3 scaffold only.",
-    },
-    { status: 501, headers: { "Cache-Control": "no-store" } },
-  );
-}
+import { liveness } from "@/server/db/health";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export function GET() { return Response.json(liveness(), {headers:{"Cache-Control":"no-store"}}); }

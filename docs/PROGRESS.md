@@ -1,14 +1,37 @@
 # Foundation progress
 
-Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4a-domain.
+Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4b-database.
 
 ## Current gate
 
-Part 4A pure domain foundation verified and complete. All delegated routine gates and handoff regression tests have passed under pinned Node 24.21.0 / npm 11.19.0.
+Part 4A is verified at fd63cf2 (161 unit tests). Part 4B database implementation is authorized and implemented as a checkpoint; **verification pending**, not stage complete. The latest user instruction excludes Docker. Codex handles complex implementation; Antigravity owns tests and routine acceptance checks.
 
-Next gate: Part 4B (auth compatibility review only; auth installation remains separately gated). Do not start 4B, auth installation, catalog models, or UI without authorization.
+Use [the Stage 4B verification prompt](development/ANTIGRAVITY-4B-VERIFICATION.md) next. No credentials are required for the local real replica set. No auth installation, catalog, checkout, payments or UI work is authorized.
 
-Stage 3 base commit: 6421b7d. Stage 4A checkpoint: 5164732. Current branch: codex/stage-4a-domain.
+## Part 4B implementation checkpoint
+
+Implemented shared native/Mongoose connection ownership, promise reuse/reset, bounded pool/timeouts, replica-set topology check, lazy redacted configuration, bounded native transaction retries with explicit sessions, owner shutdown, minimal liveness/readiness, reviewed index check/apply, and a no-Docker ephemeral MongoDB launcher. No commerce models or fixtures were added to production. DomainError received a constructor-syntax-only change for Node's native TypeScript stripping; domain behavior is unchanged.
+
+See [ADR 0009](adr/0009-database-foundation.md) and [database usage](../src/server/db/README.md).
+
+| Version | Observed installation |
+| --- | --- |
+| Node / npm | Existing pins 24.21.0 / 11.19.0 |
+| Next / React | Existing pins 16.3.8 / 19.3.0 |
+| Mongoose | 9.11.0, exact production dependency |
+| MongoDB native driver | 7.7.0, exact production dependency; Mongoose deduplicated |
+| mongodb-memory-server | 11.3.0, exact dev dependency |
+| MongoDB server binary | 8.2.6 selected in launcher; NOT downloaded/launched here |
+| Launcher internal driver | 7.5.0, dev-only separate copy; no override |
+| Better Auth / Mongo adapter | 1.7.7 reviewed from registry/source; NOT installed |
+
+Commands actually executed in 4B: public registry/source inspection; npm install --save-exact mongoose@9.11.0 mongodb@7.7.0 --no-fund; npm install --save-dev --save-exact mongodb-memory-server@11.3.0 --no-fund with postinstall server download disabled; npm ls mongodb --all. Installs succeeded and reported nine dev audit findings; fresh full audit and production audit are delegated. No credentials or real environment files were read.
+
+**Not run in 4B:** npm ci, unit/integration tests, formatting, lint, typecheck, build, route checks, docs/secret/enum/diagram gates, real MongoDB startup/rollback/retry/shutdown checks. Prior 4A/Stage 3 passes below are historical and do not verify these changes. Integration harness/tests, split test scripts, no-skip enforcement and route-check updates are explicitly delegated in the handoff.
+
+Auth result: **REOPEN ADR 0003**. The inspected adapter creates indexes during ordinary operations; a supported index-policy-compatible configuration has not been established. Read the [compatibility report](database/AUTH-COMPATIBILITY-REPORT.md). Driver peer compatibility alone is not auth approval.
+
+Stage 3 base: 6421b7d. Stage 4A checkpoint: 5164732; verified handoff: fd63cf2. Commit this 4B checkpoint before handing off; record verification in a subsequent commit and stop at the 4B gate.
 
 ## Part 4A pure domain verification and acceptance evidence
 
@@ -157,4 +180,4 @@ Secret and enum checks are static pattern gates, not a proof against every possi
 
 ## Next authorized-work boundary
 
-Complete the delegated Part 4A verification, report, then stop. Part 4B needs separate authorization and includes an auth compatibility report only; auth installation has its own gate. See the gated development order above.
+Complete the delegated Part 4B verification, report actual evidence, then stop. Auth installation and all later feature slices remain separately gated. Historical acceptance evidence above is not evidence for the 4B checkpoint.

@@ -1,10 +1,7 @@
-export function GET() {
-  return Response.json(
-    {
-      placeholder: true,
-      error: "NOT_IMPLEMENTED",
-      message: "Stage 3 scaffold only.",
-    },
-    { status: 501, headers: { "Cache-Control": "no-store" } },
-  );
+import { readiness } from "@/server/db/health";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export async function GET() {
+ const result = await readiness();
+ return Response.json(result, {status:result.status === "ok" ? 200 : 503, headers:{"Cache-Control":"no-store"}});
 }

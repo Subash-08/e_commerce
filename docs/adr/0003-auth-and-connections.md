@@ -1,6 +1,6 @@
 # ADR 0003: Conditional Better Auth and shared MongoDB client
 
-Status: CONDITIONAL APPROVAL, 2026-10-06. Architecture connection ownership is settled; installation/behavior verification remains mandatory.
+Status: REOPENED, 2026-10-06. Shared connection ownership remains settled; auth selection is not approved for installation. The published adapter creates indexes during normal operations. See [Stage 4B compatibility report](../database/AUTH-COMPATIBILITY-REPORT.md) for the supported-configuration gate and remaining runtime proof.
 
 ## Decision
 
