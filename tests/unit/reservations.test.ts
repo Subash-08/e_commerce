@@ -204,6 +204,243 @@ describe("tracked reservation invariants", () => {
       ).stock.onHand,
     ).toBe(0);
   });
+  it("resolved reservation audit entries retain actor, reason, operation, time and from/to paths", () => {
+    const held = tracked(
+      reserveStock(
+        stock(),
+        reservation(),
+        context({
+          actorId: "actor-hold",
+          reason: "checkout hold",
+          operationId: "op-hold",
+          at: 100,
+        }),
+      ).stock,
+    );
+    const consumed = resolveReservation(
+      held,
+      "hold-1",
+      "CONSUMED",
+      capture,
+      context({
+        actorId: "actor-cap",
+        reason: "order capture consumption",
+        operationId: "op-cap",
+        expectedRevision: 1,
+        at: 150,
+      }),
+    );
+    expect(consumed.stock.history).toHaveLength(2);
+    expect(consumed.stock.history[1]).toMatchObject({
+      actorId: "actor-cap",
+      reason: "order capture consumption",
+      operationId: "op-cap",
+      at: 150,
+      transitions: [{ from: "ACTIVE", to: "CONSUMED" }],
+    });
+
+    const released = resolveReservation(
+      held,
+      "hold-1",
+      "RELEASED",
+      expire,
+      context({
+        actorId: "actor-rel",
+        reason: "order expiry release",
+        operationId: "op-rel",
+        expectedRevision: 1,
+        at: 200,
+      }),
+    );
+    expect(released.stock.history).toHaveLength(2);
+    expect(released.stock.history[1]).toMatchObject({
+      actorId: "actor-rel",
+      reason: "order expiry release",
+      operationId: "op-rel",
+      at: 200,
+      transitions: [{ from: "ACTIVE", to: "RELEASED" }],
+    });
+  });
+  it("exercises both serializations of expiry versus capture proposals against the same held-stock revision", () => {
+    // Serialization 1: Expiry commits first, capture proposal becomes stale
+    {
+      const held = tracked(
+        reserveStock(
+          stock(),
+          reservation(),
+          context({ operationId: "hold-s1", at: 100 }),
+        ).stock,
+      );
+      const initial = held;
+      const expiryProposal = resolveReservation(
+        initial,
+        "hold-1",
+        "RELEASED",
+        expire,
+        context({
+          operationId: "exp-prop-1",
+          expectedRevision: initial.revision,
+          at: 200,
+        }),
+      ).stock;
+      const captureProposal = resolveReservation(
+        initial,
+        "hold-1",
+        "CONSUMED",
+        capture,
+        context({
+          operationId: "cap-prop-1",
+          expectedRevision: initial.revision,
+          at: 150,
+        }),
+      ).stock;
+
+      let current = initial;
+      current = expiryProposal;
+      expect(current.onHand).toBe(1);
+      expect(current.reserved).toBe(0);
+
+      expect(captureProposal.revision).toBe(initial.revision + 1);
+      expect(current.revision === initial.revision).toBe(false);
+
+      expect(() =>
+        resolveReservation(
+          current,
+          "hold-1",
+          "CONSUMED",
+          capture,
+          context({
+            operationId: "cap-retry-1",
+            expectedRevision: current.revision,
+            at: 200,
+          }),
+        ),
+      ).toThrow("RESERVATION_ALREADY_RESOLVED");
+
+      const dupRelease = resolveReservation(
+        current,
+        "hold-1",
+        "RELEASED",
+        expire,
+        context({
+          operationId: "exp-dup-1",
+          expectedRevision: current.revision,
+          at: 201,
+        }),
+      );
+      expect(dupRelease.stock).toBe(current);
+      expect(dupRelease.replayed).toBe(true);
+    }
+
+    // Serialization 2: Capture commits first, expiry proposal becomes stale
+    {
+      const held = tracked(
+        reserveStock(
+          stock(),
+          reservation(),
+          context({ operationId: "hold-s2", at: 100 }),
+        ).stock,
+      );
+      const initial = held;
+      const expiryProposal = resolveReservation(
+        initial,
+        "hold-1",
+        "RELEASED",
+        expire,
+        context({
+          operationId: "exp-prop-2",
+          expectedRevision: initial.revision,
+          at: 200,
+        }),
+      ).stock;
+      const captureProposal = resolveReservation(
+        initial,
+        "hold-1",
+        "CONSUMED",
+        capture,
+        context({
+          operationId: "cap-prop-2",
+          expectedRevision: initial.revision,
+          at: 150,
+        }),
+      ).stock;
+
+      let current = initial;
+      current = captureProposal;
+      expect(current.onHand).toBe(0);
+      expect(current.reserved).toBe(0);
+
+      expect(expiryProposal.revision).toBe(initial.revision + 1);
+      expect(current.revision === initial.revision).toBe(false);
+
+      expect(() =>
+        resolveReservation(
+          current,
+          "hold-1",
+          "RELEASED",
+          expire,
+          context({
+            operationId: "exp-retry-2",
+            expectedRevision: current.revision,
+            at: 200,
+          }),
+        ),
+      ).toThrow("RESERVATION_ALREADY_RESOLVED");
+
+      const dupCapture = resolveReservation(
+        current,
+        "hold-1",
+        "CONSUMED",
+        capture,
+        context({
+          operationId: "cap-dup-2",
+          expectedRevision: current.revision,
+          at: 151,
+        }),
+      );
+      expect(dupCapture.stock).toBe(current);
+      expect(dupCapture.replayed).toBe(true);
+    }
+  });
+  it("mixed and status-only inputs create no synthetic reservation", () => {
+    const statusInStock = {
+      variantId: "status-variant-in",
+      trackQuantity: false as const,
+      stockStatus: "IN_STOCK" as const,
+      revision: 0,
+      history: [],
+    };
+    const trackedItem = stock({ variantId: "tracked-variant-1", onHand: 5 });
+
+    const trackedResult = reserveStock(
+      trackedItem,
+      reservation({ id: "hold-t1", orderId: "order-mix", quantity: 2 }),
+      context({ operationId: "op-track" }),
+    );
+    expect(trackedResult.reservation).not.toBeNull();
+    expect(tracked(trackedResult.stock).reserved).toBe(2);
+
+    const statusResult = reserveStock(
+      statusInStock,
+      reservation({ id: "hold-s1", orderId: "order-mix", quantity: 2 }),
+      context({ operationId: "op-status" }),
+    );
+    expect(statusResult.reservation).toBeNull();
+    expect("reserved" in statusResult.stock).toBe(false);
+    expect("reservations" in statusResult.stock).toBe(false);
+
+    const statusOutStock = {
+      ...statusInStock,
+      stockStatus: "OUT_OF_STOCK" as const,
+    };
+    expect(() =>
+      reserveStock(
+        statusOutStock,
+        reservation({ id: "hold-s2", orderId: "order-mix" }),
+        context({ operationId: "op-status-out" }),
+      ),
+    ).toThrow("OUT_OF_STOCK");
+  });
 });
 describe("pure late-capture scenarios; real Mongo transactions remain a later gate", () => {
   it.each([false, true])(

@@ -9,7 +9,10 @@ export interface TransitionContext {
   readonly authorized: boolean;
 }
 export interface AuditEntry {
-  readonly transitions?: readonly { readonly from: string; readonly to: string }[];
+  readonly transitions?: readonly {
+    readonly from: string;
+    readonly to: string;
+  }[];
   readonly operationId: string;
   readonly actorId: string;
   readonly reason: string;
@@ -74,6 +77,13 @@ export function auditTransition(
     fingerprint,
   };
 }
-export function advance(record: Versioned, entry: AuditEntry, transitions: NonNullable<AuditEntry["transitions"]> = []): Versioned {
-  return { revision: record.revision + 1, history: [...record.history, { ...entry, transitions }] };
+export function advance(
+  record: Versioned,
+  entry: AuditEntry,
+  transitions: NonNullable<AuditEntry["transitions"]> = [],
+): Versioned {
+  return {
+    revision: record.revision + 1,
+    history: [...record.history, { ...entry, transitions }],
+  };
 }

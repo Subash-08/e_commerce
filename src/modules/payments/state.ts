@@ -60,7 +60,9 @@ export function transitionPayment(
   return {
     attempt: {
       ...attempt,
-      ...advance(attempt, entry, [{ from: attempt.state, to: observation.state }]),
+      ...advance(attempt, entry, [
+        { from: attempt.state, to: observation.state },
+      ]),
       state: observation.state,
     },
     capturedDeltaPaise: paise(

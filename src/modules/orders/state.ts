@@ -157,38 +157,55 @@ export function lateCapture(
   context: TransitionContext,
 ) {
   const financial = validate(order, facts);
-  const entry = auditTransition(order, context, { action: "late-capture", facts });
+  const entry = auditTransition(order, context, {
+    action: "late-capture",
+    facts,
+  });
   if (!entry) return { order, effects: [] as string[], replayed: true };
-  const overduePending = order.state === "PENDING_PAYMENT" &&
-    order.paymentMode === "ONLINE" && context.at >= order.expiresAt;
+  const overduePending =
+    order.state === "PENDING_PAYMENT" &&
+    order.paymentMode === "ONLINE" &&
+    context.at >= order.expiresAt;
   requireFact(
-    (order.state === "EXPIRED" || order.state === "CANCELLED" || overduePending) &&
-      facts.verifiedPayment === true && facts.capturedPaise > 0,
+    (order.state === "EXPIRED" ||
+      order.state === "CANCELLED" ||
+      overduePending) &&
+      facts.verifiedPayment === true &&
+      facts.capturedPaise > 0,
     "INVALID_LATE_CAPTURE",
   );
-  const expiredState = overduePending ? "EXPIRED" as const : order.state;
-  const canRecover = expiredState === "EXPIRED" && order.paymentMode === "ONLINE" &&
-    financial.fulfillmentEligible && facts.allLinesEligible === true &&
-    facts.stockReacquired === true && facts.couponReacquired === true;
-  const nextState = canRecover ? "PLACED" as const : expiredState;
-  const transitions: { from: StateValue<"OrderState">; to: StateValue<"OrderState"> }[] = overduePending
-    ? [{ from: order.state, to: "EXPIRED" }]
-    : [];
+  const expiredState = overduePending ? ("EXPIRED" as const) : order.state;
+  const canRecover =
+    expiredState === "EXPIRED" &&
+    order.paymentMode === "ONLINE" &&
+    financial.fulfillmentEligible &&
+    facts.allLinesEligible === true &&
+    facts.stockReacquired === true &&
+    facts.couponReacquired === true;
+  const nextState = canRecover ? ("PLACED" as const) : expiredState;
+  const transitions: {
+    from: StateValue<"OrderState">;
+    to: StateValue<"OrderState">;
+  }[] = overduePending ? [{ from: order.state, to: "EXPIRED" }] : [];
   if (canRecover) transitions.push({ from: "EXPIRED", to: "PLACED" });
   // One atomic proposal. The future service must release old generations before
   // reacquiring/consuming new ones, and persist the capture even when recovery fails.
   const effects = overduePending
     ? ["release-expired-tracked-reservations", "release-expired-coupon-claim"]
     : [];
-  effects.push(...(canRecover
-    ? ["consume-new-tracked-reservations", "consume-new-coupon-claim"]
-    : ["request-refund-review"]));
+  effects.push(
+    ...(canRecover
+      ? ["consume-new-tracked-reservations", "consume-new-coupon-claim"]
+      : ["request-refund-review"]),
+  );
   return {
     order: {
       ...order,
       ...advance(order, entry, transitions),
       state: nextState,
-      fulfillmentException: canRecover ? "NONE" as const : "REFUND_REQUIRED" as const,
+      fulfillmentException: canRecover
+        ? ("NONE" as const)
+        : ("REFUND_REQUIRED" as const),
     },
     effects,
     replayed: false,

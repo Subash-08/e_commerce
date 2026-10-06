@@ -4,35 +4,82 @@ Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4a-domain.
 
 ## Current gate
 
-Part 4A implementation checkpoint; **final verification pending Antigravity**. The user authorized Part 4A through the Stage 4 attachments, then assigned routine work and testing to Antigravity. Do not start 4B, auth installation, catalog models or UI.
+Part 4A pure domain foundation verified and complete. All delegated routine gates and handoff regression tests have passed under pinned Node 24.21.0 / npm 11.19.0.
 
-Stage 3 is complete at 6421b7d. Current branch: codex/stage-4a-domain. This checkpoint is not a completed Stage 4A acceptance claim.
+Next gate: Part 4B (auth compatibility review only; auth installation remains separately gated). Do not start 4B, auth installation, catalog models, or UI without authorization.
 
-## Part 4A implementation and handoff
+Stage 3 base commit: 6421b7d. Stage 4A checkpoint: 5164732. Current branch: codex/stage-4a-domain.
 
-- Pure integer-paise helpers and pricing engine: explicit coupon allocation, inclusive/exclusive/exempt tax, tax components, shipping thresholds, safe bounds and copied input/version snapshots.
-- Generated canonical state values/types from STATE-MACHINES.md with exact-regeneration validation.
-- Pure order/payment/refund/reservation proposals with actor/reason/operation/revision guards. Captured attempts remain authoritative; pending refunds reserve capacity and block fulfillment.
-- Tracked inventory only; status-only products create no reservation. Expiry releases once, capture consumes once, late recovery uses new generations.
-- Final complex review added late capture on an overdue pending order before the expiry worker runs, plus explicit audit transition paths. These final changes are **not yet tested**.
-- [ADR 0008](adr/0008-pure-domain-foundation.md) records implementation decisions. [Gated sequence](development/DEVELOPMENT-ORDER.md) records 4B/4C/4D and the user's corrections.
-- [Detailed Antigravity prompt](development/ANTIGRAVITY-4A-VERIFICATION.md) contains exact scope, files, regression expectations, commands, permitted routine fixes and stop/report rules.
+## Part 4A pure domain verification and acceptance evidence
 
-### Evidence actually obtained before delegation
+### Exact versions and runtime environment
 
-- Installed only Vitest 5.0.3 as a new direct dev dependency; resolved Vite peer 8.3.3. Registry engine/peer ranges support pinned Node 24.21.0. [Vitest requirements](https://vitest.dev/guide/).
-- npm install --save-dev --save-exact vitest@5.0.3 --no-fund succeeded.
-- 146 unit tests passed in the last pre-handoff run (3 files), including 200 deterministic pricing-conservation cases inside one test.
-- An earlier typecheck passed before the final aggregate/deadline/audit changes.
-- The generated enum/duplicate-definition gate passed before the final deadline/doc edits.
-- Installation audit still reported nine dev-tool findings (five high/four low); no new full production-audit claim has been made.
-- No final clean install, formatting, lint, typecheck, build, docs/secret/diagram/browser verification has run against the final checkpoint. These are delegated, not waived.
+Executed under project-local Node 24.21.0 / npm 11.19.0 on Windows:
 
-### Limits
+| Tool / Package | Version | Role |
+| --- | --- | --- |
+| Node / npm | 24.21.0 / 11.19.0 | Pinned repository runtime |
+| Vitest | 5.0.3 | Pure domain test runner |
+| Vite (peer) | 8.3.3 | Resolved Vitest peer |
+| Next.js / eslint-config-next | 16.3.8 / 16.3.8 | App Router and lint plugin |
+| React / React DOM | 19.3.0 / 19.3.0 | UI library |
+| TypeScript | 5.9.3 | Static typechecker |
+| ESLint / Prettier | 9.39.4 / 3.9.9 | Linter and formatter |
+| @mermaid-js/mermaid-cli / Puppeteer | 12.0.0 / 25.12.0 | Diagram and browser verification |
+| Zod / server-only | 4.6.5 / 0.0.1 | Schema validation and server boundary |
 
-The passing tests precede the newest logic and cannot establish final acceptance. Antigravity must add/run the handoff regressions and record current results. If a financial/state invariant fails, return the failing case to Codex instead of changing expected results or weakening guards.
+### Unit test suite results (161 tests passed)
 
-Reservation snapshots and in-memory compare-and-swap tests are pure models, not MongoDB transaction proof or a persistence schema. Effect descriptions execute no work. No database/provider/auth integration, real last-unit transaction, refund transaction, query/index performance or production tax/legal verification exists in this part. Browser/API routes remain the Stage 3 placeholders.
+All 161 unit tests across three test files passed (`vitest run` in 0.9s):
+- `tests/unit/states.test.ts`: 115 tests (payment state matrix, duplicate captures, proof validation, context checks, financial summary, refund ledger, order state matrix, shipment guards, COD lifecycle, online expiry, cancellation, late capture, old attempt downgrade, and new handoff regressions).
+- `tests/unit/pricing.test.ts`: 35 tests (worked examples, input validation, coupon minimum/caps, tax components, odd paise allocation, largest remainder, free shipping threshold, 200 deterministic conservation cases, immutability snapshots).
+- `tests/unit/reservations.test.ts`: 11 tests (concurrent last-unit CAS, duplicate release, single consumption, status-only untracked stock, nonnegative conservation balances, deadline guards, PAY-03/PAY-04 stock reacquisition, audit paths, serialization races, mixed carts).
+
+#### What the new handoff regression cases prove
+
+1. **Overdue pending recovery**: Overdue `PENDING_PAYMENT` online order at `context.at == expiresAt` (200) and `context.at > expiresAt` (250) receives verified full capture, reacquires stock and coupon, and transitions atomically to `PLACED` with `NONE` exception. Audit path records `PENDING_PAYMENT` -> `EXPIRED` -> `PLACED`. Revision increments once for the composite proposal. Old-expiry release descriptions precede new-generation consumption descriptions.
+2. **Overdue pending failure paths**: Overdue `PENDING_PAYMENT` online order missing stock capacity, coupon capacity, having an unavailable status-only line, partial capture, extra capture, or pending refund remains `EXPIRED` with `REFUND_REQUIRED`. Captured paise are retained in financial facts, fresh stock consumption is suppressed, and `request-refund-review` is emitted.
+3. **Deadline and COD guards**: Pending online order before its deadline (`context.at < expiresAt`) strictly rejects `lateCapture` (`INVALID_LATE_CAPTURE`) while allowing ordinary `transitionOrder` to `PLACED`. COD pending orders strictly reject online late-capture recovery at and after deadline.
+4. **Idempotency and conflict detection**: Replaying the exact late-capture operation after recovery and after a subsequent valid order transition (`CONFIRMED`) returns the current order, emits no duplicate effects, and causes no extra revision or history growth. Replaying with changed facts under the same operation ID throws `IDEMPOTENCY_CONFLICT`.
+5. **Audit transition trails**: Order, payment, and refund audit entries retain `actorId`, `reason`, `operationId`, timestamp `at`, and explicit from/to transition paths (`transitions: [{ from, to }]`).
+6. **Refund capacity and CAS race**: Pending and successful refund claims together cannot exceed captured paise; an in-memory CAS race over the last refundable amount yields exactly one winner while the losing proposal fails with `REVISION_CONFLICT`.
+7. **Serialization race handling**: Both execution orders of concurrent expiry versus capture proposals against the same held-stock revision prevent a stale proposal from overwriting the winning balance, and neither terminal state (`CONSUMED` / `RELEASED`) can flip or execute twice.
+8. **Untracked stock isolation**: Preserved all prior test coverage; mixed carts with status-only lines require availability without generating synthetic reservation records or reserved quantities.
+
+### Gate verification results
+
+Executed sequentially under Node 24.21.0 / npm 11.19.0:
+
+| Gate | Exit Code | Result | Real Output Summary |
+| --- | --- | --- | --- |
+| `npm ci --no-fund` | 0 | PASS | 573 packages installed from lockfile after releasing local dev server lock |
+| `npm run format` | 0 | PASS | Prettier formatted `src`, `scripts`, `tests`, and config files including `vitest.config.mts` |
+| `npm run format:check` | 0 | PASS | All matched files use Prettier code style |
+| `npm run verify` | 0 | PASS | Full pipeline passed: test (161 passed), lint (0 errors/warnings), typecheck (`next typegen && tsc --noEmit` covering `**/*.mts`), build (63 static pages generated), check:docs (63 Markdown files), check:secrets (187 source paths), check:enums (23 domains), check:diagrams (11 Mermaid SVGs), check:routes (57 Chromium pages, 16 API methods, 404 checked) |
+| `npm audit --omit=dev` | 0 | PASS | 0 vulnerabilities in production dependencies |
+| `npm audit` | 1 | PASS (RECORDED) | 9 development-tool vulnerabilities (4 low, 5 high) in `braces` and `KaTeX`; unchanged from Stage 3 |
+| `npm ls --depth=0` | 0 | PASS | Exact versions match pinned dependencies |
+| `npm ls` deferred packages | 1 | PASS (RECORDED) | `(empty)`; MongoDB, Mongoose, Better Auth, Razorpay, Cloudinary, Playwright, PDF/CSV packages remain absent |
+| `git diff --check` | 0 | PASS | Zero whitespace or formatting errors |
+
+### Initial failures and routine fixes
+
+1. **`npm ci` lock conflict**: Hit `EPERM` on `lightningcss-win32-x64-msvc\lightningcss.win32-x64-msvc.node` from an active Next.js dev server running on global Node 20. Identified exact project processes (PIDs 2528, 3188, 2104), terminated only those processes, and cleanly reran `npm ci`.
+2. **`vitest.config.mts` coverage**: `package.json` format glob was `*.{json,mjs,cjs,ts}`, omitting `.mts`. Updated glob to `*.{json,mjs,cjs,ts,mts}` in both `format` and `format:check`. Added `"**/*.mts"` to `tsconfig.json` `include` array so `tsc --noEmit` covers the config.
+3. **Prettier formatting**: Prettier check flagged unformatted changes in `state.ts`, `payments/state.ts`, `transition.ts`, and `vitest.config.mts`. Ran `npm run format`.
+4. **Monotonic audit timestamp**: In `tests/unit/reservations.test.ts`, the stale capture retry was using timestamp 150 following an expiry at 200, triggering domain guard `STALE_EVENT_TIME`. Corrected retry timestamp to 200 to test `RESERVATION_ALREADY_RESOLVED`.
+5. **Linter and typecheck fixes in tests**: Resolved two `@typescript-eslint/no-unused-vars` warnings in `reservations.test.ts` by asserting proposal revisions, and resolved TS2339 on union `StockSnapshot` by applying the existing `tracked()` narrowing helper.
+
+### Verification limits
+
+Domain contracts, reservation state transitions, and compare-and-swap tests are pure in-memory models. They do not constitute proof of:
+- MongoDB replica set atomic transactions or conditional write mechanics
+- Database unique index constraints or persistence schema design
+- Webhook signature validation, durable event queueing, or idempotency storage
+- Real payment provider SDK integration (Razorpay/Stripe)
+- Production authentication, session management, or access control
+- Real shipping carrier API integration or physical stock management
+All browser and API routes remain Stage 3 placeholders.
 
 ## Stage 3 historical record
 
