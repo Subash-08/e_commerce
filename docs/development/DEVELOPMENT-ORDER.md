@@ -1,6 +1,6 @@
 # Development order
 
-Current authorization: Part 4A only, following Stage 3 commit 6421b7d. The user's second Stage 4 attachment supersedes the earlier combined implementation prompt. Stop and report at each named part; later parts need separate approval.
+Current authorization: Part 4B database foundation, following verified Part 4A. Database verification is in progress; use mongodb-memory-server, no Docker. Review [outstanding static findings](../database/STAGE-4B-CODE-REVIEW.md) alongside the Antigravity report. Stop after 4B; auth installation, catalog and UI remain separately gated.
 
 | Part | Deliverable | Exit evidence |
 | --- | --- | --- |
