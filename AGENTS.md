@@ -3,7 +3,7 @@
 ## Read before working
 - Read docs/PROGRESS.md for the current gate and outstanding work.
 - Read docs/architecture/ARCHITECTURE-DECISIONS.md and relevant ADRs.
-- Part 4A is verified. Part 4B database foundation is authorized; use mongodb-memory-server, no Docker. Follow docs/development/ANTIGRAVITY-4B-VERIFICATION.md. Stop after 4B; no auth installation, catalog or UI authorization.
+- Part 4A is verified. Part 4B database foundation is authorized; use mongodb-memory-server, no Docker. Follow docs/development/ANTIGRAVITY-4B-VERIFICATION.md. Stop after 4B; no auth installation or catalog authorization. The user separately authorized reusable presentation-only UI components; no homepage design or commerce UI flows yet.
 - Codex handles complex implementation; Antigravity handles delegated tests/checks. Do not claim 4B complete before real replica-set evidence and all handoff gates pass.
 - Preserve existing work. Work on a stage branch, commit each completed stage, never force-push or use destructive Git.
 - Never read .env* files except .env.example; never print environment values.
