@@ -41,3 +41,7 @@ Next.js next-dev-loop requires Next 16.3+/Turbopack and agent-browser >=0.31.1, 
 5. Obtain the user's required tooling approval before installation/account access, then verify installation and permissions. Architecture approval does not authorize production payment actions.
 
 No executable install commands are supplied here because several candidate manifests use floating versions and their transitive code has not been audited. Repository SHAs do not make a floating runtime dependency safe by themselves.
+
+## Stage 2 update — 2026-10-06
+
+No tools installed. Documentation uses existing editing/web tools. Mermaid CLI was not found in PATH, plugin cache or bundled Node modules; full renderer validation is deferred explicitly to the approved Stage 3 documentation-tooling step. Existing source pins remain review candidates, not executable approvals. Next/DB/auth tools still require the dependency and permission review before activation.

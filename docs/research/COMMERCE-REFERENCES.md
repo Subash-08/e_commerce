@@ -66,3 +66,7 @@ Legal/CA review per client must resolve GST/place of supply, invoice issue timin
 ## Evidence boundaries
 
 No benchmark, full source audit, production backup test, deployment, database migration or end-to-end payment test occurred in Stage 1. Current-version documentation can change; Stage 3 must verify exact package releases and record the lockfile. The runtime error in local execution and the Git ownership mismatch are environment issues, not an application build failure.
+
+## Stage 2 follow-up — 2026-10-06
+
+Provider-neutral VPS/Vercel hosting supersedes the original production baseline. The auth/shared-client ADR records newly checked official Mongoose setClient, Better Auth Mongo adapter, session revocation, password reset, Next integration and vendor advisory sources. Documentation evidence confirms supported mechanisms but not an installed exact-version integration. No application or compatibility runtime test has been run.

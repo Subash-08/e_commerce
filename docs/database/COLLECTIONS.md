@@ -1,0 +1,80 @@
+# Conceptual collection contracts
+
+Purpose: define ownership, shape and persistence rules before Mongoose schemas exist. No database collections have been created. Types: ID is an opaque stable identifier; commerce uses ObjectId serialized as string at boundaries. Auth IDs follow the pinned adapter and are never blindly cast to ObjectId. Money is integer paise; Date is UTC; basis points are integers. All application documents have _id, createdAt, updatedAt, schemaVersion (initial 1); mutable aggregates also have revision (initial 0). State domains reference [STATE-MACHINES](../commerce/STATE-MACHINES.md), not separate enums.
+
+Required fields are listed without ?. Optional fields use ?. Defaults apply to new documents only; never silently invent missing historical financial values. Limits are proposed product safeguards and tested at implementation.
+
+## Catalog
+
+| Collection | Required and optional fields | Constraints / lifecycle / privacy |
+| --- | --- | --- |
+| products | name:string, slug:string, productCode?:string, categoryId:ID, brandId?:ID, status:CatalogState, summary:string, descriptionBlocks:typed[], attributes:AttributeValue[], media:MediaRoles, seo:SeoFields, listing:ListingProjection, publishedAt?:Date | Name 1–200 chars; normalized unique slug; archive instead of deleting referenced identity; no authoritative sellable price at parent |
+| variants | productId:ID, sku:string, normalizedSku:string, combinationKey:string, options:OptionRef[], title:string, mrpPaise:int, salePaise:int, taxPolicyKey:string, costPaise?:int, barcode?:string, active:bool, trackQuantity:bool, stockStatus:StockStatus, onHand?:int, reserved?:int, media?:MediaRoles, weightGrams?:int | sale >=0 and <=MRP; unique SKU and product/combination; stable IDs; default variant for simple products; cost is admin-only |
+| attributes | code:string, name:string, type:AttributeType, options:Option[], unit?:string, filterable:bool, visible:bool, variantAxisAllowed:bool, displayOrder:int, active:bool | Stable attribute and option IDs; unique code; type changes with stored values require migration; retire options rather than reuse IDs |
+| categories | name:string, slug:string, parentId?:ID, description:string, image?:Media, seo:SeoFields, active:bool, displayOrder:int | Unique slug; reject ancestor cycles; deleting used category requires explicit reassignment; retain redirects |
+| brands | name:string, slug:string, logo?:Media, description:string, seo:SeoFields, active:bool | Unique slug; optional relation for unbranded products; soft archive |
+
+Embedded shapes:
+- AttributeValue: attributeId, typed value (or optionIds), per-product visible/filterable overrides, displayOrder. Validate against definition; a plain arbitrary object is not accepted.
+- OptionRef: attributeId + optionId; combinationKey is a canonical ordered serialization/hash with collision-safe comparison. Display text never determines identity.
+- Media: publicId, secureUrl, resourceType, width/height when applicable, format, alt, sortOrder, version?. URLs use allowlisted delivery origins. MediaRoles: thumbnail?, cover?, gallery[], videos[] with posters, detailBlocks[].
+- SeoFields: title?, description?, ogMedia?, robotsIndex (default true for published catalog), canonicalOverride? (validated against permitted origins/routes). No reviews/ratings.
+- ListingProjection: minPricePaise?, maxPricePaise?, inStock:bool, maxDiscountBps:int, facets:typed key/value array, sourceRevision. No eligible variants => unavailable with absent range. Parent eligibility and variant stock both matter.
+- Bounds: initial max 200 variants/product, 6 variant axes, 50 gallery entries and bounded rich text; adjust by explicit measured requirement, not unlimited arrays.
+
+taxPolicyKey refers to a typed policy in versioned settings; snapshot the resolved policy/version into each quote/order. Unknown keys fail validation.
+
+Tracked variants require onHand/reserved integers >=0 with reserved <=onHand; initial reserved=0. Untracked variants omit quantity balances and never have reservations. No backorders in V1. Toggling tracking requires zero active reservations and a validated opening quantity; do not discard balances.
+
+## Identity and shopping
+
+| Collection family | Fields | Constraints / privacy |
+| --- | --- | --- |
+| auth user/account/session/verification | Library-owned IDs, normalized email, credentials, session/token expiry and adapter fields | Exact names/indexes from selected adapter; only library APIs/repository boundary mutate these; no copied passwordHash in profile |
+| profiles | authUserId:AuthID, role:Role, status:AccountState, authVersion:int, name?:string, mobile?:string, addresses:Address[] | Unique authUserId; CUSTOMER default; bounded 20 addresses with stable IDs; all PII private |
+| securityGuards | key:string, revision:int, activeAdminCount:int | Unique last-admin guard; serialize role/deactivation/bootstrap changes; count repaired only by audited procedure |
+| carts | userId:AuthID, items:CartLine[], couponCode?:string, revision:int | Unique userId, max 100 lines; no authoritative totals |
+| wishlists | userId:AuthID, items:WishlistLine[] | Unique userId, bounded 200 refs; unavailable references explainable |
+| mergeReceipts | userId:AuthID, tokenHash:string, fingerprint:string, resultRevision:int, expiresAt:Date | Unique user/token; repeat same merge cannot sum quantities twice |
+| guestAccessGrants | orderId:ID, tokenHash:string, purpose:string, expiresAt:Date, usedAt?:Date, attempts:int | Random high-entropy bearer secret never stored plaintext/logged; neutral verification response; purpose-scoped invoice/order access |
+
+Address: id, name, mobile, line1, line2?, landmark?, city, district?, stateCode, postalCode, countryCode, defaultShipping/defaultBilling; normalize India state/PIN and max lengths; no unsupported country accepted. Authenticated address edits are mutable; order addresses are copied.
+CartLine: productId, variantId, quantity (integer 1–99 proposed), addedAt. WishlistLine: productId, variantId, addedAt. For product-level wishlist intent resolve and persist a chosen default variant; archive does not silently switch a buyer's variant. Guests store these references locally, not PII.
+
+## Financial and transaction records
+
+| Collection | Fields | Constraints / lifecycle |
+| --- | --- | --- |
+| orders | orderNumber:string, customerType:CustomerType, userId:AuthID/null, customerSnapshot, shippingSnapshot, billingSnapshot, items:OrderLine[], totals:Totals, pricingVersion:string, policyVersions, couponSnapshot?, shippingSnapshotPolicy, orderStatus:OrderState, financialStatus:FinancialState, fulfillmentException:FulfillmentException, expiresAt?:Date, statusHistory:Transition[], tracking?, notes? | Unique orderNumber; guest userId=null; immutable accepted snapshots; guarded operational fields only; PII private; no cascade deletion |
+| checkoutAttempts | ownerKeyHash:string, idempotencyKey:string, fingerprint:string, orderId:ID, providerBindingState:BindingState, providerOrderId?:string | Unique owner/key; request replay binds original order; no secret PII in key/fingerprint material |
+| payments | orderId:ID, provider:string, providerOrderId:string, providerPaymentId?:string, amountPaise:int, currency:string, state:PaymentState, verifiedAt?:Date, capturedAt?:Date, method?:string, failureCode?:string | Unique partial provider/payment ID; one attempt per payment ID; multiple attempts can share provider order; verified amount must match order |
+| refunds | orderId:ID, paymentId:ID, provider:string, operationKey:string, providerRefundId?:string, amountPaise:int, allocations:RefundAllocation[], reason:string, state:RefundState, requestedBy:AuthID, history:Transition[] | Unique operationKey and partial provider/refund ID; prevent sum of pending+successful claims exceeding captured refundable balance |
+| reservations | orderId:ID, variantId:ID, generation:int(default 0), quantity:int, state:ReservationState, expiresAt:Date, resolvedAt?:Date | Unique order/variant/generation and at most one ACTIVE order/variant; late reacquisition uses next generation, preserving released record; tracked variants only; no TTL removal of active financial state |
+| coupons | normalizedCode:string, kind:CouponKind, value:int, minEligiblePaise:int, maxDiscountPaise?:int, startsAt:Date, expiresAt:Date, usageLimit?:int, active:bool, revision:int | One coupon/order V1, no stacking; rules may limit explicit products/categories/brands; first-order-only deferred until verified identity semantics |
+| couponClaims | couponId:ID, orderId:ID, generation:int(default 0), quantity:int(default 1), state:ClaimState, expiresAt:Date, couponRevision:int | Unique coupon/order/generation and at most one HELD coupon/order; recovery creates next generation; usage counter/claims transaction prevents final-use races |
+| invoices | sellerId:string, financialYear:string, series:string, sequence:int, invoiceNumber:string, orderId:ID, issueKey:string, sellerSnapshot, customerSnapshot, addresses, items, totals, taxSnapshot, templateVersion:string, issuedAt:Date, state:InvoiceState, artifact?:PrivateArtifact | Unique seller/FY/series/sequence and issueKey; legal contents immutable; render failures retry same issue |
+| creditNotes | invoiceId:ID, correctionNumber:string, reason:string, items/totals snapshot, refundIds:ID[], issuedAt:Date | Immutable correction; links original, no overwrite; number policy client CA reviewed |
+| counters | key:string, value:int | Unique seller/FY/series key; increment only inside invoice issue transaction |
+| auditLogs | actorType, actorId?, action:string, entityType:string, entityId:ID/string, changedFields:string[], reason?, correlationId:string, occurredAt:Date | Append-only, bounded/redacted details; no tokens/passwords/full payment bodies |
+
+OrderLine: productId, variantId, productName, variantName, sku, category/brand snapshot?, thumbnailRef?, quantity, mrpPaise, unitPricePaise, lineDiscountPaise, couponAllocationPaise, taxableBasePaise, taxRateBps, taxComponents[], linePayablePaise. Totals: listSubtotalPaise, itemDiscountPaise, couponDiscountPaise, taxableSubtotalPaise, taxPaise, shippingBasePaise, shippingTaxPaise, grandTotalPaise, roundingPaise; define non-double-counting formulas in pricing rules.
+Transition: from, to, actor, reason, occurredAt, correlationId, operationKey; bounded histories for order lifecycle, payment webhook deliveries remain separate.
+CustomerSnapshot: name/email/mobile; policyVersions stores accepted terms version/time and independent optional consent. PrivateArtifact: private storage key, content hash, template version, mime type, size, generatedAt; never public bucket URL.
+
+## Durability, content and admin
+
+| Collection | Fields | Constraints / lifecycle |
+| --- | --- | --- |
+| webhookEvents | provider:string, eventId:string, payloadHash:string, verifiedAt:Date, encrypted/minimized payload, state:JobState, processedAt?, failureCode? | Unique provider/event; persist with processing job before ACK; payload retention policy, no unbounded logs |
+| jobs | kind:JobKind, businessKey:string, payload:typed minimal object, state:JobState, dueAt:Date, attempts:int, leaseToken?:string, leaseUntil?:Date, lastErrorCode?, completedAt? | Unique kind/businessKey; this same collection is the outbox, not a second queue; bounded retries/retention |
+| importJobs | ownerId:AuthID, inputKey:string, inputHash:string, templateVersion:string, mode:ImportMode, state:ImportState, previewVersion:int, confirmedAt?, cursor:int, counts, errorArtifactKey? | Private immutable input; same validators as editor; idempotent chunk/row receipts stored with target operation key |
+| redirects | fromPath:string, toPath:string, statusCode:int(default 301), entityId?:ID | Unique fromPath; no loops/open redirects; flatten chains |
+| settings | key:string, value:typed object, revision:int, effectiveAt:Date | Unique key; business toggles only, no provider secrets; snapshot relevant policy at checkout |
+| pages | slug:string, draft:typed content?, publishedVersionId?:ID, versions:bounded content versions or external archived versions, seo | Unique slug; policies retain referenced versions; no executable arbitrary HTML |
+| navigation | key:string, items:validated tree, revision:int | Unique key; internal/allowlisted links, depth bound; static fallback config |
+| homepageConfig | key:string, schemaVersion:int, publication pointer, updatedBy:AuthID | Envelope only; no final blocks/section schema before design approval |
+| contactSubmissions | name:string, email:string, subject:string, message:string, createdAt:Date, handledAt? | Spam/rate limits, PII retention, private staff access |
+| newsletterSubscribers (optional) | normalizedEmail:string, consentVersion:string, consentAt:Date, confirmedAt?, unsubscribedAt? | Unique email, independent explicit consent; never infer from purchase |
+| workTasks (optional) | title, assigneeId?, relatedType?, relatedId?, priority:TaskPriority, state:TaskState, dueAt?, notes? | Admin/staff only; no effect on fulfillment authority |
+
+Application deletion: archive referenced catalog; expire transient tokens/jobs per policy after resolution; financial retention reviewed per client. Database backups/access grants are operations, not additional commerce models.

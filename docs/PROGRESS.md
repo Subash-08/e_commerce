@@ -1,52 +1,41 @@
 # Foundation progress
 
-Updated: 2026-10-06. Workspace: `D:\AI\e-commerce`.
+Updated 2026-10-06. Workspace D:\AI\e-commerce. Branch docs/foundation-stage-2.
 
 ## Current gate
 
-Stage 1: inspect, research, recommend. Architecture approval is pending.
-Do not proceed to Stage 2 documentation or Stage 3 application scaffolding until the user approves the material decisions.
-Do not implement commerce features during any foundation stage.
+Stage 1 approved with amendments. Stage 2 documentation prepared; STOP for user review before Stage 3. No application packages, routes, database models or commerce business code installed/implemented.
 
-The final attached revision supersedes the earlier mega-prompt where their sequencing or documentation requirements conflict. The original Revised Scope remains the product baseline.
+Approval source: two user attachments received after Stage 1. The first explicitly approves A/B/F, conditionally C, simplifies D, replaces E with provider-neutral hosting, and authorizes Stage 2. The second adds scheduler, shared-client, version/runtime, invariant and late-capture tests. [Current record](architecture/ARCHITECTURE-DECISIONS.md) supersedes the old proposal.
 
-## Inspection
+## Completed work
 
-- Folder was empty, including hidden entries. No application, package.json, lockfile, Next.js version, tsconfig, existing routes, dependencies, auth, database configuration, documentation, or environment files were present.
-- No ancestor AGENTS.md was found at D:\AGENTS.md or D:\AI\AGENTS.md.
-- Initialized Git on `chore/foundation-stage-1`; no existing code was overwritten.
-- Observed tools: Node 20.19.3, npm 10.8.2, Git 2.41.0.windows.3.
-- Read the three supplied attachments. No secret environment files were read.
-- No dependencies, external skills, MCP servers, or plugins installed; no cloud resources provisioned.
+- Stage 1 checkpoint: 5572b1f; empty folder inspection, research, tooling review.
+- Stage 2: approval record, seven ADRs, conceptual collection/index/evolution contracts, central states, pricing/order/payment/invoice rules.
+- Architecture/module/folder, feature-dependency and complete linked change-impact matrices.
+- Store/admin routes, rendering/cache/API access matrix, shopping and product-editor/CSV design.
+- Security/SEO/testing/operations/reuse/dependency/roadmap/DoD and Stage 3 handoff.
+- Eleven Mermaid source diagrams, concise AGENTS.md and placeholder-only .env.example.
+- Hosting is provider-neutral; no purchase/budget/production credentials. Reservations only for tracked quantity.
+- Shared MongoClient ownership settled; actual auth install compatibility remains conditional.
 
-## Review documents
+## Validation and limits
 
-- [Architecture decisions](architecture/ARCHITECTURE-DECISIONS-PENDING.md): material gate plus proposed technical defaults.
-- [Official research and commerce references](research/COMMERCE-REFERENCES.md).
-- [Agent tooling review](tooling/AGENT-TOOLS.md).
+- Link/fence/route/state/secret-example/static checks are recorded in the final stage report after execution.
+- Mermaid CLI not installed or found in bundled tools; full parser/render validation remains a stated Stage 3 gate. Structural checking is not a substitute.
+- No npm build/lint/typecheck/tests apply without an application. No provider/database tests ran.
+- No .env files except .env.example were read, and no credentials requested.
+- Windows sandbox helper still fails. Approved shell actions use command-scoped safe.directory for this workspace; no global Git safety changes.
 
-## Next stages, only after approval
+## Before Stage 3
 
-1. Record the user's decisions; generate roughly 25 core documents, approved ADRs, change-impact matrix, feature connections, route/rendering matrix, and Mermaid diagrams. Consolidate related topics; defer module-specific detail until implementation.
-2. Prepare dependency plan with exact versions; scaffold minimal store/admin routes with separate root layouts, configuration, .env.example, concise AGENTS.md, and useful module READMEs. No fake business data or commerce implementation.
-3. Validate Mermaid and documentation links, install approved dependencies, run lint/typecheck/build and relevant checks. Report actual outcomes, including unresolved configuration.
-4. Stop after foundation. Feature development requires a separate explicit instruction.
+User approval required per attached Stage 2 instructions. Then follow [exact scaffold contract](development/STAGE-3-SCAFFOLD.md). Reverify versions/advisories and Node 24 compatibility, use supported Node 22 fallback if needed. Do not copy historical version observations into pins.
 
-Proposed later development order: infrastructure/auth/roles; pure pricing and state machines; thin test-payment purchase slice; catalog admin; public catalog with SEO/cache; cart/wishlist/coupons; orders/invoices/operations; background CSV; reporting/settings; integrations; production audit. Tests accompany each phase. Work management is last and disabled by default.
-
-## Status
+Remaining gates: auth driver/hooks/revocation/security check; hosting budget/cadence/backup guarantees; private artifact/email provider; client legal/CA configuration; homepage design. These are explicit, not guessed defaults.
 
 PRE-DEVELOPMENT FOUNDATION
-
-- Architecture: NEEDS DECISION
-- Documentation: INCOMPLETE (Stage 1 review only)
-- Scaffolding: INCOMPLETE (intentionally gated)
-- Tooling: NEEDS CONFIGURATION
+- Architecture: APPROVED WITH CONDITIONS
+- Documentation: PREPARED FOR REVIEW (Mermaid CLI validation pending)
+- Scaffolding: NOT STARTED
+- Tooling: NO NEW INSTALLATIONS
 - Implementation: NOT STARTED
-
-## Stage 1 verification
-
-- Four review/progress documents created; all relative documentation links resolve.
-- No application exists yet, so lint/typecheck/build/tests are not applicable at this gate.
-- Sandbox helper failed after Git initialization. Approved outside-sandbox checks worked; Git reported different sandbox/desktop ownership. Checks use a command-scoped safe.directory for this exact workspace, without changing global Git configuration.
-- Local stage checkpoint contains only .gitignore and the four documents. No remote push is requested.
