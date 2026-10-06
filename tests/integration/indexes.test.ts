@@ -25,8 +25,11 @@ describe("Database index lifecycle, drift detection, and error sanitization", ()
   });
 
   afterAll(async () => {
-    await context?.teardown();
-    await stopSharedTestReplicaSet();
+    try {
+      await context?.teardown();
+    } finally {
+      await stopSharedTestReplicaSet();
+    }
   });
 
   it("detects missing, unchanged, unexpected, and different indexes with compound keys and options", async () => {

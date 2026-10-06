@@ -14,6 +14,7 @@ interface ConnectionCache {
   closing?: Promise<void>;
   stopped?: boolean;
 }
+const ownedConnections = new WeakMap<DatabaseHandle, mongoose.Connection>();
 const productionCache: ConnectionCache = {};
 const developmentGlobal = globalThis as typeof globalThis & {
   __commerceDbPromiseCacheV1?: ConnectionCache;
@@ -61,7 +62,13 @@ export async function openDatabase(
       observe("db.unavailable", { code: "DB_UNAVAILABLE" }),
     );
     observe("db.connected");
-    return { client, db, mongoose: connection };
+    const selected =
+      connection.name === config.databaseName
+        ? connection
+        : connection.useDb(config.databaseName, { useCache: true });
+    const handle = { client, db, mongoose: selected };
+    ownedConnections.set(handle, connection);
+    return handle;
   } catch (error) {
     if (connection) await connection.destroy().catch(() => undefined);
     else await client?.close().catch(() => undefined);
@@ -101,7 +108,8 @@ export function createDatabaseOwner(
       } catch {
         /* Failed opens already clean their client. */
       }
-      if (handle) await handle.mongoose.destroy();
+      if (handle)
+        await (ownedConnections.get(handle) ?? handle.mongoose).destroy();
       observe("db.closed");
     })();
     cache.closing = closing;

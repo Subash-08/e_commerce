@@ -25,3 +25,7 @@ Tests must use generated _test database names with both NODE_ENV=test and APP_EN
 ## Open gates
 
 Real rollback, retry, connection concurrency, index drift and shutdown evidence are pending. Auth is separately blocked by the [compatibility report](../database/AUTH-COMPATIBILITY-REPORT.md), reopening [ADR 0003](0003-auth-and-connections.md). No auth, catalog, checkout, payments or UI implementation is approved here.
+
+## Post-review implementation clarification
+
+When the configured database differs from the URI default, use Mongoose's public useDb on the shared client; keep the original connection as the shutdown owner. Do not rewrite the URI or implicitly change authentication database semantics. Index comparison preserves BSON scalar values through canonical Extended JSON before key sorting. Fixture teardown exposes cleanup errors and releases partially initialized resources. These implement the existing ownership/index contract without changing commerce invariants.

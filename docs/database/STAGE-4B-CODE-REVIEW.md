@@ -27,3 +27,13 @@ Required resolution: best-effort cleanup of all acquired resources in finally bl
 ## Acceptance handling
 
 These findings may overlap work Antigravity is already doing. Reconcile against its final diff/report rather than overwriting concurrent changes. Passing existing tests does not dismiss a missing regression. Retain the no-Docker requirement and the separate auth gate. Once the final review is provided, Codex can implement complex corrections and run focused checks, with remaining broad verification delegated as needed.
+
+## Resolution after verification report 32d40ef
+
+All three findings remained in that revision and were repaired by Codex:
+
+- Mongoose now selects the configured database with public useDb while the original connection remains the lifecycle owner. Two real regressions cover a different URI database and an omitted URI database; Mongoose writes are visible through the native configured database.
+- Index normalization serializes BSON through canonical Extended JSON before sorting object keys. A real date-cutoff index test proves unchanged values match and changed values report drift.
+- Fixture initialization closes partial clients/replicas and resets failed startup promises. Teardown attempts owner closure, collection cleanup and client closure while surfacing aggregated errors; suite teardown stops replicas even when context cleanup throws. Regressions cover probe failure/retry, preserved original plus cleanup errors, and a surfaced owner-close failure after owned collections are removed.
+
+Six new regressions pass against real MongoDB 8.2.6. The full test run now passes 166 unit and 34 integration tests with no skips. Initial attempts failed because C: had insufficient space for WiredTiger journals; successful runs used process-local TEMP/TMP under ignored .validation/mongo-temp on D:. No Atlas URI was used. See PROGRESS.md for the final acceptance-gate record.

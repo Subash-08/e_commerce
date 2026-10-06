@@ -4,9 +4,21 @@ Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4b-database
 
 ### Current gate
 
-Part 4A domain foundation is verified at fd63cf2 (161 unit tests). Part 4B database foundation is **VERIFIED AND COMPLETED** on branch `codex/stage-4b-database` (189 total tests: 161 unit, 28 integration; full verification gate passed).
+Part 4A remains verified. Part 4B is accepted after the post-report review repairs: **200 tests pass (166 unit, 34 integration)**, including six new regression tests and five UI checks. Antigravity's 189-test evidence at 32d40ef is preserved below as historical evidence; its report did not close the three static findings, which Codex subsequently repaired.
 
-Auth remains blocked: **REOPEN ADR 0003**. No auth package is installed, no commerce models/CRUD, payments, UI, or external provider calls are authorized. Stop at the 4B gate; do not start Stage 4C.
+The user separately authorized reusable UI foundations: Button, Badge, Alert, Card, EmptyState, Skeleton, InputField, TextareaField, SelectField and Checkbox. They are presentation components, not completed commerce screens or an approved homepage design. UI checkpoint: 254d3f1; the earlier Antigravity commit also included the initial component files while work was concurrent. Future handoffs must keep one writer per path.
+
+Auth remains REOPEN ADR 0003; no auth installation or catalog implementation. Atlas configuration was documented but no supplied URI was saved or used, and no Atlas collections were created. Rotate the disclosed password and configure the replacement locally per [credential setup](development/CREDENTIAL-SETUP.md).
+
+### Post-report acceptance evidence, 2026-10-06
+
+- Fixed configured-database selection through public Mongoose useDb with the original connection owning shutdown, BSON-preserving index comparison, and fixture startup/teardown cleanup error reporting. See [resolved review](database/STAGE-4B-CODE-REVIEW.md).
+- Added two database-selection regressions, a real date-filter drift regression and three cleanup/fault regressions. All six passed against local MongoDB 8.2.6; strict test runner subsequently passed 166 unit and 34 integration tests with no skips/todos/pending cases.
+- Lint, typecheck and production build passed. Documentation links passed for 70 files, secret scan for 221 source paths, enum check for 23 domains, all 11 Mermaid diagrams rendered, 57 pages/16 API methods checked in Chromium, format:check and git diff --check passed.
+- npm run verify initially stopped at the secret-pattern check because the documentation contained a dummy credential-shaped URL. Replaced it with a blank URI field; reran every remaining gate successfully. Final acceptance evidence is the completed sequence, not a claim that the initial verify invocation exited zero.
+- Initial replica startup failed due to insufficient C: temporary disk space. Successful tests/gates used process-local TEMP and TMP pointing to ignored .validation/mongo-temp on D:. No user files were deleted. Future local database runs need adequate temporary disk space.
+- No packages changed and no new install/audit was run in this repair. Antigravity's production-zero/development-nine advisory report below remains the latest audit evidence.
+- UI markup checks and compilation passed; the existing browser route checks exercised placeholder routes, not a new component gallery. Dedicated component visual/keyboard interaction review remains before use in feature routes.
 
 ## Part 4B database verification and acceptance evidence
 
@@ -248,4 +260,4 @@ Secret and enum checks are static pattern gates, not a proof against every possi
 
 ## Next authorized-work boundary
 
-Complete the delegated Part 4B verification, report actual evidence, then stop. Auth installation and all later feature slices remain separately gated. Historical acceptance evidence above is not evidence for the 4B checkpoint.
+Post-review 4B repairs are verified. Reusable presentation-only UI is separately authorized. Auth installation, catalog and commerce UI flows remain gated; follow the feature implementation plan before starting a new slice.

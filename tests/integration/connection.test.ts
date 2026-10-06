@@ -18,8 +18,11 @@ describe("Database connection ownership and lifecycle", () => {
   });
 
   afterAll(async () => {
-    await context?.teardown();
-    await stopSharedTestReplicaSet();
+    try {
+      await context?.teardown();
+    } finally {
+      await stopSharedTestReplicaSet();
+    }
   });
 
   it("50 concurrent first get calls share the same promise, handle, native client and connect exactly once", async () => {

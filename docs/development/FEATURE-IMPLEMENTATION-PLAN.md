@@ -7,12 +7,12 @@ Updated 2026-10-06. This is the execution detail for [development order](DEVELOP
 | Work | State | Owner / next action |
 | --- | --- | --- |
 | 4A pricing and state functions | Verified | Preserve 161-test baseline; add evidence for later changes |
-| 4B database foundation | Verification running, acceptance pending | Antigravity supplies final commit/report; Codex reconciles findings and fixes complex defects |
-| 4B static review | Open | Resolve/disprove database selection, BSON index comparison and cleanup findings against the final revision |
+| 4B database foundation | Accepted after post-report repairs | 200 tests pass; see current progress for complete gate evidence |
+| 4B static review | Resolved | Six new regressions prove database selection, BSON date comparison and failure cleanup |
 | Auth compatibility | Blocked | Codex resolves ADR 0003 before an auth install |
 | Remaining features below | Planned, not started | Activate one bounded package at a time after dependencies pass |
 
-No Docker. No second verification run against the same active checkout. Passing a test count alone does not close [the static review](../database/STAGE-4B-CODE-REVIEW.md).
+Reusable presentation-only UI components were separately authorized and added; feature routes and homepage design are still gated. No Docker. No second verification run against the same active checkout. Passing a test count alone does not close [the static review](../database/STAGE-4B-CODE-REVIEW.md).
 
 ## Work sequence and acceptance
 

@@ -46,8 +46,11 @@ describe("Database transactions and retry mechanics", () => {
   });
 
   afterAll(async () => {
-    await context?.teardown();
-    await stopSharedTestReplicaSet();
+    try {
+      await context?.teardown();
+    } finally {
+      await stopSharedTestReplicaSet();
+    }
   });
 
   it("persists real committed writes across collections and rolls back both on failure preserving DomainError", async () => {

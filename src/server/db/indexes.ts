@@ -1,4 +1,5 @@
 import "server-only";
+import { BSON } from "mongodb";
 import type {
   CollationOptions,
   Db,
@@ -29,14 +30,21 @@ export interface IndexDifference {
   readonly actual?: unknown;
 }
 function sorted(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sorted);
-  if (value && typeof value === "object")
-    return Object.fromEntries(
-      Object.entries(value)
-        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-        .map(([k, v]) => [k, sorted(v)]),
-    );
-  return value;
+  function order(item: unknown): unknown {
+    if (Array.isArray(item)) return item.map(order);
+    if (item && typeof item === "object")
+      return Object.fromEntries(
+        Object.entries(item)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([key, child]) => [key, order(child)]),
+      );
+    return item;
+  }
+  try {
+    return order(BSON.EJSON.serialize(value, { relaxed: false }));
+  } catch (error) {
+    throw new DatabaseError("DB_CONFIG_INVALID", error);
+  }
 }
 function collation(value: unknown) {
   if (!value || typeof value !== "object") return null;

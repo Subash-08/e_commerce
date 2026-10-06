@@ -13,6 +13,22 @@ import {
 import { DatabaseError } from "../../src/server/db/errors";
 import { type DatabaseObserver } from "../../src/server/db/observability";
 
+export async function cleanupAll(
+  steps: readonly (() => Promise<unknown>)[],
+  original?: unknown,
+): Promise<void> {
+  const errors: unknown[] = original === undefined ? [] : [original];
+  for (const step of steps) {
+    try {
+      await step();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length)
+    throw new AggregateError(errors, "Test resource cleanup failed");
+}
+
 let sharedReplicaSet: MongoMemoryReplSet | undefined;
 let sharedReplicaStarting: Promise<MongoMemoryReplSet> | undefined;
 
@@ -32,24 +48,32 @@ export async function getSharedTestReplicaSet(): Promise<MongoMemoryReplSet> {
           ip: "127.0.0.1",
         },
       });
-      // Assert topology requirements per ADR 0009 / harness instructions
-      const probeClient = new MongoClient(repl.getUri("topology_probe"));
-      await probeClient.connect();
+      const probeClient = new MongoClient(repl.getUri("topology_probe_test"), {
+        serverSelectionTimeoutMS: 2000,
+        timeoutMS: 2000,
+      });
       try {
-        const admin = probeClient.db("topology_probe").admin();
-        const hello = await admin.command({ hello: 1 });
-        if (typeof hello.setName !== "string") {
-          throw new Error("Replica set hello.setName missing");
-        }
-        if (hello.logicalSessionTimeoutMinutes == null) {
-          throw new Error("Replica set logicalSessionTimeoutMinutes missing");
-        }
-      } finally {
+        await probeClient.connect();
+        const hello = await probeClient
+          .db("topology_probe_test")
+          .admin()
+          .command({ hello: 1 });
+        if (
+          typeof hello.setName !== "string" ||
+          hello.logicalSessionTimeoutMinutes == null
+        )
+          throw new Error("Replica topology is not transaction capable");
         await probeClient.close();
+        sharedReplicaSet = repl;
+        return repl;
+      } catch (error) {
+        await cleanupAll([() => probeClient.close(), () => repl.stop()], error);
+        throw error;
       }
-      sharedReplicaSet = repl;
-      return repl;
-    })();
+    })().catch((error) => {
+      sharedReplicaStarting = undefined;
+      throw error;
+    });
   }
   return sharedReplicaStarting;
 }
@@ -167,13 +191,18 @@ export async function createTestDatabaseContext(
   const contextClient = new MongoClient(config.uri, {
     serverSelectionTimeoutMS: 2000,
   });
-  await contextClient.connect();
   const db = contextClient.db(config.databaseName);
-  await assertTransactionTopology(db);
+  try {
+    await contextClient.connect();
+    await assertTransactionTopology(db);
+  } catch (error) {
+    await cleanupAll([() => contextClient.close()], error);
+    throw error;
+  }
 
   async function createCollection(name: string, indexes?: IndexDescription[]) {
-    ownedCollections.add(name);
     const coll = await db.createCollection(name);
+    ownedCollections.add(name);
     if (indexes && indexes.length > 0) {
       await coll.createIndexes(indexes);
     }
@@ -239,22 +268,13 @@ export async function createTestDatabaseContext(
   }
 
   async function teardown() {
-    // Release any pending barriers so nothing hangs
-    for (const b of activeBarriers) {
-      b.release();
-    }
-    // Close all owners
-    for (const owner of activeOwners) {
-      await owner.close().catch(() => {});
-    }
-    // Clean up owned collections
-    try {
-      await guardedCleanup();
-    } catch {}
-    // Close context client
-    await contextClient.close().catch(() => {});
+    for (const barrier of activeBarriers) barrier.release();
+    await cleanupAll([
+      ...activeOwners.map((owner) => () => owner.close()),
+      () => guardedCleanup(),
+      () => contextClient.close(),
+    ]);
   }
-
   return {
     databaseName,
     config,

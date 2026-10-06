@@ -25,8 +25,11 @@ describe("Health, configuration, lifecycle and safety guards", () => {
   });
 
   afterAll(async () => {
-    await context?.teardown();
-    await stopSharedTestReplicaSet();
+    try {
+      await context?.teardown();
+    } finally {
+      await stopSharedTestReplicaSet();
+    }
   });
 
   describe("Liveness and Readiness endpoints", () => {
