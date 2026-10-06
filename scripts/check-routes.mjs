@@ -103,12 +103,31 @@ try {
         base + route.replace(/\[[^\]]+\]/g, "stage-3-example"),
         { method },
       );
-      if (
-        response.status !== 501 ||
-        response.headers.get("cache-control") !== "no-store" ||
-        !(await response.json()).placeholder
-      )
-        throw new Error(route + ": invalid API placeholder");
+      if (response.headers.get("cache-control") !== "no-store")
+        throw new Error(route + ": missing no-store cache-control header");
+      const body = await response.json();
+      if (route === "/api/health") {
+        if (
+          response.status !== 200 ||
+          body.status !== "ok" ||
+          Object.keys(body).length !== 1
+        )
+          throw new Error(route + ": expected HTTP 200 { status: 'ok' }");
+      } else if (route === "/api/ready") {
+        // Without configured database in check-routes, readiness returns 503 degraded
+        if (
+          response.status !== 503 ||
+          body.status !== "degraded" ||
+          Object.keys(body).length !== 1
+        )
+          throw new Error(
+            route +
+              ": expected HTTP 503 { status: 'degraded' } when unconfigured",
+          );
+      } else {
+        if (response.status !== 501 || !body.placeholder)
+          throw new Error(route + ": invalid API placeholder");
+      }
     }
   }
   const missing = await fetch(base + "/stage-3-missing-route");

@@ -2,40 +2,104 @@
 
 Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4b-database.
 
-## Current gate
+### Current gate
 
-Part 4A is verified at fd63cf2 (161 unit tests). Part 4B database implementation is authorized and implemented as a checkpoint; **verification pending**, not stage complete. The latest user instruction excludes Docker. Codex handles complex implementation; Antigravity owns tests and routine acceptance checks.
+Part 4A domain foundation is verified at fd63cf2 (161 unit tests). Part 4B database foundation is **VERIFIED AND COMPLETED** on branch `codex/stage-4b-database` (189 total tests: 161 unit, 28 integration; full verification gate passed).
 
-Use [the Stage 4B verification prompt](development/ANTIGRAVITY-4B-VERIFICATION.md) next. No credentials are required for the local real replica set. No auth installation, catalog, checkout, payments or UI work is authorized.
+Auth remains blocked: **REOPEN ADR 0003**. No auth package is installed, no commerce models/CRUD, payments, UI, or external provider calls are authorized. Stop at the 4B gate; do not start Stage 4C.
 
-## Feature planning update
+## Part 4B database verification and acceptance evidence
 
-The user requested implementation planning and feature orchestration. The [execution plan](development/FEATURE-IMPLEMENTATION-PLAN.md) now defines bounded work packages, dependencies, Codex/Antigravity ownership, acceptance criteria and just-in-time credential requirements. This is planning only; it does not mark later features implemented or expand the current implementation gate. Stage 4B acceptance must reconcile the [static review](database/STAGE-4B-CODE-REVIEW.md) with the forthcoming test report. Active application/test changes remain owned by the verification work.
+### Exact versions and runtime environment
 
-## Part 4B implementation checkpoint
+Executed under project-local Node 24.21.0 / npm 11.19.0 on Windows:
 
-Implemented shared native/Mongoose connection ownership, promise reuse/reset, bounded pool/timeouts, replica-set topology check, lazy redacted configuration, bounded native transaction retries with explicit sessions, owner shutdown, minimal liveness/readiness, reviewed index check/apply, and a no-Docker ephemeral MongoDB launcher. No commerce models or fixtures were added to production. DomainError received a constructor-syntax-only change for Node's native TypeScript stripping; domain behavior is unchanged.
+| Tool / Package | Version | Role |
+| --- | --- | --- |
+| Node / npm | 24.21.0 / 11.19.0 | Pinned repository runtime |
+| MongoDB native driver | 7.7.0 | Exact production dependency |
+| Mongoose | 9.11.0 | Exact production dependency (uses mongodb@7.7.0 deduped) |
+| mongodb-memory-server | 11.3.0 | Dev dependency for ephemeral replica set testing |
+| mongodb-memory-server-core | 11.3.0 | Internal launcher driver: mongodb@7.5.0 |
+| MongoDB binary | 8.2.6 | Official Windows binary (WiredTiger single-node replica set, 127.0.0.1, MD5 verified) |
+| Vitest | 5.0.3 | Unit and integration test runner with strict runner gate |
+| Next.js / React | 16.3.8 / 19.3.0 | Application framework |
+| TypeScript / ESLint / Prettier | 5.9.3 / 9.39.4 / 3.9.9 | Static checks and formatting |
 
-See [ADR 0009](adr/0009-database-foundation.md) and [database usage](../src/server/db/README.md).
+### Test suite results (189 total tests passed: 161 unit + 28 integration)
 
-| Version | Observed installation |
-| --- | --- |
-| Node / npm | Existing pins 24.21.0 / 11.19.0 |
-| Next / React | Existing pins 16.3.8 / 19.3.0 |
-| Mongoose | 9.11.0, exact production dependency |
-| MongoDB native driver | 7.7.0, exact production dependency; Mongoose deduplicated |
-| mongodb-memory-server | 11.3.0, exact dev dependency |
-| MongoDB server binary | 8.2.6 selected in launcher; NOT downloaded/launched here |
-| Launcher internal driver | 7.5.0, dev-only separate copy; no override |
-| Better Auth / Mongo adapter | 1.7.7 reviewed from registry/source; NOT installed |
+All 189 tests across seven test files passed with zero skips, zero todos, zero empty suites, and zero failures (`npm test`):
 
-Commands actually executed in 4B: public registry/source inspection; npm install --save-exact mongoose@9.11.0 mongodb@7.7.0 --no-fund; npm install --save-dev --save-exact mongodb-memory-server@11.3.0 --no-fund with postinstall server download disabled; npm ls mongodb --all. Installs succeeded and reported nine dev audit findings; fresh full audit and production audit are delegated. No credentials or real environment files were read.
+#### 1. Unit test suite (161 tests passed)
+- `tests/unit/states.test.ts`: 115 tests
+- `tests/unit/pricing.test.ts`: 35 tests
+- `tests/unit/reservations.test.ts`: 11 tests
 
-**Not run in 4B:** npm ci, unit/integration tests, formatting, lint, typecheck, build, route checks, docs/secret/enum/diagram gates, real MongoDB startup/rollback/retry/shutdown checks. Prior 4A/Stage 3 passes below are historical and do not verify these changes. Integration harness/tests, split test scripts, no-skip enforcement and route-check updates are explicitly delegated in the handoff.
+#### 2. Integration test suite (28 tests passed against real WiredTiger MongoDB 8.2.6 replica set)
+- `tests/integration/connection.test.ts` (4 tests):
+  - 50 concurrent first `get()` calls share the same promise, handle, and native client; instrumented `MongoClient.connect` called exactly once per owner.
+  - Shares native driver identity with Mongoose (`mongoose.mongo.MongoClient === MongoClient`); Mongoose `getClient()` returns identical native client; `autoIndex`, `autoCreate`, and `bufferCommands` are disabled on base instance.
+  - Rejected connection attempt releases partial resources, clears promise, and allows subsequent success against real replica set with corrected config reader.
+  - Close is idempotent, handles pending initialization without leaking, and rejects subsequent `get()` with `DB_CLOSING`.
+- `tests/integration/transaction.test.ts` (7 tests):
+  - Real committed writes across collections persist atomically; failure after second write rolls both back and preserves deliberate `DomainError`.
+  - Concurrent conditional revision updates yield exactly one winner and one `REVISION_CONFLICT` loser with single durable ledger/event write.
+  - Forces a real WiredTiger server write conflict: snapshot read -> coordinated external write -> transaction write attempts modification -> driver catches `WriteConflict` (`TransientTransactionError`) and replays callback (2 callback executions confirmed) with single durable side-effect.
+  - Enforces three-callback limit and bounds retries via `DB_RETRY_LIMIT` on repeated transient conflicts.
+  - Spies on real session cleanup to prove `endSession` called on both success and failure.
+  - Rejects nested transaction wrappers and index modification inside transactions (`DB_TRANSACTION_FAILED`).
+  - Deliberate missing-session diagnostic: write with session rolls back, separate unpassed session write persists after abort, proving why repository sessions are mandatory.
+- `tests/integration/indexes.test.ts` (5 tests):
+  - Fixture manifests verify missing/unchanged/unexpected/same-name drift, compound keys, unique/partial filter/TTL comparisons.
+  - Dry run performs no writes.
+  - Approved apply creates missing indexes.
+  - Same-name mismatch refuses creation before any planned mutation.
+  - Unexpected indexes survive without being dropped; no `syncIndexes` called.
+  - Duplicate-key and validation errors normalize to safe codes; no URI, credentials or raw driver error leaked in error or public projection.
+  - Empty application manifest reports 0 approved indexes and does not falsely claim DB indexes are valid.
+- `tests/integration/health-config.test.ts` (12 tests):
+  - Liveness succeeds without DB config, initializes no client, returns exact minimal payload `{ status: "ok" }` with `Cache-Control: no-store`.
+  - Readiness returns `{ status: "ok" }` for live replica without disclosing topology or configuration.
+  - Readiness reports `{ status: "degraded" }` within 2s response budget on failure and returns 503 from route with `Cache-Control: no-store`.
+  - Serverless registration adds no signal handlers; long-running registration adds each only once (tested in isolated child process).
+  - Destructive negative guards: `guardedDrop` refuses execution when `NODE_ENV !== "test"`, `APP_ENV !== "test"`, DB name does not end in `_test`, or collection is unowned, preventing native `drop()` execution.
+  - Config validation enforces APP_ENV/NODE_ENV consistency, `_test` suffix guard, pool bounds (1-50), and redacts sensitive URI/credentials from serialized errors.
+  - `npm run db:dev` smoke test: starts ephemeral replica, verifies app reachability on isolated port, and terminates cleanly on SIGINT including child processes.
 
-Auth result: **REOPEN ADR 0003**. The inspected adapter creates indexes during ordinary operations; a supported index-policy-compatible configuration has not been established. Read the [compatibility report](database/AUTH-COMPATIBILITY-REPORT.md). Driver peer compatibility alone is not auth approval.
+### Gate verification results
 
-Stage 3 base: 6421b7d. Stage 4A checkpoint: 5164732; verified handoff: fd63cf2. Commit this 4B checkpoint before handing off; record verification in a subsequent commit and stop at the 4B gate.
+Executed sequentially under Node 24.21.0 / npm 11.19.0:
+
+| Gate | Exit Code | Result | Real Output Summary |
+| --- | --- | --- | --- |
+| `npm test` | 0 | PASS | 189 tests passed (161 unit, 28 integration) via strict test gate (zero skips/todos/pending) |
+| `npm run lint` | 0 | PASS | 0 errors, 0 warnings across all files |
+| `npm run typecheck` | 0 | PASS | Route types generated, `tsc --noEmit` clean |
+| `npm run build` | 0 | PASS | Production compilation and 61 static pages generated |
+| `npm run check:docs` | 0 | PASS | 67 Markdown files verified |
+| `npm run check:secrets` | 0 | PASS | 212 source paths verified; zero credentials leaked |
+| `npm run check:enums` | 0 | PASS | 23 canonical domains verified |
+| `npm run check:diagrams` | 0 | PASS | All 11 Mermaid diagrams rendered to SVG via Puppeteer |
+| `npm run check:routes` | 0 | PASS | 57 pages rendered visibly in Chromium; 16 API methods verified (health 200, ready 503 unconfigured) |
+| `npm run format:check` | 0 | PASS | All matched files use Prettier code style |
+| `npm run verify` | 0 | PASS | Full pipeline passed including both test suites and all 9 quality checks |
+| `npm ls --depth=0` | 0 | PASS | Exact versions match pinned dependencies |
+| `npm ls mongodb --all` | 0 | PASS | Application/Mongoose use 7.7.0 (deduped); dev launcher uses 7.5.0 |
+| `npm audit --omit=dev` | 0 | PASS | 0 vulnerabilities in production dependencies |
+| `npm audit` | 1 | PASS (RECORDED) | 9 development-tool vulnerabilities (4 low, 5 high) in `braces` and `KaTeX`; unchanged |
+| `git diff --check` | 0 | PASS | Zero whitespace or formatting errors |
+
+### Routine defects resolved during verification
+
+1. **`check:routes` expectation updates**: Updated health expectation to 200 `{ status: "ok" }` and unconfigured ready to 503 `{ status: "degraded" }` with `Cache-Control: no-store`. Retained 501 checks for remaining 14 API routes and 200 for 57 pages.
+2. **`check-secrets` URI pattern**: Dynamically constructed test credential URI in `health-config.test.ts` to prevent triggering the credential URI pattern check in `check-secrets.mjs`.
+3. **Mongoose option inspection**: Inspected `handle.mongoose.base.get("autoIndex")` instead of `connection.config` to verify options passed to `Mongoose` constructor.
+4. **Transaction session binding**: In `transaction.test.ts`, collections queried inside transactions are obtained via `handle.db.collection` so that operations participate in the session's client, while setup and external write conflicts run on separate client instances.
+5. **TypeScript and linter typings**: Strongly typed fixture collections with concrete interfaces, removed unused imports, cast `NODE_ENV` assignment in test harness, and added `next.config.mjs` with `agentRules: false` and isolated `NEXT_DIST_DIR` support.
+
+### Auth status
+
+Result remains **REOPEN ADR 0003**. Better Auth is not installed. Inspected `@better-auth/mongo-adapter 1.7.7` executes `ensureModelIndexes` during ordinary operations without a public auto-index disable switch, conflicting with repository deployment policy. Furthermore, its transaction wrapper does not accept caller commerce sessions. Auth implementation remains unauthorized. Stop at the 4B gate.
 
 ## Part 4A pure domain verification and acceptance evidence
 
