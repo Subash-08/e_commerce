@@ -1,5 +1,5 @@
-# pricing
+# Pricing
 
-Future deterministic integer-paise pricing; first Stage 4 work. Stage 3 contains no implementation.
+Pure integer-paise helpers and priceQuote live here. Inputs contain explicit validated catalog, coupon, shipping and tax facts; no I/O, session or ambient clock. Outputs preserve inputs, versions, line allocations and totals. One engine serves future cart/checkout/order/invoice consumers.
 
-May depend on approved contracts and its own layers; routes compose modules, services own rules and repositories own persistence. Must not bypass service authorization or own another module's data. Follow the [module dependency rules](../../../docs/architecture/MODULE-BOUNDARIES.md) and [canonical states](../../../docs/commerce/STATE-MACHINES.md). Implementation requires separate Stage 4 authorization.
+Contracts: [pricing rules](../../../docs/commerce/PRICING-RULES.md), [implementation ADR](../../../docs/adr/0008-pure-domain-foundation.md). Tests are in tests/unit/pricing.test.ts. Persistence, quote acceptance and original-snapshot partial refund allocation remain later work.

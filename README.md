@@ -1,21 +1,22 @@
 # Reusable e-commerce base
 
-Single-tenant Next.js foundation for India/INR physical goods. Stage 3 provides visible route placeholders, configuration and validation tooling. Commerce, authentication, database access and provider integrations are not implemented.
+Single-tenant Next.js foundation for India/INR physical goods. Stage 3 routes remain visible placeholders. Part 4A adds pure pricing and lifecycle code; its final verification is delegated to Antigravity and pending.
 
-Use Node **24.21.0** and npm **11.19.0**, then:
+Use Node **24.21.0** and npm **11.19.0**:
 
 ```sh
 npm ci
 npm run dev
+npm run test
 npm run verify
 ```
 
-Open http://localhost:3000. All pages are marked as placeholders; API placeholders return 501. No environment file or credentials are needed for the scaffold. Admin pages are unprotected empty placeholders and are not ready for deployment.
+Open http://localhost:3000. APIs return 501; admin pages remain unprotected empty placeholders. No credentials are needed. No database, authentication, provider integration or production deployment is implemented.
 
-`verify` runs lint, typecheck, production build, Markdown links, secret patterns, canonical enum definitions, eleven Mermaid renders and Chromium route checks. The route check starts its own local production server on port 3217. Mermaid installs its required Chromium browser into the ignored `.cache/puppeteer` directory; validation artifacts go into `.validation`.
+`verify` runs domain tests, lint, typecheck, production build, Markdown links, secret patterns, canonical enum regeneration/definitions, eleven Mermaid renders and Chromium route checks. The browser check uses a temporary production server on port 3217. Generated artifacts are ignored under .validation and .cache/puppeteer.
 
-Use `npm run format` / `npm run format:check` for formatting. Source-of-truth contracts: [progress](docs/PROGRESS.md), [architecture](docs/architecture/ARCHITECTURE-DECISIONS.md), [routes](docs/storefront/ROUTES.md), [module boundaries](docs/architecture/MODULE-BOUNDARIES.md). Earlier Stage 2 reports describe historical state; progress records the current gate.
+Use `npm run generate:states` after approved registry membership edits; never hand-edit the generated TypeScript file.
 
-Client design/configuration belongs in `src/client`. Transactional invariants stay in the base template; see [reuse strategy](docs/development/TEMPLATE-REUSE.md). Seed-settings, admin bootstrap and client initialization commands remain future work.
+Start with [progress](docs/PROGRESS.md), [Part 4A ADR](docs/adr/0008-pure-domain-foundation.md), [pricing rules](docs/commerce/PRICING-RULES.md) and [canonical states](docs/commerce/STATE-MACHINES.md). The [Antigravity prompt](docs/development/ANTIGRAVITY-4A-VERIFICATION.md) delegates remaining testing and routine verification. [Development order](docs/development/DEVELOPMENT-ORDER.md) defines later gates.
 
-Stage 4 requires separate authorization. Its first work is Vitest plus the pure pricing engine and state-machine functions, with documentation updated alongside code.
+Client design/configuration belongs in src/client. Transactional invariants stay in the base template; see [reuse strategy](docs/development/TEMPLATE-REUSE.md).

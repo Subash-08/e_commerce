@@ -63,3 +63,13 @@ Jobs PENDING/RETRY -> RUNNING by atomic due claim; RUNNING -> SUCCEEDED/RETRY/DE
 Imports follow validation -> preview -> explicit confirmation -> queued chunks -> completed or completed-with-errors. Cancel stops uncommitted future chunks, never pretends to undo completed products. Invoices are created ISSUED once; VOID is an audited append to status metadata only where legally permitted. Corrections create credit notes; original legal fields remain immutable.
 
 All transitions use operation IDs, expected revision/state and append actor/reason/time. Define transition functions and race tests in the first business-code phase.
+
+## Part 4A implementation mapping and deadline clarification
+
+Membership is still defined only in the table above. npm run generate:states derives src/shared/domain/states.generated.ts; the enum gate checks exact regeneration before accepting this generated representation. Do not edit enum membership in TypeScript. [ADR 0008](../adr/0008-pure-domain-foundation.md) records the implementation choices.
+
+Normal online expiry requires a fresh verified no-capture observation. A verified late capture can also arrive while the order is still pending because the expiry worker is delayed. At/after the recorded deadline, lateCapture then proposes the same explicit expiry/recovery path atomically: expire/release old generations, then recover only after fresh all-line eligibility and all required stock/coupon reacquisition. If recovery fails, retain the expired status and refund-required exception. It records both transition edges in one revision-guarded audit operation. Before the deadline, use the normal capture path. COD cannot use this online expiry path.
+
+Pending refund claims block fulfillment/recovery and occupy refundable balance. Extra capture satisfies the paid amount but also requires financial review; partial capture remains pending with review. Successful refunds alone change the refund-derived financial state. Duplicate verified capture contributes zero additional money. New observation identities do not override captured truth with a failure.
+
+Pure commands require trusted actor/permission facts, nonempty reason, operation ID, expected revision and injected processing time. Replays return current state without new effects; changed immutable command data with the same operation ID conflicts. Returned effects are proposals for one future atomic service operation, not executed persistence/jobs. Real transaction/idempotency tests remain mandatory.

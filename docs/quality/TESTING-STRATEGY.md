@@ -22,3 +22,9 @@ Fixtures are synthetic under tests/fixtures. No real PII, credentials or product
 Coverage is risk-based: critical invariants and every row in [edge cases](EDGE-CASES.md), not an arbitrary line percentage. PR evidence lists commands, actual result and skipped environment tests. No passing test claim until executed.
 
 Both hosting profiles require production-build smoke tests with scheduler adapter, protected endpoint, private no-store and catalog invalidation. Multi-replica VPS requires additional cache consistency tests before enabling it.
+
+## Part 4A evidence boundary
+
+Vitest unit tests now exercise worked pricing examples, deterministic conservation, canonical order/payment transitions, refund claim capacity, tracked-only inventory, late capture and in-memory revision-guarded races. Fixtures live in tests/fixtures. See [current progress](../PROGRESS.md) for the exact tested checkpoint; do not infer final acceptance from an earlier passing run.
+
+The user assigned remaining routine test execution and verification to Antigravity. The [handoff prompt](../development/ANTIGRAVITY-4A-VERIFICATION.md) includes regression requirements for late capture before the expiry worker runs. The replica-set tests in STOCK-01 and PAY-03/PAY-04 are still unproven. No Promise/CAS harness substitutes for those integration tests.

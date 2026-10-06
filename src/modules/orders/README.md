@@ -1,5 +1,5 @@
-# orders
+# Orders
 
-Future immutable order snapshots and transitions. Stage 3 contains no implementation.
+Pure order lifecycle and lateCapture guards are implemented in state.ts. They return audited next-state proposals and effect descriptions; they do not create durable orders, execute jobs or mutate stock. Trusted services must establish authorization and fresh verified facts and commit all effects atomically.
 
-May depend on approved contracts and its own layers; routes compose modules, services own rules and repositories own persistence. Must not bypass service authorization or own another module's data. Follow the [module dependency rules](../../../docs/architecture/MODULE-BOUNDARIES.md) and [canonical states](../../../docs/commerce/STATE-MACHINES.md). Implementation requires separate Stage 4 authorization.
+Contracts: [canonical states](../../../docs/commerce/STATE-MACHINES.md), [ADR 0008](../../../docs/adr/0008-pure-domain-foundation.md). Creation/snapshot persistence and operator/customer UI remain later work.

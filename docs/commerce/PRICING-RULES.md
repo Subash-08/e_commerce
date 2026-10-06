@@ -32,3 +32,11 @@ Fresh quote is recomputed at order creation; if client-reviewed quote hash diffe
 Order snapshots do not change after accepted creation. Coupon claim deadline and order deadline are recorded; a held claim is honored until that deadline even if the public coupon subsequently expires, unless explicit cancellation policy applies. Late expiry recovery must reacquire coupon capacity or require refund review; never silently charge extra or exceed usage limits.
 
 See [edge cases](../quality/EDGE-CASES.md) MONEY-01/02 and CHECK-01.
+
+## Part 4A executable contract
+
+Implementation: src/modules/pricing/money.ts and price.ts; [ADR 0008](../adr/0008-pure-domain-foundation.md). Money maximum is 9,007,199,254,740,990 paise, strictly below the JS safe-integer maximum, with BigInt rational intermediates. Basis points range 0–10,000; quantity is 1–99; a quote has 1–100 uniquely keyed lines. Invalid input fails explicitly. The default sale<=MRP rule has no exception enabled in this implementation.
+
+Coupon minimum is eligible sale subtotal before coupon, after catalog discount. Dates are start-inclusive/end-exclusive. Line/component remainder ties use code-unit key order, never locale sorting. Tax requires explicit inclusive/exclusive/exempt mode; exemption includes a reason; component rates must sum to the resolved rate. Shipping gets its own tax calculation and threshold includes discounted goods tax. Version 1 has zero final rounding adjustment. Quote inputs are copied, not retained by mutable reference.
+
+Transactionally validating these facts and original-snapshot partial refund allocations remain later integration work. Pure tests do not establish client tax/legal compliance.

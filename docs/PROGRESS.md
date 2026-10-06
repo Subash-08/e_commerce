@@ -1,12 +1,43 @@
 # Foundation progress
 
-Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: chore/foundation-stage-3.
+Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4a-domain.
 
 ## Current gate
 
-Stage 3 scaffold is complete and verified. This record is included in the stage commit. STOP at Stage 3. Stage 4 commerce implementation requires separate explicit authorization.
+Part 4A implementation checkpoint; **final verification pending Antigravity**. The user authorized Part 4A through the Stage 4 attachments, then assigned routine work and testing to Antigravity. Do not start 4B, auth installation, catalog models or UI.
 
-Authorization: the user's Stage 3-only prompt and subsequent "continue". This is the last preparation stage. Stage 1 checkpoint: 5572b1f. Stage 2 checkpoint: 7dc596c. Earlier Stage 2 reports describe historical state; this document records the current gate.
+Stage 3 is complete at 6421b7d. Current branch: codex/stage-4a-domain. This checkpoint is not a completed Stage 4A acceptance claim.
+
+## Part 4A implementation and handoff
+
+- Pure integer-paise helpers and pricing engine: explicit coupon allocation, inclusive/exclusive/exempt tax, tax components, shipping thresholds, safe bounds and copied input/version snapshots.
+- Generated canonical state values/types from STATE-MACHINES.md with exact-regeneration validation.
+- Pure order/payment/refund/reservation proposals with actor/reason/operation/revision guards. Captured attempts remain authoritative; pending refunds reserve capacity and block fulfillment.
+- Tracked inventory only; status-only products create no reservation. Expiry releases once, capture consumes once, late recovery uses new generations.
+- Final complex review added late capture on an overdue pending order before the expiry worker runs, plus explicit audit transition paths. These final changes are **not yet tested**.
+- [ADR 0008](adr/0008-pure-domain-foundation.md) records implementation decisions. [Gated sequence](development/DEVELOPMENT-ORDER.md) records 4B/4C/4D and the user's corrections.
+- [Detailed Antigravity prompt](development/ANTIGRAVITY-4A-VERIFICATION.md) contains exact scope, files, regression expectations, commands, permitted routine fixes and stop/report rules.
+
+### Evidence actually obtained before delegation
+
+- Installed only Vitest 5.0.3 as a new direct dev dependency; resolved Vite peer 8.3.3. Registry engine/peer ranges support pinned Node 24.21.0. [Vitest requirements](https://vitest.dev/guide/).
+- npm install --save-dev --save-exact vitest@5.0.3 --no-fund succeeded.
+- 146 unit tests passed in the last pre-handoff run (3 files), including 200 deterministic pricing-conservation cases inside one test.
+- An earlier typecheck passed before the final aggregate/deadline/audit changes.
+- The generated enum/duplicate-definition gate passed before the final deadline/doc edits.
+- Installation audit still reported nine dev-tool findings (five high/four low); no new full production-audit claim has been made.
+- No final clean install, formatting, lint, typecheck, build, docs/secret/diagram/browser verification has run against the final checkpoint. These are delegated, not waived.
+
+### Limits
+
+The passing tests precede the newest logic and cannot establish final acceptance. Antigravity must add/run the handoff regressions and record current results. If a financial/state invariant fails, return the failing case to Codex instead of changing expected results or weakening guards.
+
+Reservation snapshots and in-memory compare-and-swap tests are pure models, not MongoDB transaction proof or a persistence schema. Effect descriptions execute no work. No database/provider/auth integration, real last-unit transaction, refund transaction, query/index performance or production tax/legal verification exists in this part. Browser/API routes remain the Stage 3 placeholders.
+
+## Stage 3 historical record
+
+The following versions and acceptance results describe Stage 3, not verification of the new Part 4A code. Earlier checkpoints: Stage 1 5572b1f; Stage 2 7dc596c.
+
 
 ## Delivered in Stage 3
 
@@ -79,6 +110,4 @@ Secret and enum checks are static pattern gates, not a proof against every possi
 
 ## Next authorized-work boundary
 
-Stage 4 is not started. On separate approval, add Vitest first and implement pure integer-paise pricing from worked examples in PRICING-RULES.md, then state-machine functions. Update docs and code in the same commit when evidence changes a contract.
-
-Before dependent work: auth stable-release/advisory/driver/transaction/revocation compatibility; host and scheduler selection before jobs; homepage design approval; client CA/legal review before tax/invoice implementation and launch. The minimal real Product/Variant kernel and fixture precede the purchase slice. No more setup/planning stage is needed.
+Complete the delegated Part 4A verification, report, then stop. Part 4B needs separate authorization and includes an auth compatibility report only; auth installation has its own gate. See the gated development order above.

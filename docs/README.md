@@ -48,6 +48,7 @@ Stage 2 documentation is prepared for review. No application scaffolding or comm
 - [0005: provider-neutral operations](adr/0005-provider-neutral-operations.md)
 - [0006: scope/reuse](adr/0006-scope-and-client-reuse.md)
 - [0007: rendering/content/documents](adr/0007-rendering-content-and-documents.md)
+- [0008: pure domain foundation](adr/0008-pure-domain-foundation.md)
 
 Related root contracts: [AGENTS](../AGENTS.md), [CONTRIBUTING](../CONTRIBUTING.md), [SECURITY](../SECURITY.md), [.env.example](../.env.example).
 

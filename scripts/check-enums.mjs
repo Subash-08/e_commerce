@@ -1,5 +1,7 @@
+import { checkGeneratedStates, generatedPath } from "./generate-states.mjs";
 import { readFile } from "node:fs/promises";
 import { filesUnder } from "./files.mjs";
+await checkGeneratedStates();
 const registry = "docs/commerce/STATE-MACHINES.md";
 const canonical = await readFile(registry, "utf8");
 const domains = [...canonical.matchAll(/^\| (\w+) \| ([A-Z_][^|]*) \|$/gm)].map(
@@ -9,7 +11,12 @@ if (domains.length < 20 || new Set(domains).size !== domains.length)
   throw new Error("Invalid canonical enum registry");
 const errors = [];
 for (const file of await filesUnder()) {
-  if (file === registry || !/\.(md|[cm]?[jt]sx?)$/.test(file)) continue;
+  if (
+    file === registry ||
+    file === generatedPath ||
+    !/\.(md|[cm]?[jt]sx?)$/.test(file)
+  )
+    continue;
   const text = await readFile(file, "utf8");
   for (const name of domains) {
     const patterns = [

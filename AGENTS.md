@@ -3,8 +3,8 @@
 ## Read before working
 - Read docs/PROGRESS.md for the current gate and outstanding work.
 - Read docs/architecture/ARCHITECTURE-DECISIONS.md and relevant ADRs.
-- Stage 3 scaffolding is explicitly approved. Stop after its verified commit; Stage 4 requires separate authorization.
-- Commerce implementation needs separate explicit authorization after scaffolding.
+- Part 4A pure-domain implementation is authorized. Final verification is delegated to Antigravity; follow docs/development/ANTIGRAVITY-4A-VERIFICATION.md. Stop after 4A; no 4B/auth/catalog/UI authorization.
+- Codex handles complex domain logic; Antigravity handles the delegated routine tests/checks. Do not claim 4A complete before the handoff gates pass.
 - Preserve existing work. Work on a stage branch, commit each completed stage, never force-push or use destructive Git.
 - Never read .env* files except .env.example; never print environment values.
 - Do not install dependencies, skills or MCP servers without the applicable approved plan.

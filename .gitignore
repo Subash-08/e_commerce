@@ -13,3 +13,4 @@ playwright-report/
 .validation/
 .cache/
 next-env.d.ts
+.vitest/

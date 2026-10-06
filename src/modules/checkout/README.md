@@ -1,5 +1,5 @@
-# checkout
+# Checkout
 
-Future fresh checkout validation and orchestration. Stage 3 contains no implementation.
+reservations.ts contains pure tracked-stock reserve/consume/release proposals. Status-only inventory produces no reservation. Complete one-variant snapshots support unit conservation checks; actual collections stay separate and bounded production queries must be designed in the database slice.
 
-May depend on approved contracts and its own layers; routes compose modules, services own rules and repositories own persistence. Must not bypass service authorization or own another module's data. Follow the [module dependency rules](../../../docs/architecture/MODULE-BOUNDARIES.md) and [canonical states](../../../docs/commerce/STATE-MACHINES.md). Implementation requires separate Stage 4 authorization.
+Contracts: [order lifecycle](../../../docs/commerce/ORDER-LIFECYCLE.md), [ADR 0008](../../../docs/adr/0008-pure-domain-foundation.md). No checkout service, database transaction, provider call or durable expiry runner is implemented.

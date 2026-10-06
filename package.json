@@ -13,21 +13,24 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "format": "prettier --write src scripts \"*.{json,mjs,cjs}\"",
-    "format:check": "prettier --check src scripts \"*.{json,mjs,cjs}\"",
+    "format": "prettier --write src scripts tests \"*.{json,mjs,cjs,ts}\"",
+    "format:check": "prettier --check src scripts tests \"*.{json,mjs,cjs,ts}\"",
     "check:docs": "node scripts/check-docs.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:enums": "node scripts/check-enums.mjs",
     "check:diagrams": "node scripts/check-diagrams.mjs",
     "check:routes": "node scripts/check-routes.mjs",
-    "verify": "npm run lint && npm run typecheck && npm run build && npm run check:docs && npm run check:secrets && npm run check:enums && npm run check:diagrams && npm run check:routes"
+    "verify": "npm run test && npm run lint && npm run typecheck && npm run build && npm run check:docs && npm run check:secrets && npm run check:enums && npm run check:diagrams && npm run check:routes",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate:states": "node scripts/generate-states.mjs --write"
   },
   "dependencies": {
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "zod": "4.6.5",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "12.0.0",
@@ -40,6 +43,7 @@
     "postcss": "8.5.29",
     "prettier": "3.9.9",
     "tailwindcss": "4.3.3",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
   }
 }

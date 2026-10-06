@@ -1,5 +1,5 @@
-# payments
+# Payments
 
-Future verified payment observations and deduplication. Stage 3 contains no implementation.
+Pure attempt transitions, financial aggregation and pending/successful refund-capacity guards are implemented in state.ts. Attempt identities are provider scoped. No credentials, provider SDK, signature verification, webhook route or persistent ledger is implemented.
 
-May depend on approved contracts and its own layers; routes compose modules, services own rules and repositories own persistence. Must not bypass service authorization or own another module's data. Follow the [module dependency rules](../../../docs/architecture/MODULE-BOUNDARIES.md) and [canonical states](../../../docs/commerce/STATE-MACHINES.md). Implementation requires separate Stage 4 authorization.
+Contracts: [payment lifecycle](../../../docs/commerce/PAYMENT-LIFECYCLE.md), [ADR 0008](../../../docs/adr/0008-pure-domain-foundation.md). Verified facts must come from the future trusted provider boundary, never browser flags.
