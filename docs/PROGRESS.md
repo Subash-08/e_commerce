@@ -8,6 +8,10 @@ Part 4A is verified at fd63cf2 (161 unit tests). Part 4B database implementation
 
 Use [the Stage 4B verification prompt](development/ANTIGRAVITY-4B-VERIFICATION.md) next. No credentials are required for the local real replica set. No auth installation, catalog, checkout, payments or UI work is authorized.
 
+## Feature planning update
+
+The user requested implementation planning and feature orchestration. The [execution plan](development/FEATURE-IMPLEMENTATION-PLAN.md) now defines bounded work packages, dependencies, Codex/Antigravity ownership, acceptance criteria and just-in-time credential requirements. This is planning only; it does not mark later features implemented or expand the current implementation gate. Stage 4B acceptance must reconcile the [static review](database/STAGE-4B-CODE-REVIEW.md) with the forthcoming test report. Active application/test changes remain owned by the verification work.
+
 ## Part 4B implementation checkpoint
 
 Implemented shared native/Mongoose connection ownership, promise reuse/reset, bounded pool/timeouts, replica-set topology check, lazy redacted configuration, bounded native transaction retries with explicit sessions, owner shutdown, minimal liveness/readiness, reviewed index check/apply, and a no-Docker ephemeral MongoDB launcher. No commerce models or fixtures were added to production. DomainError received a constructor-syntax-only change for Node's native TypeScript stripping; domain behavior is unchanged.

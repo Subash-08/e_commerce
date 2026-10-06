@@ -1,6 +1,6 @@
 # Dependency plan and installation gates
 
-No packages installed in Stage 2. No exact versions are approved by old documentation headers. The repository currently has no package.json or lockfile.
+Stage 2 proposed the groups below; Stage 3, 4A and the 4B checkpoint have since installed their approved subsets. package.json and package-lock.json now exist. See [progress](../PROGRESS.md) for observed versions and verification status. Historical proposed groups are not blanket permission to install later dependencies.
 
 ## Proposed package groups
 
@@ -14,7 +14,7 @@ No packages installed in Stage 2. No exact versions are approved by old document
 | zod | Stage 3 env/public configuration validation | Handwritten validators rejected for growing contracts |
 | server-only | Stage 3 server import boundary | Native boundary marker; verify package behavior |
 | mongoose, mongodb | Later foundation implementation | Shared native driver identity/pool; no DB runtime in docs scaffold |
-| better-auth + official Mongo adapter | Conditional, before auth implementation | Auth.js fallback if release/security/driver/hook checks fail |
+| better-auth + official Mongo adapter | Conditional, before auth implementation | Reopen ADR 0003 if compatibility fails; Auth.js credentials is not a drop-in password/recovery replacement (see auth report) |
 | react-hook-form + @hookform/resolvers | Product/checkout forms later | No form library needed for heading placeholders |
 | shadcn generated components + only used primitives | Later approved UI requirements | Not bulk component installation; inspect CLI/source and pin execution |
 | cloudinary, next-cloudinary | Media module later | Server management SDK vs presentation helper; install only needed parts |

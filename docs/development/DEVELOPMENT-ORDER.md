@@ -30,3 +30,5 @@ Current authorization: Part 4B database foundation, following verified Part 4A. 
 - Host/scheduler choice precedes jobs; homepage design precedes homepage work; CA/legal review precedes production tax/invoicing.
 
 Update documentation alongside the code that changes a contract. Never let later UI work bypass an unresolved data/transaction gate.
+
+Use the [feature implementation and orchestration plan](FEATURE-IMPLEMENTATION-PLAN.md) for bounded work packages, dependencies, owner assignments, credential timing and handoff rules. The table above remains the stage sequence; the detailed plan does not grant later-stage authorization.
