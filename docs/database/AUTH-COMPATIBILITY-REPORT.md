@@ -1,5 +1,7 @@
 # Auth compatibility report
 
+> Historical source-only review, superseded on 2026-10-07 by the [runtime spike report](AUTH-SPIKE-REPORT.md) and amended ADR 0003. The original index conclusion below was overbroad. Auth is now installed and AUTH-CORE is authorized; retain the old findings only as review history.
+
 Reviewed 2026-10-06. Result: **REOPEN ADR 0003**. No auth package is installed and auth implementation is not authorized.
 
 ## Version and source evidence

@@ -1,0 +1,9 @@
+{
+  "versions": {
+    "better-auth": "1.7.7",
+    "@better-auth/mongo-adapter": "1.7.7",
+    "@better-auth/core": "1.7.7"
+  },
+  "monitoringControlPassed": true,
+  "commands": []
+}

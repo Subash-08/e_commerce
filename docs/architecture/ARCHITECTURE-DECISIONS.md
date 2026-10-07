@@ -8,7 +8,7 @@ Approval recorded: **2026-10-06**, from the user's two attached Stage 1 reviews.
 | --- | --- | --- |
 | A | APPROVED: owned custom single-tenant Next.js modular monolith, Mongoose commerce, one deployment/database per client; no separate Express/unnecessary infrastructure | [0001](../adr/0001-custom-single-tenant-monolith.md) |
 | B | APPROVED: separate stable sellable variants, unique SKU, default variant for simple products, inline editor | [0002](../adr/0002-catalog-identity.md) |
-| C | REOPENED in 4B: supported runtime index policy unresolved; compatibility report blocks auth installation; no second credential implementation | [0003](../adr/0003-auth-and-connections.md) |
+| C | AUTH-DECIDE accepted 2026-10-07 for pinned minimal configuration; AUTH-CORE authorized; one production driver, dev tooling exception enforced; no second credential implementation | [0003](../adr/0003-auth-and-connections.md) |
 | D | APPROVED WITH SIMPLIFICATION: integer paise/snapshots/idempotency/reconciliation; reservations ONLY for trackQuantity=true; small closed durable jobs/outbox | [0004](../adr/0004-transaction-correctness.md) |
 | E | AMENDED: provider-neutral; cost-focused VPS preferred, paid Vercel supported; managed Atlas, no self-hosted production DB | [0005](../adr/0005-provider-neutral-operations.md) |
 | F | APPROVED: India/INR physical goods, guest/account checkout; optional Work last, static blog, homepage schema after design | [0006](../adr/0006-scope-and-client-reuse.md) |

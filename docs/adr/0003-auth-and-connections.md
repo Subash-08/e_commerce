@@ -1,6 +1,14 @@
 # ADR 0003: Conditional Better Auth and shared MongoDB client
 
-Status: REOPENED, 2026-10-06. Shared connection ownership remains settled; auth selection is not approved for installation. The published adapter creates indexes during normal operations. See [Stage 4B compatibility report](../database/AUTH-COMPATIBILITY-REPORT.md) for the supported-configuration gate and remaining runtime proof.
+Status: AUTH-DECIDE accepted for the pinned minimal Better Auth 1.7.7 configuration, 2026-10-07. The user authorized AUTH-CORE after the amended driver checks pass. See [runtime evidence](../database/AUTH-SPIKE-REPORT.md). This supersedes the initial overbroad index-policy finding; production feature acceptance is still required.
+
+## Amended driver criterion
+
+Exactly one mongodb copy in the production dependency tree; dev-only tooling may carry its own, enforced by a script.
+
+The user approved this wording on 2026-10-07. npm run verify starts with check:production-driver, which checks the npm production tree and shared driver resolution/class identity. An isolated npm ci --omit=dev passed with one driver. The only extra development copy is transitive through the memory-server launcher. No overrides, driver casts or aliases are allowed to force compatibility.
+
+The exact minimal email/password configuration emits no runtime index commands after reviewed indexes are precreated. New plugins or schema index declarations require the runtime command check again; this is not a general auto-index-disable guarantee.
 
 ## Decision
 
@@ -18,7 +26,7 @@ Official admin plugin documents user-session revocation, but enabling it also ex
 
 Password reset uses library flow with revokeSessionsOnPasswordReset enabled. Re-authentication and reset links never appear in logs. Email/password is initial scope; OAuth, Magic Link login, SSO and impersonation are not enabled. A guest order access link is a separately purpose-scoped order grant, not an auth login plugin.
 
-## Verified documentation, not installed compatibility
+## Supporting documentation
 
 - [Mongoose setClient](https://mongoosejs.com/docs/api/connection.html#Connection.prototype.setClient()) supports reuse of native client.
 - [Better Auth MongoDB adapter](https://better-auth.com/docs/adapters/mongo) documents client-based transactions on replica set/sharded deployment.
@@ -27,7 +35,7 @@ Password reset uses library flow with revokeSessionsOnPasswordReset enabled. Re-
 - [Next integration](https://better-auth.com/docs/integrations/next) documents App Router integration.
 - [Admin session operations](https://better-auth.com/docs/plugins/admin) document server user-session revocation; broader endpoints need exclusion.
 
-## Before installation / acceptance
+## Before version changes / production acceptance
 
 Recheck current stable release, all selected adapter/plugin versions, exact driver peer compatibility, Node/Next support and advisories. Published [GHSA-965c-763c-88jm](https://github.com/better-auth/better-auth/security/advisories/GHSA-965c-763c-88jm) affects certain OAuth+Magic Link configurations before 1.7.7 and lists 1.7.7 patched; [OAuth Proxy advisory](https://github.com/better-auth/better-auth/security/advisories/GHSA-r4xp-prcw-77qf) and other advisories must also be checked against enabled code. This is not a blanket clean bill for any version and these observations must not be copied into pins.
 

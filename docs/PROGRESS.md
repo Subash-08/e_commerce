@@ -1,6 +1,6 @@
 # Foundation progress
 
-Updated 2026-10-06. Workspace: D:\AI\e-commerce. Branch: codex/stage-4b-database.
+Updated 2026-10-07. Workspace: D:\AI\e-commerce. Branch: codex/auth-decide-spike.
 
 ### Current gate
 
@@ -8,9 +8,9 @@ Part 4A remains verified. Part 4B is accepted after the post-report review repai
 
 The user separately authorized reusable UI foundations: Button, Badge, Alert, Card, EmptyState, Skeleton, InputField, TextareaField, SelectField and Checkbox. They are presentation components, not completed commerce screens or an approved homepage design. UI checkpoint: 254d3f1; the earlier Antigravity commit also included the initial component files while work was concurrent. Future handoffs must keep one writer per path.
 
-Auth remains REOPEN ADR 0003; no auth installation or catalog implementation. Atlas configuration was documented but no supplied URI was saved or used, and no Atlas collections were created. Rotate the disclosed password and configure the replacement locally per [credential setup](development/CREDENTIAL-SETUP.md).
+AUTH-DECIDE passed on 2026-10-07: 12/12 replica-set spike tests; single production driver/class identity; isolated npm ci --omit=dev; production audit zero reported vulnerabilities. The user's amended driver criterion permits only the test launcher's transitive dev copy. The check is wired into npm run verify. Exact versions and the scope of every result are in [the spike report](database/AUTH-SPIKE-REPORT.md). The old blanket runtime-index finding is corrected there and in ADR 0003.
 
-The user stopped further UI work and requested returning to the staged sequence. Uncommitted preview fixtures were removed; committed primitives remain. AUTH-DECIDE now has a [concrete policy proposal](database/AUTH-COMPATIBILITY-REPORT.md) for a bounded local compatibility exercise. It is proposed only; auth installation still needs explicit approval. 
+AUTH-CORE is authorized after these prerequisites. Profile models and pure authorization code are currently uncommitted work, not feature acceptance. Registration/recovery routes, authority mutation/revocation, abuse controls and bootstrap remain to implement. No new catalog or homepage work. Atlas credentials were neither saved nor used; configure rotated credentials locally per [credential setup](development/CREDENTIAL-SETUP.md).
 
 ### Post-report acceptance evidence, 2026-10-06
 

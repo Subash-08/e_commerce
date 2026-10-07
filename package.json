@@ -20,7 +20,7 @@
     "check:enums": "node scripts/check-enums.mjs",
     "check:diagrams": "node scripts/check-diagrams.mjs",
     "check:routes": "node scripts/check-routes.mjs",
-    "verify": "npm run test && npm run lint && npm run typecheck && npm run build && npm run check:docs && npm run check:secrets && npm run check:enums && npm run check:diagrams && npm run check:routes && npm run format:check",
+    "verify": "npm run check:production-driver && npm run test && npm run lint && npm run typecheck && npm run build && npm run check:docs && npm run check:secrets && npm run check:enums && npm run check:diagrams && npm run check:routes && npm run format:check",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "node scripts/test-gate.mjs unit",
     "test:integration": "node scripts/test-gate.mjs integration",
@@ -28,9 +28,13 @@
     "generate:states": "node scripts/generate-states.mjs --write",
     "db:dev": "node scripts/local-replica.mjs",
     "db:indexes:check": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts check",
-    "db:indexes:apply": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts apply"
+    "db:indexes:apply": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts apply",
+    "test:auth-spike": "node scripts/test-gate.mjs vitest.auth-spike.config.mts",
+    "check:production-driver": "node scripts/check-production-driver.mjs"
   },
   "dependencies": {
+    "@better-auth/mongo-adapter": "1.7.7",
+    "better-auth": "1.7.7",
     "mongodb": "7.7.0",
     "mongoose": "9.11.0",
     "next": "16.3.8",

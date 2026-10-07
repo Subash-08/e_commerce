@@ -1,0 +1,50 @@
+{
+  "versions": {
+    "better-auth": "1.7.7",
+    "@better-auth/mongo-adapter": "1.7.7",
+    "@better-auth/core": "1.7.7"
+  },
+  "indexes": [
+    {
+      "collection": "auth_user",
+      "name": "auth_user_email_uidx",
+      "key": {
+        "email": 1
+      },
+      "unique": true
+    },
+    {
+      "collection": "auth_session",
+      "name": "auth_session_token_uidx",
+      "key": {
+        "token": 1
+      },
+      "unique": true
+    },
+    {
+      "collection": "auth_session",
+      "name": "auth_session_userId_idx",
+      "key": {
+        "userId": 1
+      },
+      "unique": false
+    },
+    {
+      "collection": "auth_account",
+      "name": "auth_account_userId_idx",
+      "key": {
+        "userId": 1
+      },
+      "unique": false
+    },
+    {
+      "collection": "auth_verification",
+      "name": "auth_verification_identifier_idx",
+      "key": {
+        "identifier": 1
+      },
+      "unique": false
+    }
+  ],
+  "runtimeCommands": []
+}
