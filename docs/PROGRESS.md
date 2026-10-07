@@ -1,6 +1,16 @@
 # Foundation progress
 
-Updated 2026-10-07. Workspace: D:\AI\e-commerce. Branch: codex/auth-core.
+Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/category-management.
+
+### Category management delivered, 2026-10-08
+
+Implemented the first catalog feature as a complete modular slice. /admin/categories uses Atlas-side prefix search, status/parent filters, sorting, counting and 20-row pagination. Creation and editing use dedicated /admin/categories/new and /admin/categories/[id]/edit routes with compact shared admin cards, URL-backed tabs, inline validation, unsaved-change protection, a sticky action bar, responsive/mobile navigation and a fixed desktop sidebar. The form covers hierarchy, stable slug, display order, active/inactive/archive lifecycle, deactivation reason, featured placement, description, Cloudinary thumbnail/banner and SEO controls.
+
+The service/repository boundary enforces a four-level acyclic hierarchy, active-parent rules, immutable archive state, product-reference protection, optimistic revisions and fresh server-side authority inside the serialized transaction. Slug edits retain durable 301 history. Mutations write audits and a durable closed cache-invalidation job in the same transaction; Cloudinary calls remain outside transactions. The public category route uses the same projection for metadata and content, renders breadcrumbs/structured data and honors historical redirects.
+
+Reviewed category, taxonomy-guard, redirect and media indexes were dry-run checked with no drift and then created in the configured Atlas database. Cloudinary credentials passed a real generated-image upload and immediate cleanup check; no credential or asset URL was printed. Two focused isolated-Atlas integration checks passed for hierarchy persistence, indexed filters, cycle and unsafe-parent rejection, optimistic conflicts and redirect history. Lint, typecheck, secret scan and the Node 24 production build passed. Browser automation was unavailable due to the CUA kernel exiting, so no automated viewport claim is made; the user-provided create-page screenshot was reviewed and the excessive vertical spacing was tightened. No development category data was created during verification.
+
+Next implementation target after this checkpoint is Brand management, reusing the shared admin, media, repository, service, audit, cache-job and Atlas-query patterns.
 
 ### Current auth closure work, 2026-10-07
 
@@ -50,28 +60,30 @@ AUTH-CORE/GUARDS is not fully accepted: owner bootstrap, transactional authority
 
 Executed under project-local Node 24.21.0 / npm 11.19.0 on Windows:
 
-| Tool / Package | Version | Role |
-| --- | --- | --- |
-| Node / npm | 24.21.0 / 11.19.0 | Pinned repository runtime |
-| MongoDB native driver | 7.7.0 | Exact production dependency |
-| Mongoose | 9.11.0 | Exact production dependency (uses mongodb@7.7.0 deduped) |
-| mongodb-memory-server | 11.3.0 | Dev dependency for ephemeral replica set testing |
-| mongodb-memory-server-core | 11.3.0 | Internal launcher driver: mongodb@7.5.0 |
-| MongoDB binary | 8.2.6 | Official Windows binary (WiredTiger single-node replica set, 127.0.0.1, MD5 verified) |
-| Vitest | 5.0.3 | Unit and integration test runner with strict runner gate |
-| Next.js / React | 16.3.8 / 19.3.0 | Application framework |
-| TypeScript / ESLint / Prettier | 5.9.3 / 9.39.4 / 3.9.9 | Static checks and formatting |
+| Tool / Package                 | Version                | Role                                                                                  |
+| ------------------------------ | ---------------------- | ------------------------------------------------------------------------------------- |
+| Node / npm                     | 24.21.0 / 11.19.0      | Pinned repository runtime                                                             |
+| MongoDB native driver          | 7.7.0                  | Exact production dependency                                                           |
+| Mongoose                       | 9.11.0                 | Exact production dependency (uses mongodb@7.7.0 deduped)                              |
+| mongodb-memory-server          | 11.3.0                 | Dev dependency for ephemeral replica set testing                                      |
+| mongodb-memory-server-core     | 11.3.0                 | Internal launcher driver: mongodb@7.5.0                                               |
+| MongoDB binary                 | 8.2.6                  | Official Windows binary (WiredTiger single-node replica set, 127.0.0.1, MD5 verified) |
+| Vitest                         | 5.0.3                  | Unit and integration test runner with strict runner gate                              |
+| Next.js / React                | 16.3.8 / 19.3.0        | Application framework                                                                 |
+| TypeScript / ESLint / Prettier | 5.9.3 / 9.39.4 / 3.9.9 | Static checks and formatting                                                          |
 
 ### Test suite results (189 total tests passed: 161 unit + 28 integration)
 
 All 189 tests across seven test files passed with zero skips, zero todos, zero empty suites, and zero failures (`npm test`):
 
 #### 1. Unit test suite (161 tests passed)
+
 - `tests/unit/states.test.ts`: 115 tests
 - `tests/unit/pricing.test.ts`: 35 tests
 - `tests/unit/reservations.test.ts`: 11 tests
 
 #### 2. Integration test suite (28 tests passed against real WiredTiger MongoDB 8.2.6 replica set)
+
 - `tests/integration/connection.test.ts` (4 tests):
   - 50 concurrent first `get()` calls share the same promise, handle, and native client; instrumented `MongoClient.connect` called exactly once per owner.
   - Shares native driver identity with Mongoose (`mongoose.mongo.MongoClient === MongoClient`); Mongoose `getClient()` returns identical native client; `autoIndex`, `autoCreate`, and `bufferCommands` are disabled on base instance.
@@ -106,24 +118,24 @@ All 189 tests across seven test files passed with zero skips, zero todos, zero e
 
 Executed sequentially under Node 24.21.0 / npm 11.19.0:
 
-| Gate | Exit Code | Result | Real Output Summary |
-| --- | --- | --- | --- |
-| `npm test` | 0 | PASS | 189 tests passed (161 unit, 28 integration) via strict test gate (zero skips/todos/pending) |
-| `npm run lint` | 0 | PASS | 0 errors, 0 warnings across all files |
-| `npm run typecheck` | 0 | PASS | Route types generated, `tsc --noEmit` clean |
-| `npm run build` | 0 | PASS | Production compilation and 61 static pages generated |
-| `npm run check:docs` | 0 | PASS | 67 Markdown files verified |
-| `npm run check:secrets` | 0 | PASS | 212 source paths verified; zero credentials leaked |
-| `npm run check:enums` | 0 | PASS | 23 canonical domains verified |
-| `npm run check:diagrams` | 0 | PASS | All 11 Mermaid diagrams rendered to SVG via Puppeteer |
-| `npm run check:routes` | 0 | PASS | 57 pages rendered visibly in Chromium; 16 API methods verified (health 200, ready 503 unconfigured) |
-| `npm run format:check` | 0 | PASS | All matched files use Prettier code style |
-| `npm run verify` | 0 | PASS | Full pipeline passed including both test suites and all 9 quality checks |
-| `npm ls --depth=0` | 0 | PASS | Exact versions match pinned dependencies |
-| `npm ls mongodb --all` | 0 | PASS | Application/Mongoose use 7.7.0 (deduped); dev launcher uses 7.5.0 |
-| `npm audit --omit=dev` | 0 | PASS | 0 vulnerabilities in production dependencies |
-| `npm audit` | 1 | PASS (RECORDED) | 9 development-tool vulnerabilities (4 low, 5 high) in `braces` and `KaTeX`; unchanged |
-| `git diff --check` | 0 | PASS | Zero whitespace or formatting errors |
+| Gate                     | Exit Code | Result          | Real Output Summary                                                                                 |
+| ------------------------ | --------- | --------------- | --------------------------------------------------------------------------------------------------- |
+| `npm test`               | 0         | PASS            | 189 tests passed (161 unit, 28 integration) via strict test gate (zero skips/todos/pending)         |
+| `npm run lint`           | 0         | PASS            | 0 errors, 0 warnings across all files                                                               |
+| `npm run typecheck`      | 0         | PASS            | Route types generated, `tsc --noEmit` clean                                                         |
+| `npm run build`          | 0         | PASS            | Production compilation and 61 static pages generated                                                |
+| `npm run check:docs`     | 0         | PASS            | 67 Markdown files verified                                                                          |
+| `npm run check:secrets`  | 0         | PASS            | 212 source paths verified; zero credentials leaked                                                  |
+| `npm run check:enums`    | 0         | PASS            | 23 canonical domains verified                                                                       |
+| `npm run check:diagrams` | 0         | PASS            | All 11 Mermaid diagrams rendered to SVG via Puppeteer                                               |
+| `npm run check:routes`   | 0         | PASS            | 57 pages rendered visibly in Chromium; 16 API methods verified (health 200, ready 503 unconfigured) |
+| `npm run format:check`   | 0         | PASS            | All matched files use Prettier code style                                                           |
+| `npm run verify`         | 0         | PASS            | Full pipeline passed including both test suites and all 9 quality checks                            |
+| `npm ls --depth=0`       | 0         | PASS            | Exact versions match pinned dependencies                                                            |
+| `npm ls mongodb --all`   | 0         | PASS            | Application/Mongoose use 7.7.0 (deduped); dev launcher uses 7.5.0                                   |
+| `npm audit --omit=dev`   | 0         | PASS            | 0 vulnerabilities in production dependencies                                                        |
+| `npm audit`              | 1         | PASS (RECORDED) | 9 development-tool vulnerabilities (4 low, 5 high) in `braces` and `KaTeX`; unchanged               |
+| `git diff --check`       | 0         | PASS            | Zero whitespace or formatting errors                                                                |
 
 ### Routine defects resolved during verification
 
@@ -143,21 +155,22 @@ Result remains **REOPEN ADR 0003**. Better Auth is not installed. Inspected `@be
 
 Executed under project-local Node 24.21.0 / npm 11.19.0 on Windows:
 
-| Tool / Package | Version | Role |
-| --- | --- | --- |
-| Node / npm | 24.21.0 / 11.19.0 | Pinned repository runtime |
-| Vitest | 5.0.3 | Pure domain test runner |
-| Vite (peer) | 8.3.3 | Resolved Vitest peer |
-| Next.js / eslint-config-next | 16.3.8 / 16.3.8 | App Router and lint plugin |
-| React / React DOM | 19.3.0 / 19.3.0 | UI library |
-| TypeScript | 5.9.3 | Static typechecker |
-| ESLint / Prettier | 9.39.4 / 3.9.9 | Linter and formatter |
-| @mermaid-js/mermaid-cli / Puppeteer | 12.0.0 / 25.12.0 | Diagram and browser verification |
-| Zod / server-only | 4.6.5 / 0.0.1 | Schema validation and server boundary |
+| Tool / Package                      | Version           | Role                                  |
+| ----------------------------------- | ----------------- | ------------------------------------- |
+| Node / npm                          | 24.21.0 / 11.19.0 | Pinned repository runtime             |
+| Vitest                              | 5.0.3             | Pure domain test runner               |
+| Vite (peer)                         | 8.3.3             | Resolved Vitest peer                  |
+| Next.js / eslint-config-next        | 16.3.8 / 16.3.8   | App Router and lint plugin            |
+| React / React DOM                   | 19.3.0 / 19.3.0   | UI library                            |
+| TypeScript                          | 5.9.3             | Static typechecker                    |
+| ESLint / Prettier                   | 9.39.4 / 3.9.9    | Linter and formatter                  |
+| @mermaid-js/mermaid-cli / Puppeteer | 12.0.0 / 25.12.0  | Diagram and browser verification      |
+| Zod / server-only                   | 4.6.5 / 0.0.1     | Schema validation and server boundary |
 
 ### Unit test suite results (161 tests passed)
 
 All 161 unit tests across three test files passed (`vitest run` in 0.9s):
+
 - `tests/unit/states.test.ts`: 115 tests (payment state matrix, duplicate captures, proof validation, context checks, financial summary, refund ledger, order state matrix, shipment guards, COD lifecycle, online expiry, cancellation, late capture, old attempt downgrade, and new handoff regressions).
 - `tests/unit/pricing.test.ts`: 35 tests (worked examples, input validation, coupon minimum/caps, tax components, odd paise allocation, largest remainder, free shipping threshold, 200 deterministic conservation cases, immutability snapshots).
 - `tests/unit/reservations.test.ts`: 11 tests (concurrent last-unit CAS, duplicate release, single consumption, status-only untracked stock, nonnegative conservation balances, deadline guards, PAY-03/PAY-04 stock reacquisition, audit paths, serialization races, mixed carts).
@@ -177,17 +190,17 @@ All 161 unit tests across three test files passed (`vitest run` in 0.9s):
 
 Executed sequentially under Node 24.21.0 / npm 11.19.0:
 
-| Gate | Exit Code | Result | Real Output Summary |
-| --- | --- | --- | --- |
-| `npm ci --no-fund` | 0 | PASS | 573 packages installed from lockfile after releasing local dev server lock |
-| `npm run format` | 0 | PASS | Prettier formatted `src`, `scripts`, `tests`, and config files including `vitest.config.mts` |
-| `npm run format:check` | 0 | PASS | All matched files use Prettier code style |
-| `npm run verify` | 0 | PASS | Full pipeline passed: test (161 passed), lint (0 errors/warnings), typecheck (`next typegen && tsc --noEmit` covering `**/*.mts`), build (63 static pages generated), check:docs (63 Markdown files), check:secrets (187 source paths), check:enums (23 domains), check:diagrams (11 Mermaid SVGs), check:routes (57 Chromium pages, 16 API methods, 404 checked) |
-| `npm audit --omit=dev` | 0 | PASS | 0 vulnerabilities in production dependencies |
-| `npm audit` | 1 | PASS (RECORDED) | 9 development-tool vulnerabilities (4 low, 5 high) in `braces` and `KaTeX`; unchanged from Stage 3 |
-| `npm ls --depth=0` | 0 | PASS | Exact versions match pinned dependencies |
-| `npm ls` deferred packages | 1 | PASS (RECORDED) | `(empty)`; MongoDB, Mongoose, Better Auth, Razorpay, Cloudinary, Playwright, PDF/CSV packages remain absent |
-| `git diff --check` | 0 | PASS | Zero whitespace or formatting errors |
+| Gate                       | Exit Code | Result          | Real Output Summary                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------- | --------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm ci --no-fund`         | 0         | PASS            | 573 packages installed from lockfile after releasing local dev server lock                                                                                                                                                                                                                                                                                        |
+| `npm run format`           | 0         | PASS            | Prettier formatted `src`, `scripts`, `tests`, and config files including `vitest.config.mts`                                                                                                                                                                                                                                                                      |
+| `npm run format:check`     | 0         | PASS            | All matched files use Prettier code style                                                                                                                                                                                                                                                                                                                         |
+| `npm run verify`           | 0         | PASS            | Full pipeline passed: test (161 passed), lint (0 errors/warnings), typecheck (`next typegen && tsc --noEmit` covering `**/*.mts`), build (63 static pages generated), check:docs (63 Markdown files), check:secrets (187 source paths), check:enums (23 domains), check:diagrams (11 Mermaid SVGs), check:routes (57 Chromium pages, 16 API methods, 404 checked) |
+| `npm audit --omit=dev`     | 0         | PASS            | 0 vulnerabilities in production dependencies                                                                                                                                                                                                                                                                                                                      |
+| `npm audit`                | 1         | PASS (RECORDED) | 9 development-tool vulnerabilities (4 low, 5 high) in `braces` and `KaTeX`; unchanged from Stage 3                                                                                                                                                                                                                                                                |
+| `npm ls --depth=0`         | 0         | PASS            | Exact versions match pinned dependencies                                                                                                                                                                                                                                                                                                                          |
+| `npm ls` deferred packages | 1         | PASS (RECORDED) | `(empty)`; MongoDB, Mongoose, Better Auth, Razorpay, Cloudinary, Playwright, PDF/CSV packages remain absent                                                                                                                                                                                                                                                       |
+| `git diff --check`         | 0         | PASS            | Zero whitespace or formatting errors                                                                                                                                                                                                                                                                                                                              |
 
 ### Initial failures and routine fixes
 
@@ -200,18 +213,18 @@ Executed sequentially under Node 24.21.0 / npm 11.19.0:
 ### Verification limits
 
 Domain contracts, reservation state transitions, and compare-and-swap tests are pure in-memory models. They do not constitute proof of:
+
 - MongoDB replica set atomic transactions or conditional write mechanics
 - Database unique index constraints or persistence schema design
 - Webhook signature validation, durable event queueing, or idempotency storage
 - Real payment provider SDK integration (Razorpay/Stripe)
 - Production authentication, session management, or access control
 - Real shipping carrier API integration or physical stock management
-All browser and API routes remain Stage 3 placeholders.
+  All browser and API routes remain Stage 3 placeholders.
 
 ## Stage 3 historical record
 
 The following versions and acceptance results describe Stage 3, not verification of the new Part 4A code. Earlier checkpoints: Stage 1 5572b1f; Stage 2 7dc596c.
-
 
 ## Delivered in Stage 3
 
@@ -226,20 +239,20 @@ The following versions and acceptance results describe Stage 3, not verification
 
 Public npm registry metadata and official Node distribution metadata were checked on 2026-10-06 immediately before installation.
 
-| Package/runtime | Installed version |
-| --- | --- |
-| Node / npm | 24.21.0 / 11.19.0 |
-| next / eslint-config-next | 16.3.8 / 16.3.8 |
-| react / react-dom | 19.3.0 / 19.3.0 |
-| typescript | 5.9.3 |
-| @types/node | 24.19.1 |
-| @types/react / @types/react-dom | 19.3.0 / 19.3.0 |
-| tailwindcss / @tailwindcss/postcss | 4.3.3 / 4.3.3 |
-| postcss | 8.5.29 |
-| eslint / prettier | 9.39.4 / 3.9.9 |
-| zod / server-only | 4.6.5 / 0.0.1 |
-| @mermaid-js/mermaid-cli | 12.0.0 |
-| Mermaid / Puppeteer (transitive dev tooling) | 12.1.0 / 25.12.0 |
+| Package/runtime                              | Installed version |
+| -------------------------------------------- | ----------------- |
+| Node / npm                                   | 24.21.0 / 11.19.0 |
+| next / eslint-config-next                    | 16.3.8 / 16.3.8   |
+| react / react-dom                            | 19.3.0 / 19.3.0   |
+| typescript                                   | 5.9.3             |
+| @types/node                                  | 24.19.1           |
+| @types/react / @types/react-dom              | 19.3.0 / 19.3.0   |
+| tailwindcss / @tailwindcss/postcss           | 4.3.3 / 4.3.3     |
+| postcss                                      | 8.5.29            |
+| eslint / prettier                            | 9.39.4 / 3.9.9    |
+| zod / server-only                            | 4.6.5 / 0.0.1     |
+| @mermaid-js/mermaid-cli                      | 12.0.0            |
+| Mermaid / Puppeteer (transitive dev tooling) | 12.1.0 / 25.12.0  |
 
 Next 16.3.8 was the actual latest stable registry tag; React peer ranges accept 19.3.0. Node 24 satisfies Next's >=20.9.0 and Mermaid CLI's >=22.13.0 requirements. Node's official Windows archive SHA-256 was verified before extraction into ignored .tools. Global Node 20 was not modified.
 
@@ -251,22 +264,22 @@ TypeScript 7 and ESLint 10 were not selected: installed lint peers require TypeS
 
 Executed under Node 24.21.0 / npm 11.19.0 on Windows:
 
-| Gate | Result |
-| --- | --- |
-| npm ci --no-fund | PASS; 548 packages installed from lockfile |
-| npm run lint | PASS |
-| npm run typecheck | PASS; Next route type generation and tsc --noEmit |
-| npm run build | PASS; production compilation and page generation |
-| npm run check:docs | PASS; 61 Markdown files checked |
-| npm run check:secrets | PASS; repository text, including .env.example and lockfile |
-| npm run check:enums | PASS; 23 canonical domains, references allowed |
-| npm run check:diagrams | PASS; all 11 parsed and rendered to SVG |
-| npm run check:routes | PASS; 57 pages visibly rendered in Chromium; 16 API methods, root separation, documented route coverage and 404 checked |
-| npm run format:check | PASS |
-| npm ls --depth=0 | PASS; exact direct versions match pins |
-| npm ls deferred packages --all | Empty; no auth, MongoDB/Mongoose, Razorpay, Cloudinary, Vitest, Playwright test, PDF or CSV libraries installed |
-| npm audit --omit=dev | PASS; zero vulnerabilities |
-| git diff --check | PASS |
+| Gate                           | Result                                                                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| npm ci --no-fund               | PASS; 548 packages installed from lockfile                                                                              |
+| npm run lint                   | PASS                                                                                                                    |
+| npm run typecheck              | PASS; Next route type generation and tsc --noEmit                                                                       |
+| npm run build                  | PASS; production compilation and page generation                                                                        |
+| npm run check:docs             | PASS; 61 Markdown files checked                                                                                         |
+| npm run check:secrets          | PASS; repository text, including .env.example and lockfile                                                              |
+| npm run check:enums            | PASS; 23 canonical domains, references allowed                                                                          |
+| npm run check:diagrams         | PASS; all 11 parsed and rendered to SVG                                                                                 |
+| npm run check:routes           | PASS; 57 pages visibly rendered in Chromium; 16 API methods, root separation, documented route coverage and 404 checked |
+| npm run format:check           | PASS                                                                                                                    |
+| npm ls --depth=0               | PASS; exact direct versions match pins                                                                                  |
+| npm ls deferred packages --all | Empty; no auth, MongoDB/Mongoose, Razorpay, Cloudinary, Vitest, Playwright test, PDF or CSV libraries installed         |
+| npm audit --omit=dev           | PASS; zero vulnerabilities                                                                                              |
+| git diff --check               | PASS                                                                                                                    |
 
 The complete acceptance sequence is npm run verify. Browser/diagram outputs are in ignored .validation. Puppeteer is Mermaid's required peer, reused for the browser gate; no test framework was installed. Page checks assert HTTP 200, visible placeholder text, correct store/admin shell and no browser page errors. Dynamic IDs use a harmless placeholder string.
 
@@ -275,6 +288,7 @@ The first npm ci attempt encountered a native-file lock from an existing project
 ## Audit findings and verification limits
 
 Full npm audit reports **9 development-tool findings: 5 high and 4 low**. These are dependency-chain counts rooted in two advisories:
+
 - [braces stack exhaustion](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm): braces 3.0.3 via Next ESLint tooling; no patched version listed.
 - [KaTeX inherited trust settings](https://github.com/advisories/GHSA-238p-pmpm-9mq7): KaTeX 0.16.47 via Mermaid; fixed in 0.18.2, outside the renderer's declared dependency range.
 

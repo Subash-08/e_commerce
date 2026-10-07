@@ -27,6 +27,7 @@
     "test:watch": "vitest",
     "generate:states": "node scripts/generate-states.mjs --write",
     "db:dev": "node scripts/dev-atlas.mjs",
+    "media:verify": "node scripts/verify-cloudinary.mjs",
     "db:indexes:check": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts check",
     "db:indexes:apply": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts apply",
     "test:auth-spike": "node scripts/test-gate.mjs vitest.auth-spike.config.mts",
