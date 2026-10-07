@@ -1,5 +1,6 @@
-import path from "node:path";
-import { MongoMemoryReplSet } from "mongodb-memory-server";
+import { randomUUID } from "node:crypto";
+import nextEnv from "@next/env";
+
 import { MongoClient, type Db, type IndexDescription } from "mongodb";
 import {
   parseDatabaseConfig,
@@ -29,62 +30,29 @@ export async function cleanupAll(
     throw new AggregateError(errors, "Test resource cleanup failed");
 }
 
-let sharedReplicaSet: MongoMemoryReplSet | undefined;
-let sharedReplicaStarting: Promise<MongoMemoryReplSet> | undefined;
-
-export async function getSharedTestReplicaSet(): Promise<MongoMemoryReplSet> {
-  if (sharedReplicaSet) return sharedReplicaSet;
-  if (!sharedReplicaStarting) {
-    sharedReplicaStarting = (async () => {
-      const repl = await MongoMemoryReplSet.create({
-        binary: {
-          version: "8.2.6",
-          downloadDir: path.resolve(".cache/mongodb-binaries"),
-          checkMD5: true,
-        },
-        replSet: {
-          count: 1,
-          storageEngine: "wiredTiger",
-          ip: "127.0.0.1",
-        },
-      });
-      const probeClient = new MongoClient(repl.getUri("topology_probe_test"), {
-        serverSelectionTimeoutMS: 2000,
-        timeoutMS: 2000,
-      });
-      try {
-        await probeClient.connect();
-        const hello = await probeClient
-          .db("topology_probe_test")
-          .admin()
-          .command({ hello: 1 });
-        if (
-          typeof hello.setName !== "string" ||
-          hello.logicalSessionTimeoutMinutes == null
-        )
-          throw new Error("Replica topology is not transaction capable");
-        await probeClient.close();
-        sharedReplicaSet = repl;
-        return repl;
-      } catch (error) {
-        await cleanupAll([() => probeClient.close(), () => repl.stop()], error);
-        throw error;
-      }
-    })().catch((error) => {
-      sharedReplicaStarting = undefined;
-      throw error;
-    });
+// No hosted process: probe only the configured Atlas deployment.
+export async function getSharedTestReplicaSet() {
+  nextEnv.loadEnvConfig(process.cwd(), true, { info() {}, error() {} });
+  const uri = process.env.MONGODB_URI;
+  parseDatabaseConfig({
+    NODE_ENV: "test",
+    APP_ENV: "test",
+    MONGODB_URI: uri,
+    MONGODB_DB_NAME: "ecommerce_test",
+  });
+  const client = new MongoClient(uri!, { serverSelectionTimeoutMS: 10000 });
+  try {
+    await client.connect();
+    await assertTransactionTopology(client.db("ecommerce_test"));
+  } catch (error) {
+    await cleanupAll([() => client.close()], error);
+    throw error;
   }
-  return sharedReplicaStarting;
+  await client.close();
+  return { getUri: () => uri! };
 }
-
 export async function stopSharedTestReplicaSet(): Promise<void> {
-  if (sharedReplicaSet) {
-    const repl = sharedReplicaSet;
-    sharedReplicaSet = undefined;
-    sharedReplicaStarting = undefined;
-    await repl.stop();
-  }
+  /* Atlas is externally managed. */
 }
 
 export class TestBarrier {
@@ -166,14 +134,14 @@ export async function createTestDatabaseContext(
   (process.env as Record<string, string | undefined>).NODE_ENV = "test";
   process.env.APP_ENV = "test";
 
-  const randomSuffix = Math.random().toString(36).slice(2, 10);
+  const randomSuffix = randomUUID().replaceAll("-", "").slice(0, 16);
   const sanitizedPrefix = suitePrefix
     .replace(/[^a-zA-Z0-9_]/g, "_")
-    .slice(0, 40);
-  const databaseName = `${sanitizedPrefix}_${randomSuffix}_test`;
+    .slice(0, 5);
+  const databaseName = `ec_${sanitizedPrefix}_${randomSuffix}_test`;
   assertTestDatabase(databaseName);
 
-  const uri = repl.getUri(databaseName);
+  const uri = repl.getUri();
   const config = parseDatabaseConfig({
     NODE_ENV: "test",
     APP_ENV: "test",

@@ -1,4 +1,4 @@
-import { Placeholder } from "@/shared/ui/placeholder";
-export default function Page() {
-  return <Placeholder title="/admin" />;
+import { redirect } from "next/navigation";
+export default function AdminPage() {
+  redirect("/admin/users");
 }

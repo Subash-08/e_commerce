@@ -8,7 +8,7 @@ import {
 } from "../fixtures/db-harness";
 import { createDatabaseOwner } from "../../src/server/db/connection";
 import { DatabaseError } from "../../src/server/db/errors";
-import { parseDatabaseConfig } from "../../src/server/db/config";
+
 
 describe("Database connection ownership and lifecycle", () => {
   let context: TestDatabaseContext;
@@ -70,23 +70,10 @@ describe("Database connection ownership and lifecycle", () => {
   });
 
   it("a rejected connection attempt releases partial resources, clears promise, and allows subsequent success", async () => {
-    let returnGoodConfig = false;
-    const badConfig = parseDatabaseConfig({
-      NODE_ENV: "test",
-      APP_ENV: "test",
-      MONGODB_URI: "mongodb://127.0.0.1:27099", // port where nothing is listening
-      MONGODB_DB_NAME: "rejected_conn_test",
-      MONGODB_MAX_POOL_SIZE: 5,
-    });
-
-    const configFn = () => (returnGoodConfig ? context.config : badConfig);
-    const owner = createDatabaseOwner(configFn);
-
-    // First attempt rejects due to connection failure
+    const failure = vi.spyOn(MongoClient.prototype, 'connect').mockRejectedValueOnce(new Error('injected_connection_failure'));
+    const owner = createDatabaseOwner(() => context.config);
     await expect(owner.get()).rejects.toThrow(DatabaseError);
-
-    // Correct the config; same owner must clear its failed promise and succeed
-    returnGoodConfig = true;
+    failure.mockRestore();
     const handle = await owner.get();
     expect(handle.client).toBeInstanceOf(MongoClient);
 

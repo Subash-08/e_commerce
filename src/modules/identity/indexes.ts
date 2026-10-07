@@ -4,6 +4,27 @@ import type { CollectionIndexes } from "../../server/db/indexes";
 // Exact reviewed minimal core indexes; changes require the runtime command regression.
 export const identityIndexes: readonly CollectionIndexes[] = [
   {
+    collection: "auditLogs",
+    indexes: [
+      { name: "audit_entity_time", key: { entityId: 1, occurredAt: -1 } },
+    ],
+  },
+  {
+    collection: "jobs",
+    indexes: [
+      {
+        name: "jobs_kind_business_unique",
+        key: { kind: 1, businessKey: 1 },
+        unique: true,
+      },
+      { name: "jobs_kind_state_due", key: { kind: 1, state: 1, dueAt: 1 } },
+      {
+        name: "jobs_kind_state_lease",
+        key: { kind: 1, state: 1, leaseUntil: 1 },
+      },
+    ],
+  },
+  {
     collection: "auth_user",
     indexes: [
       { name: "auth_user_email_uidx", key: { email: 1 }, unique: true },

@@ -1,3 +1,4 @@
+import "./load-environment.mjs";
 import { getDatabase, closeDatabase } from "../src/server/db/connection.ts";
 import { approvedIndexes } from "../src/server/db/approved-indexes.ts";
 import { applyIndexes, checkIndexes } from "../src/server/db/indexes.ts";

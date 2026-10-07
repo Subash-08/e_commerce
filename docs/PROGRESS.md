@@ -2,7 +2,17 @@
 
 Updated 2026-10-07. Workspace: D:\AI\e-commerce. Branch: codex/auth-core.
 
-### Current gate
+### Current auth closure work, 2026-10-07
+
+The latest user review is evaluated in [the implementation plan](development/FEATURE-IMPLEMENTATION-PLAN.md). Atlas-only runtime supersedes all historical local-replica instructions below. The normal application uses its configured Atlas database; verification fixtures use generated Atlas test databases and owned-collection cleanup. No production/development account is altered by integration fixtures.
+
+Implemented since c7bd7b5: admin Users and audit pages, transactional role/activation changes, serialized last-admin guard, supported session deletion with durable retries, audited first-admin bootstrap, safe operator missing-profile repair, development reset mailbox, and the reference-inspired dark-sidebar/purple admin theme. Both loopback names are supported in development; production origins remain restricted. Local database launcher and memory-server dependency removed. Node/Next/auth dependency pins are unchanged.
+
+The user's selected account was bootstrapped through the operator command and verified ACTIVE/ADMIN with one guard and audit record. Live Atlas HTTP registration/login/session checks passed on localhost and 127.0.0.1; temporary accounts were cleaned by exact identity. Cloudinary uploads were selected for Category, but configuration presence check is currently false.
+
+Current closure evidence: focused real Atlas suites passed 11 checks covering profile provisioning, reset/replay, direct endpoint denial, authority mutation, last-admin concurrency, deferred session deletion and missing-profile repair. Lint/typecheck and production build passed (one fixture unused-parameter warning remains). The final recovery regression also proves old cookies remain denied. All 179 existing unit checks passed; the Atlas run passed 43/44 integration checks, with only a stale database-name assertion failing. That assertion was updated to the explicitly approved configured-database policy and its 11-check file then passed. Docs links, secret scan and the production driver check passed. This is sequential evidence, not a claim that the initial npm test invocation passed. No Category/Brand/Product feature has been implemented in this slice.
+
+### Historical gate (retained evidence)
 
 Part 4A remains verified. Part 4B is accepted after the post-report review repairs: **200 tests pass (166 unit, 34 integration)**, including six new regression tests and five UI checks. Antigravity's 189-test evidence at 32d40ef is preserved below as historical evidence; its report did not close the three static findings, which Codex subsequently repaired.
 

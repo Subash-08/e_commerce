@@ -1,13 +1,15 @@
 # Identity implementation
 
-Implemented: private profile/security-guard schemas, default-customer provisioning, Better Auth session hooks, fresh ownership/role guards, bounded HTTP operation allowlist, registration/sign-in/sign-out/recovery/reset routes and account forms. The auth library owns passwords, auth users, accounts, sessions and reset tokens; profiles contain no credential fields. Index creation remains explicit through the reviewed manifest and db:indexes scripts.
+Better Auth owns users, passwords, accounts, sessions and reset tokens. The application profile owns role, status, authVersion, revision and timestamps. Services enforce fresh authority; repositories own persistence. Admin layouts do not replace service checks.
 
-Two [recovery email adapters](../../../docs/development/RECOVERY-EMAIL.md) are selectable. Configuration is lazy; missing provider/database configuration fails closed. Public forms do not expose driver or provider errors. Email change, deletion, social login, account linking, broad admin operations and impersonation are not exposed.
+Implemented: registration/login/logout, password recovery, private account page, audited first-admin bootstrap, user list/search/role and status filters/pagination, role and activation changes, transaction-serialized last-admin protection, audit trail and durable session-revocation retry. Development accepts the configured loopback port on localhost and 127.0.0.1; production retains the exact configured origin.
 
-The database-backed limiter is shared across instances. Until the deployment's trusted proxy policy is approved, it uses a shared per-path bucket rather than trusting caller-provided IP headers. This protects the boundary but may throttle unrelated users; host-specific trusted IP configuration and abuse acceptance are required before launch.
+Atlas is the only database runtime. Configuration is loaded through the environment layer. Indexes are explicit; startup does not create or synchronize indexes. No local MongoDB launcher or memory-server dependency remains.
 
-Account/admin layouts are guarded, but layouts never replace service-level authorization. Future data services must call requireAccess with the persisted resource owner's auth ID; never accept ownership or authority from the browser.
+Operator commands:
+- npm run auth:bootstrap -- --approve --user-id ID: only an existing active registered account, only before any administrator/guard exists. Records the initial admin event and invalidates old authority.
+- npm run auth:repair -- --approve --user-id ID: repairs only a missing customer profile for a registered ID, audits it, preserves valid profiles and advances beyond existing session versions. Production additionally requires --production. No credential changes or browser repair endpoint.
 
-Provisioning uses an idempotent customer-only upsert after library user creation. This operation does not share the library transaction; an interrupted signup can leave an orphan profile. It grants no access without a valid library session, and missing/inactive profiles fail closed. An audited repair procedure is still required before production operation.
+Session deletion uses the supported server-only Better Auth endpoint. Failed cleanup remains durable; fresh authVersion checks deny stale cookies immediately. Startup, authority mutations and the admin retry button drain bounded batches. Scheduled draining and host-specific trusted-proxy rate limits remain deployment gates.
 
-Outstanding AUTH-CORE/GUARDS: owner bootstrap, transactional role/deactivation changes with last-admin serialization, audit/revocation job and supported session-deletion retry, auth audit coverage, host-specific IP policy, failure/recovery acceptance, live mailbox delivery. The security-guard schema alone is not an implemented last-admin service. No catalog authorization follows this checkpoint.
+The development mailbox is available only in development at /api/auth/dev-mail. Resend and n8n remain selectable; external delivery requires the chosen provider's locally configured credentials and live verification. Email change, account deletion and social sign-in are deliberately not exposed. Customer addresses and commerce data belong to separate modules.

@@ -5,7 +5,8 @@ import { getIdentity } from "./runtime";
 
 /** Layout check only; every data service must also check fresh authority at its boundary. */
 export async function requireAccountPage(admin = false) {
-  let permitted = false;
+  let account:
+    { id: string; name: string; email: string; role: string } | undefined;
   try {
     const requestHeaders = new Headers(await headers());
     const identity = await getIdentity();
@@ -13,15 +14,21 @@ export async function requireAccountPage(admin = false) {
       headers: requestHeaders,
     });
     if (session) {
-      await identity.requireAccess(
+      const authority = await identity.requireAccess(
         requestHeaders,
         admin ? "catalog.manage" : "profile.own",
         session.user.id,
       );
-      permitted = true;
+      account = {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        role: authority.role,
+      };
     }
   } catch {
     /* Configuration/database failure never grants page access. */
   }
-  if (!permitted) redirect("/login");
+  if (!account) redirect("/login");
+  return account;
 }

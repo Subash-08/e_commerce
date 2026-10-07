@@ -1,3 +1,4 @@
+import { deliverDevelopmentMail } from "./development-mail";
 import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -9,6 +10,7 @@ const common = {
   appUrl: z.url(),
 };
 const configSchema = z.discriminatedUnion("provider", [
+  z.object({ ...common, provider: z.literal("development") }),
   z.object({
     ...common,
     provider: z.literal("resend"),
@@ -59,6 +61,12 @@ export function readRecoveryEmailConfig(
     webhookSecret: environment.N8N_WEBHOOK_SECRET,
   });
   if (!result.success) throw new DomainError("EMAIL_CONFIG_INVALID");
+  if (
+    result.data.provider === "development" &&
+    (environment.APP_ENV !== "development" ||
+      environment.NODE_ENV !== "development")
+  )
+    throw new DomainError("EMAIL_CONFIG_INVALID");
   const localAllowed =
     environment.APP_ENV === "development" || environment.APP_ENV === "test";
   const app = safeUrl(result.data.appUrl, localAllowed);
@@ -84,6 +92,7 @@ export function createRecoverySender(
   const parsed = configSchema.safeParse(config);
   if (!parsed.success) throw new DomainError("EMAIL_CONFIG_INVALID");
   const settings = parsed.data;
+  if (settings.provider === "development") return deliverDevelopmentMail;
   const appOrigin = safeUrl(settings.appUrl, true).origin;
   if (settings.provider === "n8n") safeUrl(settings.webhookUrl, true);
   return async ({ email, url }) => {

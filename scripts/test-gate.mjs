@@ -1,3 +1,4 @@
+import "./load-environment.mjs";
 import { startVitest } from "vitest/node";
 
 const targetSuite = process.argv[2] ?? "all";

@@ -65,12 +65,32 @@ export function AccountForm({ mode }: { mode: Mode }) {
         body: JSON.stringify(body),
       });
       if (!response.ok) {
+        const failure = await response.json().catch(() => ({}));
+        const code = typeof failure.error === "string" ? failure.error : "";
+        const reason: Record<string, string> = {
+          INVALID_NAME: "Enter your name using 1–200 characters.",
+          INVALID_EMAIL: "Enter a valid email address.",
+          INVALID_PASSWORD: "Use a password between 12 and 128 characters.",
+          PASSWORD_TOO_SHORT: "Your password needs at least 12 characters.",
+          PASSWORD_TOO_LONG: "Your password cannot exceed 128 characters.",
+          USER_ALREADY_EXISTS:
+            "An account already uses this email. Sign in or reset its password.",
+          USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
+            "An account already uses this email. Sign in or reset its password.",
+          INVALID_EMAIL_OR_PASSWORD: "The email or password is incorrect.",
+        };
+        const fallback =
+          mode === "register"
+            ? "Check your name, email and password, then try again."
+            : mode === "login"
+              ? "The email or password is incorrect. Try again or request a reset link."
+              : "This reset request is invalid or expired. Request a new reset link.";
         setMessage(
           response.status === 429
             ? "Too many attempts. Please wait a minute and try again."
             : response.status === 503
               ? "Account services are temporarily unavailable. Please try again later."
-              : "We could not complete that request. Check your details or request a new reset link.",
+              : (reason[code] ?? fallback),
         );
         return;
       }
@@ -79,8 +99,12 @@ export function AccountForm({ mode }: { mode: Mode }) {
         setSignedIn(false);
         setMessage("You have signed out.");
       } else if (mode === "login") {
-        setSignedIn(true);
-        setMessage("You are signed in.");
+        const session = await fetch("/api/auth/get-session", {
+          cache: "no-store",
+        }).then((response) => response.json());
+        window.location.assign(
+          session.user?.role === "ADMIN" ? "/admin/users" : "/account",
+        );
       } else if (mode === "register") {
         setCompleted(true);
         setMessage(
@@ -105,74 +129,108 @@ export function AccountForm({ mode }: { mode: Mode }) {
     }
   }
   return (
-    <main
-      data-feature="auth"
-      className="mx-auto w-full max-w-md space-y-6 px-6 py-12"
-    >
-      <h1 className="text-2xl font-semibold">{labels[mode]}</h1>
-      <form className="space-y-5" onSubmit={submit} aria-busy={pending}>
-        {!signedIn && !completed && (
-          <>
-            {mode === "register" && (
-              <InputField
-                name="name"
-                label="Name"
-                autoComplete="name"
-                maxLength={200}
-                required
-                disabled={pending}
-              />
-            )}
-            {mode !== "reset-password" && (
-              <InputField
-                name="email"
-                type="email"
-                label="Email"
-                autoComplete="email"
-                maxLength={254}
-                required
-                disabled={pending}
-              />
-            )}
-            {mode !== "forgot-password" && (
-              <InputField
-                name="password"
-                type="password"
-                label={mode === "reset-password" ? "New password" : "Password"}
-                autoComplete={
-                  mode === "login" ? "current-password" : "new-password"
-                }
-                minLength={mode === "login" ? 1 : 12}
-                maxLength={128}
-                hint={mode === "login" ? undefined : "Use 12–128 characters."}
-                required
-                disabled={pending}
-              />
-            )}
-          </>
-        )}
-        {(!completed || signedIn) && (
-          <Button type="submit" loading={pending}>
-            {signedIn ? "Sign out" : labels[mode]}
-          </Button>
-        )}
-        <p role="status" aria-live="polite">
-          {message}
+    <main data-feature="auth" className="auth-screen">
+      <aside className="auth-story">
+        <span className="auth-mark" aria-hidden="true">
+          C
+        </span>
+        <span className="auth-eyebrow">YOUR COMMERCE WORKSPACE</span>
+        <h2>
+          A simpler way
+          <br />
+          to stay connected.
+        </h2>
+        <p>
+          One secure account.
+          <br />
+          Everything you need, in one place.
         </p>
-      </form>
-      <nav
-        className="flex flex-wrap gap-4 text-sm underline"
-        aria-label="Account options"
-      >
-        {mode !== "login" && <Link href="/login">Sign in</Link>}
-        {mode === "login" && (
-          <>
-            <Link href="/register">Create an account</Link>
-            <Link href="/account">Your account</Link>
-          </>
-        )}
-        <Link href="/forgot-password">Request a reset link</Link>
-      </nav>
+        <div className="auth-story-bottom">
+          <span aria-hidden="true">◈</span> Built around your privacy
+        </div>
+      </aside>
+      <div className="auth-card">
+        <span className="auth-eyebrow">
+          {mode === "login"
+            ? "WELCOME BACK"
+            : mode === "register"
+              ? "LET'S GET STARTED"
+              : "ACCOUNT RECOVERY"}
+        </span>
+        <h1>{labels[mode]}</h1>
+        <p className="auth-intro">
+          {mode === "login"
+            ? "Enter your details to access your account."
+            : mode === "register"
+              ? "Create your account in a few simple steps."
+              : "We'll help you get back into your account securely."}
+        </p>
+        <form className="space-y-5" onSubmit={submit} aria-busy={pending}>
+          {!signedIn && !completed && (
+            <>
+              {mode === "register" && (
+                <InputField
+                  name="name"
+                  label="Name"
+                  autoComplete="name"
+                  maxLength={200}
+                  required
+                  disabled={pending}
+                />
+              )}
+              {mode !== "reset-password" && (
+                <InputField
+                  name="email"
+                  type="email"
+                  label="Email"
+                  autoComplete="email"
+                  maxLength={254}
+                  required
+                  disabled={pending}
+                />
+              )}
+              {mode !== "forgot-password" && (
+                <InputField
+                  name="password"
+                  type="password"
+                  label={
+                    mode === "reset-password" ? "New password" : "Password"
+                  }
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                  minLength={mode === "login" ? 1 : 12}
+                  maxLength={128}
+                  hint={mode === "login" ? undefined : "Use 12–128 characters."}
+                  required
+                  disabled={pending}
+                />
+              )}
+            </>
+          )}
+          {(!completed || signedIn) && (
+            <Button type="submit" loading={pending}>
+              {signedIn ? "Sign out" : labels[mode]}
+            </Button>
+          )}
+          <p role="status" aria-live="polite">
+            {message}
+          </p>
+        </form>
+        <nav
+          className="flex flex-wrap gap-4 text-sm underline"
+          aria-label="Account options"
+        >
+          {mode !== "login" && <Link href="/login">Sign in</Link>}
+          {mode === "login" && (
+            <>
+              <Link href="/register">Create an account</Link>
+              <Link href="/account">Your account</Link>
+            </>
+          )}
+          <Link href="/forgot-password">Request a reset link</Link>
+        </nav>
+      </div>
     </main>
   );
 }

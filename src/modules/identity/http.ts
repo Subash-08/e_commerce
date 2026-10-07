@@ -1,3 +1,4 @@
+import { developmentMailbox } from "../notifications/development-mail";
 import "server-only";
 import { z } from "zod";
 import type { createIdentity } from "./service";
@@ -62,6 +63,8 @@ export async function handleIdentityRequest(
   const path = pathname.startsWith("/api/auth/")
     ? pathname.slice("/api/auth".length)
     : "";
+  if (request.method === "GET" && path === "/dev-mail")
+    return developmentMailbox(request);
   const resetCallback = /^\/reset-password\/[a-zA-Z0-9_-]{1,256}$/.test(path);
   if (
     (request.method === "GET" && path !== "/get-session" && !resetCallback) ||
@@ -76,7 +79,20 @@ export async function handleIdentityRequest(
     try {
       const schema = bodies[path as keyof typeof bodies];
       const parsed = schema.safeParse(await boundedBody(request));
-      if (!parsed.success) return json({ error: "INVALID_REQUEST" }, 400);
+      if (!parsed.success) {
+        const field = parsed.error.issues[0]?.path[0];
+        const code = [
+          "name",
+          "email",
+          "password",
+          "newPassword",
+          "token",
+        ].includes(String(field))
+          ? "INVALID_" +
+            String(field).replace("newPassword", "password").toUpperCase()
+          : "INVALID_REQUEST";
+        return json({ error: code }, 400);
+      }
       body = parsed.data;
     } catch {
       return json({ error: "INVALID_REQUEST" }, 400);
@@ -93,19 +109,46 @@ export async function handleIdentityRequest(
         headers: request.headers,
       });
       if (!session) return json({ error: "AUTH_REQUIRED" }, 401);
-      await identity.requireAccess(
+      const actor = await identity.requireAccess(
         request.headers,
         "profile.own",
         session.user.id,
       );
       return json(
-        { user: { id: session.user.id, name: session.user.name } },
+        {
+          user: {
+            id: session.user.id,
+            name: session.user.name,
+            role: actor.role,
+          },
+        },
         200,
         limited,
       );
     }
     const base = identity.baseURL;
-    if (request.method === "POST" && request.headers.get("origin") !== base)
+    const requestOrigin = request.headers.get("origin");
+    let allowedOrigin = requestOrigin === base;
+    if (
+      !allowedOrigin &&
+      process.env.APP_ENV === "development" &&
+      requestOrigin
+    ) {
+      try {
+        const expected = new URL(base);
+        const received = new URL(requestOrigin);
+        const loopback = (host: string) =>
+          ["localhost", "127.0.0.1", "[::1]"].includes(host);
+        allowedOrigin =
+          loopback(expected.hostname) &&
+          loopback(received.hostname) &&
+          expected.protocol === received.protocol &&
+          expected.port === received.port;
+      } catch {
+        /* Reject malformed origins. */
+      }
+    }
+    if (request.method === "POST" && !allowedOrigin)
       return json({ error: "FORBIDDEN" }, 403);
     if (path === "/request-password-reset")
       body = { ...(body as object), redirectTo: base + "/reset-password" };
@@ -126,14 +169,40 @@ export async function handleIdentityRequest(
     }
     if (response.status === 429)
       return json({ error: "RATE_LIMITED" }, 429, response);
-    if (!response.ok)
+    if (!response.ok) {
+      const payload = await response
+        .clone()
+        .json()
+        .catch(() => null);
+      const libraryCode =
+        payload &&
+        typeof payload === "object" &&
+        "code" in payload &&
+        typeof payload.code === "string"
+          ? payload.code
+          : "";
+      const safeCode = [
+        "INVALID_EMAIL",
+        "PASSWORD_TOO_SHORT",
+        "PASSWORD_TOO_LONG",
+        "USER_ALREADY_EXISTS",
+        "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL",
+        "INVALID_EMAIL_OR_PASSWORD",
+      ].includes(libraryCode)
+        ? libraryCode
+        : response.status >= 500
+          ? "AUTH_UNAVAILABLE"
+          : "AUTH_REQUEST_FAILED";
+      console.error("auth.request_rejected", {
+        path,
+        status: response.status,
+        code: safeCode,
+      });
       return json(
-        {
-          error:
-            response.status >= 500 ? "AUTH_UNAVAILABLE" : "AUTH_REQUEST_FAILED",
-        },
-        response.status >= 500 ? 503 : 400,
+        { error: safeCode },
+        response.status >= 500 ? 503 : response.status,
       );
+    }
     if (path === "/sign-up/email")
       return json(
         {

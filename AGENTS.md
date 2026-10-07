@@ -3,7 +3,7 @@
 ## Read before working
 - Read docs/PROGRESS.md for the current gate and outstanding work.
 - Read docs/architecture/ARCHITECTURE-DECISIONS.md and relevant ADRs.
-- Parts 4A/4B are accepted. AUTH-DECIDE passed; the user authorized AUTH-CORE on 2026-10-07 with the production-driver criterion in ADR 0003. Read docs/database/AUTH-SPIKE-REPORT.md. Use mongodb-memory-server, no Docker. Complete auth before catalog; no homepage or unrelated UI work.
+- Parts 4A/4B are accepted. AUTH-DECIDE passed; the user authorized AUTH-CORE on 2026-10-07 with the production-driver criterion in ADR 0003. Read docs/database/AUTH-SPIKE-REPORT.md. Use MongoDB Atlas only; no local MongoDB, Docker or memory-server. Complete auth before catalog; no homepage or unrelated UI work.
 - Codex handles complex implementation; Antigravity handles delegated tests/checks. Do not claim 4B complete before real replica-set evidence and all handoff gates pass.
 - Preserve existing work. Work on a stage branch, commit each completed stage, never force-push or use destructive Git.
 - Never read .env* files except .env.example; never print environment values.

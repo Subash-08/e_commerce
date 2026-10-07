@@ -6,7 +6,7 @@ Status: AUTH-DECIDE accepted for the pinned minimal Better Auth 1.7.7 configurat
 
 Exactly one mongodb copy in the production dependency tree; dev-only tooling may carry its own, enforced by a script.
 
-The user approved this wording on 2026-10-07. npm run verify starts with check:production-driver, which checks the npm production tree and shared driver resolution/class identity. An isolated npm ci --omit=dev passed with one driver. The only extra development copy is transitive through the memory-server launcher. No overrides, driver casts or aliases are allowed to force compatibility.
+The user approved this wording on 2026-10-07. npm run verify starts with check:production-driver, which checks the npm production tree and shared driver resolution/class identity. An isolated npm ci --omit=dev passed with one driver. Historical evidence included an extra development copy through the memory-server launcher. The Atlas-only migration removes that launcher and its driver; the production identity gate remains required. No overrides, driver casts or aliases are allowed to force compatibility.
 
 The exact minimal email/password configuration emits no runtime index commands after reviewed indexes are precreated. New plugins or schema index declarations require the runtime command check again; this is not a general auto-index-disable guarantee.
 

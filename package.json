@@ -8,7 +8,7 @@
   },
   "packageManager": "npm@11.19.0",
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev-atlas.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -26,11 +26,13 @@
     "test:integration": "node scripts/test-gate.mjs integration",
     "test:watch": "vitest",
     "generate:states": "node scripts/generate-states.mjs --write",
-    "db:dev": "node scripts/local-replica.mjs",
+    "db:dev": "node scripts/dev-atlas.mjs",
     "db:indexes:check": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts check",
     "db:indexes:apply": "node --conditions=react-server --experimental-strip-types scripts/db-indexes.ts apply",
     "test:auth-spike": "node scripts/test-gate.mjs vitest.auth-spike.config.mts",
-    "check:production-driver": "node scripts/check-production-driver.mjs"
+    "check:production-driver": "node scripts/check-production-driver.mjs",
+    "auth:bootstrap": "node --conditions=react-server --experimental-strip-types scripts/auth-bootstrap.ts",
+    "auth:repair": "node --conditions=react-server --experimental-strip-types scripts/auth-repair.ts"
   },
   "dependencies": {
     "@better-auth/mongo-adapter": "1.7.7",
@@ -51,18 +53,10 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.8",
-    "mongodb-memory-server": "11.3.0",
     "postcss": "8.5.29",
     "prettier": "3.9.9",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vitest": "5.0.3"
-  },
-  "config": {
-    "mongodbMemoryServer": {
-      "disablePostinstall": true,
-      "version": "8.2.6",
-      "downloadDir": ".cache/mongodb-binaries"
-    }
   }
 }

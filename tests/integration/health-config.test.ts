@@ -1,8 +1,6 @@
+import { spawn } from "node:child_process";
 import { describe, expect, it, beforeAll, afterAll, vi } from "vitest";
 import { MongoClient } from "mongodb";
-import { spawn } from "node:child_process";
-import http from "node:http";
-import fs from "node:fs";
 import {
   createTestDatabaseContext,
   stopSharedTestReplicaSet,
@@ -192,11 +190,9 @@ describe("Health, configuration, lifecycle and safety guards", () => {
       });
     });
 
-    it("assertTestDatabase refuses databases not ending in _test", () => {
-      expect(() => assertTestDatabase("production_db")).toThrow(DatabaseError);
-      expect(() => assertTestDatabase("staging")).toThrow(DatabaseError);
-      expect(() => assertTestDatabase("test")).toThrow(DatabaseError); // does not end in _test
-      expect(() => assertTestDatabase("mydb_test")).not.toThrow();
+    it("assertTestDatabase validates a configured shared Atlas database name", () => {
+      expect(() => assertTestDatabase("ecommerce")).not.toThrow();
+      expect(() => assertTestDatabase("invalid-name")).toThrow(DatabaseError);
     });
   });
 
@@ -207,7 +203,7 @@ describe("Health, configuration, lifecycle and safety guards", () => {
         parseDatabaseConfig({
           NODE_ENV: "test",
           APP_ENV: "development",
-          MONGODB_URI: "mongodb://127.0.0.1:27017",
+          MONGODB_URI: "mongodb+srv://configuration-fixture.mongodb.net",
           MONGODB_DB_NAME: "store_test",
         }),
       ).toThrow(DatabaseError);
@@ -217,37 +213,37 @@ describe("Health, configuration, lifecycle and safety guards", () => {
         parseDatabaseConfig({
           NODE_ENV: "production",
           APP_ENV: "test",
-          MONGODB_URI: "mongodb://127.0.0.1:27017",
+          MONGODB_URI: "mongodb+srv://configuration-fixture.mongodb.net",
           MONGODB_DB_NAME: "store_test",
         }),
       ).toThrow(DatabaseError);
 
-      // Non-test environment using a _test database name -> rejected
+      // Configured database names do not silently select environments
       expect(() =>
         parseDatabaseConfig({
           NODE_ENV: "development",
           APP_ENV: "development",
-          MONGODB_URI: "mongodb://127.0.0.1:27017",
+          MONGODB_URI: "mongodb+srv://configuration-fixture.mongodb.net",
           MONGODB_DB_NAME: "dev_database_test",
         }),
-      ).toThrow(DatabaseError);
+      ).not.toThrow();
 
-      // Test environment using a non _test database name -> rejected
+      // The harness owns isolation; a name alone grants no cleanup authority
       expect(() =>
         parseDatabaseConfig({
           NODE_ENV: "test",
           APP_ENV: "test",
-          MONGODB_URI: "mongodb://127.0.0.1:27017",
+          MONGODB_URI: "mongodb+srv://configuration-fixture.mongodb.net",
           MONGODB_DB_NAME: "production_db",
         }),
-      ).toThrow(DatabaseError);
+      ).not.toThrow();
     });
 
     it("enforces connection pool bounds between 1 and 50", () => {
       const baseValid = {
         NODE_ENV: "test",
         APP_ENV: "test",
-        MONGODB_URI: "mongodb://127.0.0.1:27017",
+        MONGODB_URI: "mongodb+srv://configuration-fixture.mongodb.net",
         MONGODB_DB_NAME: "pool_test",
       };
 
@@ -311,96 +307,5 @@ describe("Health, configuration, lifecycle and safety guards", () => {
       const publicErr = publicDatabaseError(capturedError);
       expect(publicErr).toEqual({ code: "DB_CONFIG_INVALID" });
     });
-  });
-
-  describe("Dev launcher smoke test (npm run db:dev)", () => {
-    it("starts ephemeral replica, verifies app reachability, and terminates cleanly on SIGINT", async () => {
-      const testPort = "43219";
-      const child = spawn(process.execPath, ["scripts/local-replica.mjs"], {
-        env: {
-          ...process.env,
-          PORT: testPort,
-          NEXT_DIST_DIR: ".next-smoke",
-        },
-        stdio: "pipe",
-      });
-
-      let replicaReady = false;
-      let appReachable = false;
-
-      const pReplicaReady = new Promise<void>((resolve) => {
-        child.stdout?.on("data", (chunk) => {
-          const str = chunk.toString();
-          if (str.includes("Ephemeral local replica ready")) {
-            replicaReady = true;
-            resolve();
-          }
-        });
-      });
-
-      // Wait up to 15s for replica startup
-      await Promise.race([
-        pReplicaReady,
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Local replica startup timeout")),
-            15000,
-          ),
-        ),
-      ]);
-
-      expect(replicaReady).toBe(true);
-
-      // Poll test app health endpoint until reachable
-      const pollHealth = async () => {
-        for (let i = 0; i < 40; i++) {
-          try {
-            const ok = await new Promise<boolean>((resolve) => {
-              const req = http.get(
-                `http://127.0.0.1:${testPort}/api/health`,
-                (res) => {
-                  resolve(res.statusCode === 200);
-                },
-              );
-              req.on("error", () => resolve(false));
-              req.setTimeout(500, () => {
-                req.destroy();
-                resolve(false);
-              });
-            });
-            if (ok) {
-              appReachable = true;
-              return;
-            }
-          } catch {}
-          await new Promise((r) => setTimeout(r, 500));
-        }
-      };
-
-      await pollHealth();
-      expect(appReachable).toBe(true);
-
-      // Clean shutdown via SIGINT (Ctrl+C equivalent)
-      const pExit = new Promise<void>((resolve) => {
-        child.on("exit", () => resolve());
-      });
-
-      child.kill("SIGINT");
-
-      await Promise.race([
-        pExit,
-        new Promise((resolve) => setTimeout(resolve, 5000)),
-      ]);
-
-      // If still running after timeout, force terminate
-      if (child.exitCode === null) {
-        child.kill("SIGTERM");
-      }
-
-      // Cleanup smoke distDir if created
-      try {
-        fs.rmSync(".next-smoke", { recursive: true, force: true });
-      } catch {}
-    }, 30000);
   });
 });

@@ -37,7 +37,19 @@ for (const file of files) {
     problems.push(file + ": prohibited environment file (not read)");
     continue;
   }
-  const bytes = await readFile(file);
+  let bytes;
+  try {
+    bytes = await readFile(file);
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "ENOENT"
+    )
+      continue;
+    throw error;
+  }
   if (bytes.includes(0)) continue; // Skip binary files; inspect every text extension.
   const text = bytes.toString("utf8");
   const lines = text.split(/\r?\n/);

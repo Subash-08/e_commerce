@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MongoClient } from "mongodb";
-import { MongoMemoryReplSet } from "mongodb-memory-server";
+
 import {
   cleanupAll,
   createTestDatabaseContext,
@@ -14,18 +14,18 @@ describe("Fixture failure cleanup", () => {
     await stopSharedTestReplicaSet();
   });
 
-  it("stops a partially started replica and permits retry after probe failure", async () => {
+  it("closes an Atlas probe after failure and permits retry", async () => {
     const failure = new Error("injected_probe_failure");
     const connect = vi
       .spyOn(MongoClient.prototype, "connect")
       .mockRejectedValueOnce(failure);
-    const stop = vi.spyOn(MongoMemoryReplSet.prototype, "stop");
+    const stop = vi.spyOn(MongoClient.prototype, "close");
     await expect(getSharedTestReplicaSet()).rejects.toMatchObject({
       errors: [failure],
     });
     expect(stop).toHaveBeenCalled();
     connect.mockRestore();
-    expect(await getSharedTestReplicaSet()).toBeInstanceOf(MongoMemoryReplSet);
+    expect((await getSharedTestReplicaSet()).getUri).toBeTypeOf("function");
   });
 
   it("continues cleanup and preserves original and cleanup errors", async () => {
