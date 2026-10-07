@@ -1,6 +1,6 @@
 # Foundation progress
 
-Updated 2026-10-07. Workspace: D:\AI\e-commerce. Branch: codex/auth-decide-spike.
+Updated 2026-10-07. Workspace: D:\AI\e-commerce. Branch: codex/auth-core.
 
 ### Current gate
 
@@ -10,7 +10,19 @@ The user separately authorized reusable UI foundations: Button, Badge, Alert, Ca
 
 AUTH-DECIDE passed on 2026-10-07: 12/12 replica-set spike tests; single production driver/class identity; isolated npm ci --omit=dev; production audit zero reported vulnerabilities. The user's amended driver criterion permits only the test launcher's transitive dev copy. The check is wired into npm run verify. Exact versions and the scope of every result are in [the spike report](database/AUTH-SPIKE-REPORT.md). The old blanket runtime-index finding is corrected there and in ADR 0003.
 
-AUTH-CORE is authorized after these prerequisites. Profile models and pure authorization code are currently uncommitted work, not feature acceptance. Registration/recovery routes, authority mutation/revocation, abuse controls and bootstrap remain to implement. No new catalog or homepage work. Atlas credentials were neither saved nor used; configure rotated credentials locally per [credential setup](development/CREDENTIAL-SETUP.md).
+AUTH-CORE is authorized after these prerequisites. Compatibility checkpoint: 0b4e91d. The user additionally requested both Resend and n8n email transports, selecting one later.
+
+### Account implementation checkpoint, 2026-10-07
+
+Implemented actual profile/security-guard models, a customer-provisioning repository, reviewed auth/profile/rate-limit indexes, the Better Auth service, fresh authority/ownership guards, a bounded HTTP allowlist and registration/sign-in/sign-out/recovery/reset forms. Account and admin page layouts now require authority. Routes return neutral errors and never expose provider/driver details. No catalog or homepage feature was added.
+
+Both [recovery delivery adapters](development/RECOVERY-EMAIL.md) are implemented without additional dependencies. Selection is EMAIL_PROVIDER=resend or n8n. No credentials were read, no Atlas connection was made and no external mail was sent. Runtime activation requires locally configured database, explicit indexes, auth secret and one selected provider. Missing configuration returns 503 rather than fake success.
+
+Focused evidence so far: 5 authorization tests, 8 delivery-contract tests and 5 real-replica account tests pass. The latter cover default-customer provisioning, real cookies, ownership/stale/inactive denial, reset/replay/session revocation, neutral delivery failure, sign-out and shared cross-instance recovery limits. Command-monitoring positive control passes; account operations emit zero runtime index commands. Typecheck, lint, docs links, enum and secret checks pass. The full test run passed 218 tests (179 unit, 39 integration), with zero skipped/todo/empty/failing cases. The account suite was rerun after strengthening HTTP login/CSRF and concurrent cross-instance limit checks: 5/5 passed; exactly 3 of 8 simultaneous recovery requests succeeded and 5 were limited.
+
+Final gate evidence: production-driver check, lint, typecheck, build, docs links (72 files), secret scan (245 paths), enum registry (23 domains), all 11 Mermaid renders, browser coverage (57 pages/16 API methods) and format check passed. The initial verify stopped on a browser-cache 304; the route checker now disables browser cache. Protected layouts were made explicitly dynamic, then build/browser checks were rerun successfully. A package formatting warning was fixed and format:check passed. This is completed sequential evidence, not a claim that the original verify invocation returned zero. Login screenshot visually reviewed. No live provider delivery or authenticated browser journey was claimed.
+
+AUTH-CORE/GUARDS is not fully accepted: owner bootstrap, transactional authority mutations/last-admin protection, audit/revocation retry, interrupted-signup repair and live mailbox delivery remain. The limiter currently uses a shared per-path bucket, intentionally trusting no forwarded client IP; host-specific IP policy is a launch gate. No catalog work should start before auth acceptance. See the [identity implementation boundaries](../src/modules/identity/README.md).
 
 ### Post-report acceptance evidence, 2026-10-06
 

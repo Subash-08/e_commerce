@@ -46,7 +46,20 @@ const child = spawn(
     "-H",
     "127.0.0.1",
   ],
-  { stdio: ["ignore", "pipe", "pipe"] },
+  {
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      APP_ENV: "test",
+      MONGODB_URI: "",
+      MONGODB_DB_NAME: "",
+      EMAIL_PROVIDER: "",
+      BETTER_AUTH_SECRET: "",
+      RESEND_API_KEY: "",
+      N8N_WEBHOOK_URL: "",
+      N8N_WEBHOOK_SECRET: "",
+    },
+  },
 );
 let log = "";
 child.stdout.on("data", (chunk) => {
@@ -71,6 +84,7 @@ try {
   if (!ready) throw new Error("Server readiness timed out");
   browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
+  await page.setCacheEnabled(false);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   for (const route of manifest.pages) {
@@ -78,20 +92,41 @@ try {
     const response = await page.goto(base + url, { waitUntil: "networkidle0" });
     if (response.status() !== 200)
       throw new Error(route + ": HTTP " + response.status());
-    const visible = await page.$eval(
-      "[data-placeholder]",
-      (element) =>
-        element.checkVisibility() &&
-        element.textContent.includes("Placeholder — not implemented."),
-    );
-    const shell = await page.$eval("body", (element) => element.dataset.shell);
-    if (!visible || shell !== (route.startsWith("/admin") ? "admin" : "store"))
-      throw new Error(route + ": invalid placeholder or root layout");
+    const accountForm = [
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/reset-password",
+    ].includes(route);
+    const guarded = route.startsWith("/admin") || route.startsWith("/account");
+    if (accountForm || guarded) {
+      if (guarded && new URL(page.url()).pathname !== "/login")
+        throw new Error(route + ": unauthenticated access was not redirected");
+      const visible = await page.$eval('[data-feature="auth"]', (element) =>
+        element.checkVisibility(),
+      );
+      if (!visible) throw new Error(route + ": missing visible account form");
+    } else {
+      const visible = await page.$eval(
+        "[data-placeholder]",
+        (element) =>
+          element.checkVisibility() &&
+          element.textContent.includes("Placeholder — not implemented."),
+      );
+      const shell = await page.$eval(
+        "body",
+        (element) => element.dataset.shell,
+      );
+      if (!visible || shell !== "store")
+        throw new Error(route + ": invalid placeholder or root layout");
+    }
   }
   await page.screenshot({
     path: ".validation/admin-placeholder.png",
     fullPage: true,
   });
+  await page.goto(base + "/login", { waitUntil: "networkidle0" });
+  await page.screenshot({ path: ".validation/auth-login.png", fullPage: true });
   await page.goto(base, { waitUntil: "networkidle0" });
   await page.screenshot({
     path: ".validation/store-placeholder.png",
@@ -124,6 +159,9 @@ try {
             route +
               ": expected HTTP 503 { status: 'degraded' } when unconfigured",
           );
+      } else if (route === "/api/auth/[...all]") {
+        if (response.status !== 404 || body.error !== "NOT_FOUND")
+          throw new Error("Unknown auth operation must return 404");
       } else {
         if (response.status !== 501 || !body.placeholder)
           throw new Error(route + ": invalid API placeholder");

@@ -1,6 +1,6 @@
 # Feature implementation and orchestration plan
 
-Updated 2026-10-06. This is the execution detail for [development order](DEVELOPMENT-ORDER.md), not authorization to implement every listed feature. Current implementation authorization ends at 4B. Later packages require their named gate and user authorization. Existing contracts remain authoritative; do not duplicate status definitions here.
+Updated 2026-10-07. This is the execution detail for [development order](DEVELOPMENT-ORDER.md), not authorization to implement every listed feature. Current implementation authorization includes AUTH-CORE/GUARDS after the accepted AUTH-DECIDE spike (0b4e91d). Auth is in progress; later packages still require their named gate. Existing contracts remain authoritative; do not duplicate status definitions here.
 
 ## Current board
 
@@ -72,7 +72,7 @@ Auth authority and its index policy must not be worked around to expose admin CR
 | Needed before | Information / secret |
 | --- | --- |
 | Current 4B | None; ephemeral local replica set |
-| Auth decision | Email transport choice and local recovery-test approach |
+| Auth delivery | Both Resend/n8n adapters authorized and implemented; select one and configure locally before live mailbox verification |
 | External recovery email test | Sender domain and selected provider test credentials; generate auth secret locally, never paste it into chat |
 | D-DURABILITY | Chosen VPS/Vercel profile, scheduler cadence, region, connection budget and recovery targets; no purchase inferred |
 | BUY-PAY | Razorpay test key ID/secret and separate webhook secret through local secret configuration; never production keys |

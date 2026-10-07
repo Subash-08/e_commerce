@@ -35,3 +35,7 @@ Missing provider IDs need partial indexes, not a unique index accepting only one
 Derived fields are rebuildable from source records. Historical invoices/order snapshots are not recalculated by catalog/tax migration. For required historical corrections, add a linked correction document. Enum changes require explicit mappings and transition tests.
 
 Each migration records ID/checksum/start/completion/counts/failure details in a small migration ledger when migrations begin. No migrations or ledger created at this stage. Rollback is either compatible code rollback or tested restore/forward repair; do not assume reversing a script restores external payments. See [operations](../operations/ENVIRONMENTS-BACKUPS.md).
+
+## AUTH-CORE implementation checkpoint (2026-10-07)
+
+The application manifest now includes the five reviewed core auth indexes, unique profile authUserId, unique security-guard key, and unique rate-limit key plus lastRequest for pruning. Names and exact definitions live in src/modules/identity/indexes.ts and are included by src/server/db/approved-indexes.ts. The rate-limit additions support Better Auth's database-backed atomic consume; no new credentials collection is introduced. Index checks run before auth service initialization; runtime drift fails closed. Only the explicit index script creates indexes. The real account integration test monitors both warm/cold service instances and asserts zero runtime index commands.

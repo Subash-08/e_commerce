@@ -244,13 +244,13 @@ describe("Database index lifecycle, drift detection, and error sanitization", ()
     await owner.close();
   });
 
-  it("the empty application manifest reports no approved indexes and does not claim database is valid", async () => {
+  it("an explicitly empty manifest remains a no-op; the application now declares identity indexes", async () => {
     const owner = context.createOwner();
     const handle = await owner.get();
 
-    expect(approvedIndexes).toHaveLength(0);
+    expect(approvedIndexes.length).toBeGreaterThan(0);
 
-    const result = await checkIndexes(handle.db, approvedIndexes);
+    const result = await checkIndexes(handle.db, []);
     expect(result).toHaveLength(0);
 
     await owner.close();

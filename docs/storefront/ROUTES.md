@@ -1,6 +1,6 @@
 # App Router route and rendering matrix
 
-Proposed paths, not implemented routes. Route groups do not change URLs. Store root: src/app/(store)/layout.tsx; admin root: src/app/(admin)/layout.tsx around admin URLs. No shared root importing storefront UI. API handlers sit at src/app/api. Both roots own html/body. Cross-root navigation can reload the document.
+Implementation note (2026-10-07): the four account entry/recovery pages and the allowlisted auth API are implemented; account/admin layouts are guarded. The other feature routes remain visibly marked placeholders. The matrix below is the full target contract, not a claim that all features exist. Route groups do not change URLs. Store root: src/app/(store)/layout.tsx; admin root: src/app/(admin)/layout.tsx around admin URLs. No shared root importing storefront UI. API handlers sit at src/app/api. Both roots own html/body. Cross-root navigation can reload the document.
 
 Legend: PUBLIC = cached public Server Component content; DYNAMIC = per-request server content with client interaction islands; PRIVATE = dynamic/no-store with identity checks. Cache tags are from [cache contract](../architecture/CACHING-REVALIDATION.md). Public cached data never includes cookies/session/PII.
 
