@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const items = [
   { href: "/admin/categories", title: "Categories", icon: "▦" },
+  { href: "/admin/brands", title: "Brands", icon: "◆" },
   { href: "/admin/users", title: "Customers & users", icon: "◎" },
   { href: "/admin/logs", title: "Audit trail", icon: "▤" },
   { href: "/account", title: "My account", icon: "⚙" },

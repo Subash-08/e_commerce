@@ -1048,3 +1048,47 @@ select:focus-visible {
     margin-left: 0;
   }
 }
+
+.admin-form-fieldset {
+  display: block;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.admin-media-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.55fr);
+  gap: 16px;
+  padding: 18px;
+}
+.admin-media-grid > div {
+  min-height: 180px;
+  border: 1px dashed #d5d0f3;
+  border-radius: 9px;
+  padding: 16px;
+}
+.admin-media-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-media-grid small {
+  display: block;
+  margin-top: 6px;
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+.admin-media-grid img {
+  display: block;
+  max-height: 120px;
+  margin: 14px 0;
+  object-fit: contain;
+}
+@media (max-width: 650px) {
+  .admin-media-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+}

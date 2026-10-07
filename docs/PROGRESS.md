@@ -1,6 +1,12 @@
 # Foundation progress
 
-Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/category-management.
+Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/brand-management.
+
+### Brand management delivered, 2026-10-08
+
+Implemented Brand as a complete catalog slice on top of the Category/admin/media foundations. The admin has Atlas-side prefix search, status and featured filters, sorting, counts and pagination; dedicated create/edit routes; compact Details, Logo and Search tabs; inline validation; unsaved-change protection; archive/deactivation controls; and Cloudinary logo upload. The service owns optimistic concurrency, fresh transaction-time authority, product-reference protection, stable slug redirects, safe audit data and durable cache invalidation. The public brand page supplies canonical metadata, Open Graph data and Brand structured data from one projection.
+
+Five reviewed Brand indexes were created in Atlas. Typecheck, lint and the production build passed, including /admin/brands, /admin/brands/new, /admin/brands/[id]/edit and /brand/[slug]. No additional Brand test suite was added; verification stayed focused on compilation and the required database indexes.
 
 ### Category management delivered, 2026-10-08
 
