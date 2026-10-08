@@ -99,6 +99,7 @@ function ShippingEditor({
 }) {
   const router = useRouter();
   const form = useRef<HTMLFormElement>(null);
+  const dirtyRef = useRef(restored);
   const [dirty, setDirty] = useState(restored),
     [revision, setRevision] = useState(data.revision),
     [pending, start] = useTransition();
@@ -112,11 +113,11 @@ function ShippingEditor({
   > | null>(null);
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {
-      if (dirty) e.preventDefault();
+      if (dirtyRef.current) e.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  }, []);
   function input() {
     const f = new FormData(form.current!);
     const text = (key: string) => String(f.get(key) ?? "").trim();
@@ -193,8 +194,10 @@ function ShippingEditor({
         ref={form}
         className="shipping-settings"
         onChange={(event) => {
-          if (!event.target.getAttribute("name")?.startsWith("preview."))
+          if (!event.target.getAttribute("name")?.startsWith("preview.")) {
+            dirtyRef.current = true;
             setDirty(true);
+          }
           setPreview(null);
         }}
         onSubmit={(e) => {
@@ -203,6 +206,7 @@ function ShippingEditor({
           start(async () => {
             const result = await saveShippingAction(input(), revision);
             if (result.ok) {
+              dirtyRef.current = false;
               setRevision(result.revision);
               setDirty(false);
               setErrors({});
@@ -578,7 +582,7 @@ function ShippingEditor({
               <div key={h.revision} className="shipping-history">
                 <span>
                   Revision {h.revision} ·{" "}
-                  {new Date(h.updatedAt).toLocaleString()}
+                  {h.updatedAt.replace("T", " ").slice(0, 19)} UTC
                 </span>
                 <button
                   type="button"
