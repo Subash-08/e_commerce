@@ -1,5 +1,5 @@
-import { calculateTax } from "../pricing/price";
-import { fromBigInt, roundHalfUp } from "../pricing/money";
+import { calculateTax } from "../pricing/price.ts";
+import { fromBigInt, roundHalfUp } from "../pricing/money.ts";
 export function priceBreakdown(
   amount: number,
   mode: "INCLUSIVE" | "EXCLUSIVE",

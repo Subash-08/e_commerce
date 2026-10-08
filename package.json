@@ -33,7 +33,9 @@
     "test:auth-spike": "node scripts/test-gate.mjs vitest.auth-spike.config.mts",
     "check:production-driver": "node scripts/check-production-driver.mjs",
     "auth:bootstrap": "node --conditions=react-server --experimental-strip-types scripts/auth-bootstrap.ts",
-    "auth:repair": "node --conditions=react-server --experimental-strip-types scripts/auth-repair.ts"
+    "auth:repair": "node --conditions=react-server --experimental-strip-types scripts/auth-repair.ts",
+    "seed:demo:check": "node --conditions=react-server --experimental-strip-types scripts/seed-demo-catalog.ts --dry-run",
+    "seed:demo": "node --conditions=react-server --experimental-strip-types scripts/seed-demo-catalog.ts"
   },
   "dependencies": {
     "@better-auth/mongo-adapter": "1.7.7",

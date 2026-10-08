@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { isPublicImageUrl } from "./image-url";
-import { objectId } from "../attributes/validation";
-import { stateValues } from "../../shared/domain/states.generated";
+import { isPublicImageUrl } from "./image-url.ts";
+import { objectId } from "../attributes/validation.ts";
+import { stateValues } from "../../shared/domain/states.generated.ts";
 
 const text = (max: number) => z.string().trim().max(max);
 const integer = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);

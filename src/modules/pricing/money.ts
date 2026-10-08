@@ -1,4 +1,4 @@
-import { integer, requireFact } from "../../shared/domain/errors";
+import { integer, requireFact } from "../../shared/domain/errors.ts";
 declare const moneyBrand: unique symbol;
 declare const bpsBrand: unique symbol;
 export type MoneyPaise = number & { readonly [moneyBrand]: true };

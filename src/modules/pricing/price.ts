@@ -1,5 +1,5 @@
-import { identifier, integer, requireFact } from "../../shared/domain/errors";
-import type { StateValue } from "../../shared/domain/states.generated";
+import { identifier, integer, requireFact } from "../../shared/domain/errors.ts";
+import type { StateValue } from "../../shared/domain/states.generated.ts";
 import {
   allocatePaise,
   basisPoints,
@@ -11,7 +11,7 @@ import {
   roundHalfUp,
   subtractPaise,
   sumPaise,
-} from "./money";
+} from "./money.ts";
 
 export interface TaxFacts {
   readonly mode: "INCLUSIVE" | "EXCLUSIVE" | "EXEMPT";

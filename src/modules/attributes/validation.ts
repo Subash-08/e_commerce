@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { stateValues } from "../../shared/domain/states.generated";
+import { stateValues } from "../../shared/domain/states.generated.ts";
 
 export const objectId = z
   .string()
