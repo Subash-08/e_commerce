@@ -45,24 +45,20 @@ export async function readPublicProduct(
   );
   if (!product) return null;
   const [brand, category, variants] = await Promise.all([
-    database.db
-      .collection("brands")
-      .findOne(
-        {
-          _id: product.brandId,
-          ...(preview ? {} : { active: true, archivedAt: null }),
-        },
-        { projection: { name: 1, slug: 1 } },
-      ),
-    database.db
-      .collection("categories")
-      .findOne(
-        {
-          _id: product.primaryCategoryId,
-          ...(preview ? {} : { active: true, archivedAt: null }),
-        },
-        { projection: { name: 1, slug: 1 } },
-      ),
+    database.db.collection("brands").findOne(
+      {
+        _id: product.brandId,
+        ...(preview ? {} : { active: true, archivedAt: null }),
+      },
+      { projection: { name: 1, slug: 1 } },
+    ),
+    database.db.collection("categories").findOne(
+      {
+        _id: product.primaryCategoryId,
+        ...(preview ? {} : { active: true, archivedAt: null }),
+      },
+      { projection: { name: 1, slug: 1 } },
+    ),
     repo.variants
       .find(
         { productId: product._id, active: true, archived: false },

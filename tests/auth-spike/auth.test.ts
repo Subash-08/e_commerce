@@ -138,7 +138,7 @@ describe("AUTH-DECIDE bounded spike", () => {
     const copies = Object.keys(lock.packages).filter((name) =>
       name.endsWith("/mongodb"),
     );
-    expect(copies).toEqual(['node_modules/mongodb']);
+    expect(copies).toEqual(["node_modules/mongodb"]);
     const pkg = JSON.parse(await readFile("package.json", "utf8"));
     expect(pkg.overrides).toBeUndefined();
     expect(

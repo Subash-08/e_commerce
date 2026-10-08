@@ -117,11 +117,7 @@ export function MobileMenu({ navItems, accountItems }: Props) {
           >
             {/* Drawer header */}
             <div className="sf-drawer-header">
-              <Link
-                href="/"
-                className="sf-logo"
-                onClick={() => setOpen(false)}
-              >
+              <Link href="/" className="sf-logo" onClick={() => setOpen(false)}>
                 <span className="sf-logo-mark" aria-hidden="true">
                   C
                 </span>
@@ -195,10 +191,7 @@ export function MobileMenu({ navItems, accountItems }: Props) {
             </div>
 
             {/* Nav links */}
-            <nav
-              aria-label="Mobile navigation"
-              className="sf-drawer-nav"
-            >
+            <nav aria-label="Mobile navigation" className="sf-drawer-nav">
               <p className="sf-drawer-section-label">Shop</p>
               {navItems.map((item) => (
                 <Link

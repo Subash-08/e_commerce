@@ -41,38 +41,30 @@ describe("catalog transactional boundaries", () => {
     await applyIndexes(database.db, [...catalogIndexes, ...categoryIndexes], {
       dryRun: false,
     });
-    await database.db
-      .collection("profiles")
-      .insertOne({
-        authUserId: "catalog-admin",
-        role: "ADMIN",
-        status: "ACTIVE",
-      });
-    await database.db
-      .collection("brands")
-      .insertOne({
-        _id: brand,
-        name: "Fixture",
-        slug: "fixture",
-        active: true,
-        archivedAt: null,
-      });
-    await database.db
-      .collection("categories")
-      .insertOne({
-        _id: category,
-        name: "Fixture",
-        slug: "fixture",
-        active: true,
-        archivedAt: null,
-      });
-    await database.db
-      .collection("mediaAssets")
-      .insertOne({
-        _id: media,
-        secureUrl: "https://example.com/fixture.webp",
-        resourceType: "image",
-      });
+    await database.db.collection("profiles").insertOne({
+      authUserId: "catalog-admin",
+      role: "ADMIN",
+      status: "ACTIVE",
+    });
+    await database.db.collection("brands").insertOne({
+      _id: brand,
+      name: "Fixture",
+      slug: "fixture",
+      active: true,
+      archivedAt: null,
+    });
+    await database.db.collection("categories").insertOne({
+      _id: category,
+      name: "Fixture",
+      slug: "fixture",
+      active: true,
+      archivedAt: null,
+    });
+    await database.db.collection("mediaAssets").insertOne({
+      _id: media,
+      secureUrl: "https://example.com/fixture.webp",
+      resourceType: "image",
+    });
     service = catalogService(database, async () => ({
       authUserId: "catalog-admin",
     }));

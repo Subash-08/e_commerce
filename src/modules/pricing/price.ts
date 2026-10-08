@@ -1,4 +1,8 @@
-import { identifier, integer, requireFact } from "../../shared/domain/errors.ts";
+import {
+  identifier,
+  integer,
+  requireFact,
+} from "../../shared/domain/errors.ts";
 import type { StateValue } from "../../shared/domain/states.generated.ts";
 import {
   allocatePaise,

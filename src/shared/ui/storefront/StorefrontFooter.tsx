@@ -42,7 +42,11 @@ export function StorefrontFooter() {
       <div className="sf-footer-main">
         {/* Brand column */}
         <div className="sf-footer-brand">
-          <Link href="/" className="sf-footer-logo" aria-label="Commerce — Home">
+          <Link
+            href="/"
+            className="sf-footer-logo"
+            aria-label="Commerce — Home"
+          >
             <span className="sf-logo-mark" aria-hidden="true">
               C
             </span>
@@ -96,10 +100,7 @@ export function StorefrontFooter() {
         <p style={{ margin: 0 }}>
           © {year} Commerce Store. Reusable template — not a real business.
         </p>
-        <nav
-          aria-label="Policy links"
-          className="sf-footer-bottom-links"
-        >
+        <nav aria-label="Policy links" className="sf-footer-bottom-links">
           {bottomPolicyLinks.map((link) => (
             <Link key={link.href} href={link.href}>
               {link.label}

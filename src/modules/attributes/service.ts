@@ -65,16 +65,14 @@ export function attributeService(
             { $inc: { revision: 1 } },
             { session },
           );
-        const profile = await database.db
-          .collection("profiles")
-          .findOne(
-            {
-              authUserId: actor.authUserId,
-              status: "ACTIVE",
-              role: { $in: ["ADMIN", "STAFF"] },
-            },
-            { session },
-          );
+        const profile = await database.db.collection("profiles").findOne(
+          {
+            authUserId: actor.authUserId,
+            status: "ACTIVE",
+            role: { $in: ["ADMIN", "STAFF"] },
+          },
+          { session },
+        );
         requireFact(profile, "FORBIDDEN");
         const prior = await repo.get(id, session);
         requireFact(
@@ -120,45 +118,41 @@ export function attributeService(
           ),
           "REVISION_CONFLICT",
         );
-        await database.db
-          .collection("auditLogs")
-          .insertOne(
-            {
-              actorType: "ACCOUNT",
-              actorId: actor.authUserId,
-              action: prior ? "ATTRIBUTE_UPDATED" : "ATTRIBUTE_CREATED",
-              entityType: "attribute",
-              entityId: id.toString(),
-              occurredAt: new Date(),
-              before: prior
-                ? { active: prior.active, revision: prior.revision }
-                : null,
-              after: {
-                active: value.active,
-                revision: (prior?.revision ?? -1) + 1,
-              },
-              schemaVersion: 1,
+        await database.db.collection("auditLogs").insertOne(
+          {
+            actorType: "ACCOUNT",
+            actorId: actor.authUserId,
+            action: prior ? "ATTRIBUTE_UPDATED" : "ATTRIBUTE_CREATED",
+            entityType: "attribute",
+            entityId: id.toString(),
+            occurredAt: new Date(),
+            before: prior
+              ? { active: prior.active, revision: prior.revision }
+              : null,
+            after: {
+              active: value.active,
+              revision: (prior?.revision ?? -1) + 1,
             },
-            { session },
-          );
-        await database.db
-          .collection("jobs")
-          .insertOne(
-            {
-              kind: "INVALIDATE_PUBLIC_CACHE",
-              businessKey:
-                "attribute:" + id + ":" + ((prior?.revision ?? -1) + 1),
-              payload: { tags: ["catalog"], paths: [] },
-              state: "PENDING",
-              dueAt: new Date(),
-              attempts: 0,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              revision: 0,
-              schemaVersion: 1,
-            },
-            { session },
-          );
+            schemaVersion: 1,
+          },
+          { session },
+        );
+        await database.db.collection("jobs").insertOne(
+          {
+            kind: "INVALIDATE_PUBLIC_CACHE",
+            businessKey:
+              "attribute:" + id + ":" + ((prior?.revision ?? -1) + 1),
+            payload: { tags: ["catalog"], paths: [] },
+            state: "PENDING",
+            dueAt: new Date(),
+            attempts: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            revision: 0,
+            schemaVersion: 1,
+          },
+          { session },
+        );
       }, database);
       return { id: id.toString() };
     },

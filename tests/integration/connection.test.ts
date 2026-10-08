@@ -9,7 +9,6 @@ import {
 import { createDatabaseOwner } from "../../src/server/db/connection";
 import { DatabaseError } from "../../src/server/db/errors";
 
-
 describe("Database connection ownership and lifecycle", () => {
   let context: TestDatabaseContext;
 
@@ -70,7 +69,9 @@ describe("Database connection ownership and lifecycle", () => {
   });
 
   it("a rejected connection attempt releases partial resources, clears promise, and allows subsequent success", async () => {
-    const failure = vi.spyOn(MongoClient.prototype, 'connect').mockRejectedValueOnce(new Error('injected_connection_failure'));
+    const failure = vi
+      .spyOn(MongoClient.prototype, "connect")
+      .mockRejectedValueOnce(new Error("injected_connection_failure"));
     const owner = createDatabaseOwner(() => context.config);
     await expect(owner.get()).rejects.toThrow(DatabaseError);
     failure.mockRestore();

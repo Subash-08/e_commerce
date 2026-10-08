@@ -244,16 +244,14 @@ export function catalogService(
             .collection("taxonomyGuards")
             .updateOne({ key }, { $inc: { revision: 1 } }, { session });
         requireFact(
-          await database.db
-            .collection("profiles")
-            .findOne(
-              {
-                authUserId: actor.authUserId,
-                status: "ACTIVE",
-                role: { $in: ["ADMIN", "STAFF"] },
-              },
-              { session },
-            ),
+          await database.db.collection("profiles").findOne(
+            {
+              authUserId: actor.authUserId,
+              status: "ACTIVE",
+              role: { $in: ["ADMIN", "STAFF"] },
+            },
+            { session },
+          ),
           "FORBIDDEN",
         );
         const prior = await repo.products.findOne({ _id: id }, { session });
@@ -468,15 +466,13 @@ export function catalogService(
         ];
         if (mediaIds.length)
           requireFact(
-            (await database.db
-              .collection("mediaAssets")
-              .countDocuments(
-                {
-                  _id: { $in: mediaIds.map((x) => new ObjectId(x)) },
-                  resourceType: "image",
-                },
-                { session },
-              )) === mediaIds.length,
+            (await database.db.collection("mediaAssets").countDocuments(
+              {
+                _id: { $in: mediaIds.map((x) => new ObjectId(x)) },
+                resourceType: "image",
+              },
+              { session },
+            )) === mediaIds.length,
             "MEDIA_NOT_FOUND",
           );
         const videoIds = [
@@ -488,15 +484,13 @@ export function catalogService(
         ];
         if (videoIds.length)
           requireFact(
-            (await database.db
-              .collection("mediaAssets")
-              .countDocuments(
-                {
-                  _id: { $in: videoIds.map((x) => new ObjectId(x)) },
-                  resourceType: "video",
-                },
-                { session },
-              )) === videoIds.length,
+            (await database.db.collection("mediaAssets").countDocuments(
+              {
+                _id: { $in: videoIds.map((x) => new ObjectId(x)) },
+                resourceType: "video",
+              },
+              { session },
+            )) === videoIds.length,
             "MEDIA_NOT_FOUND",
           );
         requireFact(
@@ -538,20 +532,18 @@ export function catalogService(
               { $set: { toPath: newPath } },
               { session },
             );
-          await database.db
-            .collection("redirects")
-            .insertOne(
-              {
-                fromPath: "/product/" + prior.slug,
-                toPath: newPath,
-                entityId: id,
-                entityType: "product",
-                statusCode: 301,
-                createdAt: new Date(),
-                schemaVersion: 1,
-              },
-              { session },
-            );
+          await database.db.collection("redirects").insertOne(
+            {
+              fromPath: "/product/" + prior.slug,
+              toPath: newPath,
+              entityId: id,
+              entityType: "product",
+              statusCode: 301,
+              createdAt: new Date(),
+              schemaVersion: 1,
+            },
+            { session },
+          );
         }
         const {
           id: ignoredId,
@@ -593,44 +585,40 @@ export function catalogService(
           );
         else await repo.products.insertOne(record, { session });
         await repo.replaceVariants(next, session);
-        await database.db
-          .collection("auditLogs")
-          .insertOne(
-            {
-              actorType: "ACCOUNT",
-              actorId: actor.authUserId,
-              action: prior ? "PRODUCT_UPDATED" : "PRODUCT_CREATED",
-              entityType: "product",
-              entityId: id.toString(),
-              before: prior
-                ? { revision: prior.revision, status: prior.status }
-                : null,
-              after: { revision, status: value.status, variants: next.length },
-              occurredAt: new Date(),
-              schemaVersion: 1,
+        await database.db.collection("auditLogs").insertOne(
+          {
+            actorType: "ACCOUNT",
+            actorId: actor.authUserId,
+            action: prior ? "PRODUCT_UPDATED" : "PRODUCT_CREATED",
+            entityType: "product",
+            entityId: id.toString(),
+            before: prior
+              ? { revision: prior.revision, status: prior.status }
+              : null,
+            after: { revision, status: value.status, variants: next.length },
+            occurredAt: new Date(),
+            schemaVersion: 1,
+          },
+          { session },
+        );
+        await database.db.collection("jobs").insertOne(
+          {
+            kind: "INVALIDATE_PUBLIC_CACHE",
+            businessKey: "product:" + id + ":" + revision,
+            payload: {
+              tags: ["catalog", "navigation", "sitemap", "home"],
+              paths: [newPath, ...(prior ? ["/product/" + prior.slug] : [])],
             },
-            { session },
-          );
-        await database.db
-          .collection("jobs")
-          .insertOne(
-            {
-              kind: "INVALIDATE_PUBLIC_CACHE",
-              businessKey: "product:" + id + ":" + revision,
-              payload: {
-                tags: ["catalog", "navigation", "sitemap", "home"],
-                paths: [newPath, ...(prior ? ["/product/" + prior.slug] : [])],
-              },
-              state: "PENDING",
-              dueAt: new Date(),
-              attempts: 0,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              schemaVersion: 1,
-              revision: 0,
-            },
-            { session },
-          );
+            state: "PENDING",
+            dueAt: new Date(),
+            attempts: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            schemaVersion: 1,
+            revision: 0,
+          },
+          { session },
+        );
       }, database);
       return { id: id.toString() };
     },

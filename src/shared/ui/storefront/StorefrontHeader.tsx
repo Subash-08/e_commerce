@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DesktopNav } from "./DesktopNav.tsx";
 import { MobileMenu } from "./MobileMenu.tsx";
 
 // ── SVG icon helpers (inline, no package) ─────────────────────────────────
@@ -173,11 +174,7 @@ export function StorefrontHeader() {
 
         {/* Desktop navigation */}
         <nav aria-label="Primary navigation" className="sf-nav">
-          {mainNavItems.map((item) => (
-            <Link key={item.href} href={item.href} className="sf-nav-link">
-              {item.label}
-            </Link>
-          ))}
+          <DesktopNav items={mainNavItems} />
 
           {/* Desktop search — inside nav so it is reachable by keyboard near nav */}
           <form
@@ -212,25 +209,13 @@ export function StorefrontHeader() {
 
         {/* Desktop icon actions */}
         <div className="sf-header-actions">
-          <Link
-            href="/account"
-            className="sf-icon-btn"
-            aria-label="My account"
-          >
+          <Link href="/account" className="sf-icon-btn" aria-label="My account">
             <IconUser />
           </Link>
-          <Link
-            href="/wishlist"
-            className="sf-icon-btn"
-            aria-label="Wishlist"
-          >
+          <Link href="/wishlist" className="sf-icon-btn" aria-label="Wishlist">
             <IconHeart />
           </Link>
-          <Link
-            href="/cart"
-            className="sf-icon-btn"
-            aria-label="Cart"
-          >
+          <Link href="/cart" className="sf-icon-btn" aria-label="Cart">
             <IconCart />
           </Link>
 

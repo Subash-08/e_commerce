@@ -562,17 +562,18 @@
     display: none;
   }
 
-  .sf-menu-btn {
-    display: inline-flex;
-  }
-
   .sf-drawer-overlay,
   .sf-drawer {
     display: flex;
   }
 
-  .sf-header-actions .sf-icon-btn {
+  .sf-header-actions .sf-icon-btn:not(.sf-menu-btn) {
     display: none;
+  }
+
+  .sf-header-actions .sf-menu-btn,
+  .sf-menu-btn {
+    display: inline-flex;
   }
 }
 

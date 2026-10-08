@@ -20,29 +20,25 @@ export async function drainCategoryInvalidations() {
       for (const tag of job.payload.tags as string[])
         revalidateTag(tag, { expire: 0 });
       for (const path of job.payload.paths as string[]) revalidatePath(path);
-      await db
-        .collection("jobs")
-        .updateOne(
-          { _id: job._id },
-          {
-            $set: { state: "SUCCEEDED", completedAt: new Date() },
-            $inc: { attempts: 1 },
-          },
-        );
+      await db.collection("jobs").updateOne(
+        { _id: job._id },
+        {
+          $set: { state: "SUCCEEDED", completedAt: new Date() },
+          $inc: { attempts: 1 },
+        },
+      );
     } catch {
-      await db
-        .collection("jobs")
-        .updateOne(
-          { _id: job._id },
-          {
-            $set: {
-              state: "RETRY",
-              dueAt: new Date(Date.now() + 30000),
-              lastErrorCode: "CACHE_INVALIDATION_FAILED",
-            },
-            $inc: { attempts: 1 },
+      await db.collection("jobs").updateOne(
+        { _id: job._id },
+        {
+          $set: {
+            state: "RETRY",
+            dueAt: new Date(Date.now() + 30000),
+            lastErrorCode: "CACHE_INVALIDATION_FAILED",
           },
-        );
+          $inc: { attempts: 1 },
+        },
+      );
     }
   }
 }

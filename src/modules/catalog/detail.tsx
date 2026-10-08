@@ -88,31 +88,23 @@ export function ProductDetail({
                   <legend>{axis.name}</legend>
                   <div className="product-axis-options">
                     {axis.options.map((option) => {
-                      const target =
-                        product.variants.find(
-                          (v) =>
-                            v.options.some(
-                              (o) =>
-                                o.attributeId === axis.id &&
-                                o.optionId === option.id,
-                            ) &&
-                            variant.options
-                              .filter((o) => o.attributeId !== axis.id)
-                              .every((o) =>
-                                v.options.some(
-                                  (x) =>
-                                    x.attributeId === o.attributeId &&
-                                    x.optionId === o.optionId,
-                                ),
-                              ),
-                        ) ??
-                        product.variants.find((v) =>
+                      const target = product.variants.find(
+                        (v) =>
                           v.options.some(
                             (o) =>
                               o.attributeId === axis.id &&
                               o.optionId === option.id,
-                          ),
-                        );
+                          ) &&
+                          variant.options
+                            .filter((o) => o.attributeId !== axis.id)
+                            .every((o) =>
+                              v.options.some(
+                                (x) =>
+                                  x.attributeId === o.attributeId &&
+                                  x.optionId === o.optionId,
+                              ),
+                            ),
+                      );
 
                       const selected = variant.options.some(
                         (o) => o.optionId === option.id,

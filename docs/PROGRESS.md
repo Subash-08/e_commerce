@@ -2,6 +2,26 @@
 
 Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
 
+### Storefront shell, catalog UI polish and review repairs, 2026-10-08
+
+Implemented Antigravity Tasks 01 and 02 with Task 03 review repairs. The storefront shell establishes a dedicated `--sf-*` custom property namespace scoped to `[data-shell="store"]` so the admin dark/purple theme remains untouched. Components include a server-rendered `StorefrontHeader` with brand mark, `DesktopNav` client island for pathname-aware `aria-current="page"` indication, real GET search form targeting `/search?q=`, accessible account/wishlist/cart icon links, and an accessible `MobileMenu` client drawer with keyboard focus trap, Escape dismissal, and touch targets ≥40px. At tablet/mobile viewports (≤1024px), `.sf-menu-btn` is explicitly visible via `.sf-header-actions .sf-menu-btn` while desktop nav and header utility icons collapse into the drawer. The `StorefrontFooter` groups navigation into Shop, Support, Legal, and Brand sections with neutral template text.
+
+Polished existing catalog public routes (`/category/[slug]`, `/brand/[slug]`, and `/product/[slug]`):
+- `/category/[slug]`: compact hero card with breadcrumbs, banner image, title, description, and interactive subcategory cards.
+- `/brand/[slug]`: clean brand hero with logo container, monogram fallback, and truthful notice that products will appear once catalog discovery is launched.
+- `/product/[slug]`: unified with `--sf-*` design tokens, `Breadcrumbs` component, `ProductDetailSkeleton` Suspense fallback, responsive variant axes with impossible combinations remaining strictly disabled, selectable sold-out variants with visible out-of-stock badges, price breakdown, GST-inclusive notice, SKU/model numbers, warranty badge, features grid, structured specifications, manufacturer content layout, and preserved checkout unavailable notice.
+- Shared loading (`loading.tsx`) and error boundary (`error.tsx`) components polished with storefront tokens.
+
+Verification: Typecheck passes with 0 errors; ESLint passes with 0 errors/warnings; production build passes generating 37 static pages; 181 unit tests pass; Prettier passes repository-wide (`npm run format:check`); HTTP checks confirm status 200 on `/`, `/products`, `/category/demo-laptops`, `/brand/demo-northstar`, `/product/demo-northstar-air-14`, non-default variant query, invalid variant fallback notice, and sold-out Forge variant.
+
+Limits: Real catalog listing grids, faceted filters, pagination, and live checkout/cart actions are not implemented in this presentation slice and remain Codex-owned discovery work.
+
+### Demo catalog seed fixture delivered, 2026-10-08
+
+Implemented `scripts/fixtures/demo-catalog.ts` and `scripts/seed-demo-catalog.ts` with 2 brands, 5 categories, 4 attributes with 10 options, 5 products, and 10 variants. Records are tagged `demo-catalog-v1` and demo products are flagged `noindex`. The seeder operates exclusively against the configured MongoDB Atlas database, rejects production environments, never drops collections, and executes inside an atomic database transaction. Added explicit `.ts` extensions to relative imports across catalog validation, pricing, and domain modules for Node 24 `--experimental-strip-types` compatibility.
+
+Verification: `npm run seed:demo:check` (dry run) confirmed matching record counts; `npm run seed:demo -- --approve` committed seed data to Atlas; typecheck and lint passed.
+
 ### Product, variant, attribute and media checkpoint, 2026-10-08
 
 Implemented /admin/attributes and /admin/products with create/edit/preview routes. Products require a brand, categories and one primary category. Typed attributes and stable option IDs drive a reviewed variant-generation diff; variants own SKU, barcode, inclusive/exclusive GST price entry, discounts, private cost, tracked/status-only availability, shipping dimensions and specifications. Saves enforce product revisions, unique identities, reservation boundaries, fresh authority, durable redirects and audit/cache jobs. Primary-category archive protection now identifies affected published products.
