@@ -1,35 +1,30 @@
 export default function Loading() {
   return (
     <div
-      className="sf-catalog-container sf-skeleton-pulse"
+      className="sf-catalog-container"
       role="status"
-      aria-label="Loading page content"
+      aria-label="Loading products"
     >
-      <div
-        className="sf-skeleton-line"
-        style={{ width: "160px", height: "16px", marginBottom: "1.5rem" }}
-      />
-      <div
-        className="sf-skeleton-box"
-        style={{
-          width: "100%",
-          height: "240px",
-          borderRadius: "16px",
-          marginBottom: "1.5rem",
-        }}
-      />
-      <div
-        className="sf-skeleton-line"
-        style={{ width: "35%", height: "28px", marginBottom: "1rem" }}
-      />
-      <div
-        className="sf-skeleton-line"
-        style={{ width: "70%", height: "16px", marginBottom: "0.5rem" }}
-      />
-      <div
-        className="sf-skeleton-line"
-        style={{ width: "50%", height: "16px" }}
-      />
+      <div className="sf-listing-skeleton sf-skeleton-pulse">
+        <div className="sf-skeleton-heading">
+          <span className="sf-skeleton-line" />
+          <span className="sf-skeleton-line" />
+        </div>
+        <div className="sf-skeleton-layout">
+          <div className="sf-skeleton-filter sf-skeleton-box" />
+          <div className="sf-skeleton-grid">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div key={index} className="sf-skeleton-card">
+                <span className="sf-skeleton-box" />
+                <span className="sf-skeleton-line" />
+                <span className="sf-skeleton-line" />
+                <span className="sf-skeleton-line" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <span className="sf-sr-only">Loading the latest catalog results…</span>
     </div>
   );
 }

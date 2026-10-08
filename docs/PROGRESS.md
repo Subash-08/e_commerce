@@ -2,6 +2,15 @@
 
 Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
 
+### Catalog discovery storefront stage, 2026-10-08
+
+Connected the shared Atlas discovery engine to /products, /search, /category/[slug] and /brand/[slug]. The routes now render consistent public product cards, route-specific dynamic facets, inclusive-GST price bounds, selected-filter chips, deterministic sorting, twelve-product pagination, empty/invalid-query states and a catalog-shaped loading skeleton. Filters use GET URLs and remain server-authoritative. Desktop uses a sticky filter panel; mobile uses a native modal dialog. Product cards keep image, price, availability and URL tied to one representative matching variant and link to readable variant paths. Cart and wishlist mutations remain deliberately absent until their services exist.
+
+SEO behavior now distinguishes clean and filtered listings: clean product, category and brand pages are indexable according to their record policy; valid clean pagination is self-canonical; filtered listings and all searches use noindex,follow. robots.txt does not block query URLs. The new dynamic sitemap includes only indexable active base product, category and brand URLs; it never includes variant paths. Demo fixtures are correctly absent because they are explicitly robotsIndex false.
+
+Verification stayed implementation-focused: TypeScript, ESLint and the production build pass. Live Atlas-backed HTTP checks returned 200 for all four listing scopes, exposed the expected route-specific facets, produced readable variant links, applied compound price/availability filters, and emitted filtered/search noindex metadata. The sitemap and robots routes return 200. CUA visual automation remains unavailable because the Windows sandbox helper exits during initialization, so responsive visual/keyboard behavior is not claimed from automated browser control.
+
+Next feature boundary: catalog discovery is usable. Cart and wishlist persistence/actions are the next customer-facing dependency before checkout. Homepage merchandising can consume the same public product-card projection after its design is approved.
 ### Catalog discovery query-engine stage, 2026-10-08
 
 Implemented the server-only shared engine under src/modules/catalog/discovery: validated scope/filter/sort/page contracts; Atlas same-variant matching; distinct-product facets excluding their own filters; inclusive-GST price bounds; active taxonomy/descendant resolution; SKU/product search with real deterministic scoring; twelve-product pagination; safe representative-variant card projection and batched image resolution. All four future listing routes can reuse this entry point. First-publication time is preserved by product saves, with compatible historical fallback.

@@ -4,6 +4,15 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { publicCategory } from "@/modules/categories/public";
+import {
+  CatalogListing,
+  InvalidCatalogQuery,
+} from "@/modules/catalog/discovery/CatalogListing";
+import {
+  listingSeo,
+  loadCatalogListing,
+  type RouteSearchParams,
+} from "@/modules/catalog/discovery/loader";
 import { Breadcrumbs } from "@/shared/ui/storefront/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
@@ -12,23 +21,27 @@ const appOrigin = () => process.env.APP_URL ?? "http://localhost:3300";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<RouteSearchParams>;
 }): Promise<Metadata> {
   const row = await read((await params).slug);
   if (!row || row.kind === "redirect")
     return { robots: { index: false, follow: false } };
   const title = row.seo.title || row.name;
   const description = row.seo.description || row.description.slice(0, 170);
-  const canonical = new URL(
-    row.seo.canonicalPath || "/category/" + row.slug,
-    appOrigin(),
-  ).toString();
+  const basePath = row.seo.canonicalPath || "/category/" + row.slug;
+  const seo = listingSeo(await searchParams, basePath);
+  const canonical = new URL(seo.canonical, appOrigin()).toString();
   return {
     title,
     description,
     alternates: { canonical },
-    robots: { index: row.seo.robotsIndex, follow: row.seo.robotsFollow },
+    robots: {
+      index: row.seo.robotsIndex && seo.index,
+      follow: row.seo.robotsFollow,
+    },
     openGraph: {
       title,
       description,
@@ -40,13 +53,20 @@ export async function generateMetadata({
 
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<RouteSearchParams>;
 }) {
   const row = await read((await params).slug);
   if (!row) notFound();
   if (row.kind === "redirect") permanentRedirect(row.destination);
 
+  const basePath = "/category/" + row.slug;
+  const listing = await loadCatalogListing(
+    { kind: "category", slug: row.slug },
+    await searchParams,
+  );
   const breadcrumbs = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -57,12 +77,12 @@ export default async function CategoryPage({
       item: new URL("/category/" + item.slug, appOrigin()).toString(),
     })),
   };
-
   const breadcrumbItems = [
     { label: "Home", href: "/" },
-    ...row.crumbs.map((c, i) => ({
-      label: c.name,
-      href: i === row.crumbs.length - 1 ? undefined : "/category/" + c.slug,
+    ...row.crumbs.map((crumb, index) => ({
+      label: crumb.name,
+      href:
+        index === row.crumbs.length - 1 ? undefined : "/category/" + crumb.slug,
     })),
   ];
 
@@ -71,11 +91,10 @@ export default async function CategoryPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbs).replace(/</g, "\u003c"),
+          __html: JSON.stringify(breadcrumbs).replace(/</g, "\\u003c"),
         }}
       />
       <Breadcrumbs items={breadcrumbItems} />
-
       <section className="sf-category-hero">
         {row.image && (
           <div className="sf-category-image-wrap">
@@ -97,8 +116,7 @@ export default async function CategoryPage({
           )}
         </div>
       </section>
-
-      {row.children.length > 0 ? (
+      {row.children.length > 0 && (
         <section className="sf-category-section">
           <h2 className="sf-category-section-title">Browse categories</h2>
           <div className="sf-child-category-grid">
@@ -119,13 +137,17 @@ export default async function CategoryPage({
             ))}
           </div>
         </section>
+      )}
+      {listing.kind === "invalid" ? (
+        <InvalidCatalogQuery basePath={basePath} />
       ) : (
-        <div className="sf-catalog-notice">
-          <p>
-            Products in <strong>{row.name}</strong> will be displayed here once
-            catalog listing is released.
-          </p>
-        </div>
+        <CatalogListing
+          result={listing.result}
+          basePath={basePath}
+          eyebrow="Collection"
+          title={`Products in ${row.name}`}
+          headingLevel={2}
+        />
       )}
     </div>
   );
