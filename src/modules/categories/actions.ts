@@ -12,7 +12,7 @@ const messages: Record<string, string> = {
     "Choose an active parent for active categories. Move or deactivate children before changing their parent’s availability.",
   CATEGORY_ARCHIVED: "Archived categories cannot be restored in this version.",
   CATEGORY_IN_USE:
-    "Reassign this category’s products before deactivating or archiving it.",
+    "Reassign this category as the primary category of published products before deactivating or archiving it.",
   CATEGORY_LIMIT: "The 1,000-category limit has been reached.",
   SLUG_RESERVED: "This URL is reserved by another category’s redirect history.",
   DB_DUPLICATE_KEY: "This category URL already exists. Choose another slug.",

@@ -1,3 +1,5 @@
+import { attributeIndexes } from "../../modules/attributes/indexes.ts";
+import { catalogIndexes } from "../../modules/catalog/indexes.ts";
 import "server-only";
 import { categoryIndexes } from "../../modules/categories/indexes.ts";
 import { brandIndexes } from "../../modules/brands/indexes.ts";
@@ -7,4 +9,6 @@ export const approvedIndexes: readonly CollectionIndexes[] = [
   ...identityIndexes,
   ...categoryIndexes,
   ...brandIndexes,
+  ...attributeIndexes,
+  ...catalogIndexes,
 ];

@@ -117,6 +117,19 @@ export function categoryService(
         ]),
       );
       return {
+        affectedProducts: row
+          ? (
+              await database.db
+                .collection("products")
+                .find(
+                  { primaryCategoryId: row._id, status: "ACTIVE" },
+                  { projection: { name: 1 } },
+                )
+                .sort({ _id: 1 })
+                .limit(21)
+                .toArray()
+            ).map((p) => ({ id: p._id.toString(), name: String(p.name) }))
+          : [],
         value: row
           ? {
               id: row._id.toString(),
@@ -227,15 +240,13 @@ export function categoryService(
         }
         if (
           (!value.active || value.archived) &&
-          (await database.db
-            .collection("products")
-            .countDocuments(
-              {
-                $or: [{ categoryIds: id }, { primaryCategoryId: id }],
-                status: { $ne: "ARCHIVED" },
-              },
-              { session },
-            ))
+          (await database.db.collection("products").countDocuments(
+            {
+              primaryCategoryId: id,
+              status: "ACTIVE",
+            },
+            { session },
+          ))
         )
           throw new DomainError("CATEGORY_IN_USE");
         for (const mediaId of [value.thumbnailId, value.bannerId])
@@ -267,20 +278,18 @@ export function categoryService(
               { $set: { toPath: newPath, updatedAt: new Date() } },
               { session },
             );
-          await database.db
-            .collection("redirects")
-            .insertOne(
-              {
-                fromPath: "/category/" + prior.slug,
-                toPath: newPath,
-                statusCode: 301,
-                entityId: id,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                schemaVersion: 1,
-              },
-              { session },
-            );
+          await database.db.collection("redirects").insertOne(
+            {
+              fromPath: "/category/" + prior.slug,
+              toPath: newPath,
+              statusCode: 301,
+              entityId: id,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              schemaVersion: 1,
+            },
+            { session },
+          );
         }
         const fields = {
           name: value.name,
@@ -323,61 +332,57 @@ export function categoryService(
             ],
             { session },
           );
-        await database.db
-          .collection("auditLogs")
-          .insertOne(
-            {
-              actorType: "ACCOUNT",
-              actorId: actor.authUserId,
-              action: prior ? "CATEGORY_UPDATED" : "CATEGORY_CREATED",
-              entityType: "category",
-              entityId: id.toString(),
-              before: prior
-                ? {
-                    slug: prior.slug,
-                    parentId: prior.parentId?.toString(),
-                    active: prior.active,
-                  }
-                : null,
-              after: {
-                slug: value.slug,
-                parentId: value.parentId,
-                active: fields.active,
-                archived: value.archived,
-              },
-              occurredAt: new Date(),
-              createdAt: new Date(),
-              schemaVersion: 1,
+        await database.db.collection("auditLogs").insertOne(
+          {
+            actorType: "ACCOUNT",
+            actorId: actor.authUserId,
+            action: prior ? "CATEGORY_UPDATED" : "CATEGORY_CREATED",
+            entityType: "category",
+            entityId: id.toString(),
+            before: prior
+              ? {
+                  slug: prior.slug,
+                  parentId: prior.parentId?.toString(),
+                  active: prior.active,
+                }
+              : null,
+            after: {
+              slug: value.slug,
+              parentId: value.parentId,
+              active: fields.active,
+              archived: value.archived,
             },
-            { session },
-          );
-        await database.db
-          .collection("jobs")
-          .insertOne(
-            {
-              kind: "INVALIDATE_PUBLIC_CACHE",
-              businessKey:
-                "category:" + id + ":" + (prior ? prior.revision + 1 : 0),
-              payload: {
-                tags: [
-                  "category:" + id,
-                  "catalog",
-                  "navigation",
-                  "home",
-                  "sitemap",
-                ],
-                paths: [newPath, ...(prior ? ["/category/" + prior.slug] : [])],
-              },
-              state: "PENDING",
-              dueAt: new Date(),
-              attempts: 0,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              schemaVersion: 1,
-              revision: 0,
+            occurredAt: new Date(),
+            createdAt: new Date(),
+            schemaVersion: 1,
+          },
+          { session },
+        );
+        await database.db.collection("jobs").insertOne(
+          {
+            kind: "INVALIDATE_PUBLIC_CACHE",
+            businessKey:
+              "category:" + id + ":" + (prior ? prior.revision + 1 : 0),
+            payload: {
+              tags: [
+                "category:" + id,
+                "catalog",
+                "navigation",
+                "home",
+                "sitemap",
+              ],
+              paths: [newPath, ...(prior ? ["/category/" + prior.slug] : [])],
             },
-            { session },
-          );
+            state: "PENDING",
+            dueAt: new Date(),
+            attempts: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            schemaVersion: 1,
+            revision: 0,
+          },
+          { session },
+        );
       }, database);
       return { id: id.toString() };
     },

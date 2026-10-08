@@ -1,6 +1,18 @@
 # Foundation progress
 
-Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/brand-management.
+Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
+
+### Product, variant, attribute and media checkpoint, 2026-10-08
+
+Implemented /admin/attributes and /admin/products with create/edit/preview routes. Products require a brand, categories and one primary category. Typed attributes and stable option IDs drive a reviewed variant-generation diff; variants own SKU, barcode, inclusive/exclusive GST price entry, discounts, private cost, tracked/status-only availability, shipping dimensions and specifications. Saves enforce product revisions, unique identities, reservation boundaries, fresh authority, durable redirects and audit/cache jobs. Primary-category archive protection now identifies affected published products.
+
+The Media tab has explicit thumbnail, optional hover image, gallery, per-variant galleries, ordered manufacturer A+ sections, YouTube links and Cloudinary video uploads. Every image role supports file uploads or a validated public HTTPS URL. The public product page combines images and videos in one gallery, displays manufacturer content, resolves stable variant query URLs, and excludes private cost/notes/stock counts. Uploads precede the transactional save. Unassigned shared assets are retained; automated orphan deletion is not implemented.
+
+Atlas received 17 reviewed missing attribute/product/variant/tax-policy indexes after a clean dry run. A real save regression exposed the pinned driver's inherited-timeout incompatibility in bulk operations; the repository now executes bounded ordered commands on the same MongoClient/session. [ADR 0010](adr/0010-catalog-pricing-and-public-variants.md) records price policy, media, URL, caching and transaction decisions.
+
+Verification: 181 unit checks pass; five focused Atlas catalog/category checks pass, including conflicting SKU/variant writes and rollback, optimistic revisions, reserved stock, public-field exclusion and draft/archive visibility. Typecheck and production build passed. Lint passed after correcting the edit-route error boundary. No new package was installed. The build used a separate ignored output directory to preserve the development server.
+
+Limits: CUA could not start due to the Windows sandbox helper error, so responsive browser/keyboard review and live mixed-media playback are not claimed. The new video adapter compiled but no real video was uploaded during this slice. Google Rich Results validation remains manual. Full storefront listing grids, rendering related-product cards, production scheduler/dead-job recovery and safe provider orphan cleanup remain follow-up work; do not describe all catalog/commerce features as complete.
 
 ### Brand management delivered, 2026-10-08
 

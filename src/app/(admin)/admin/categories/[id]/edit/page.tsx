@@ -34,6 +34,31 @@ export default async function EditCategoryPage({
         title={"Edit " + data.value.name}
         description="Update storefront placement, images, visibility and search metadata."
       />
+      {data.affectedProducts.length > 0 && (
+        <aside className="admin-notice warning">
+          <div>
+            <strong>Primary category for published products</strong>
+            <p>
+              Reassign these products before deactivating or archiving this
+              category.
+            </p>
+            <ul>
+              {data.affectedProducts.slice(0, 20).map((p) => (
+                <li key={p.id}>
+                  <Link href={"/admin/products/" + p.id + "/edit"}>
+                    {p.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {data.affectedProducts.length > 20 && (
+              <Link href={"/admin/products?category=" + id + "&status=ACTIVE"}>
+                View all affected products
+              </Link>
+            )}
+          </div>
+        </aside>
+      )}
       <CategoryForm
         initial={data.value}
         initialMedia={data.media}

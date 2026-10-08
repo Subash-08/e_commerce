@@ -4,6 +4,20 @@ const nextConfig = {
   agentRules: false,
   devIndicators: false,
   logging: { incomingRequests: false },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
