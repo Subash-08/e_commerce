@@ -35,6 +35,12 @@ export const catalogIndexes: readonly CollectionIndexes[] = [
     indexes: [
       { name: "variants_sku_unique", key: { normalizedSku: 1 }, unique: true },
       {
+        name: "variants_product_url_key_unique",
+        key: { productId: 1, urlKey: 1 },
+        unique: true,
+        partialFilterExpression: { urlKey: { $type: "string" } },
+      },
+      {
         name: "variants_combination_unique",
         key: { productId: 1, combinationKey: 1 },
         unique: true,

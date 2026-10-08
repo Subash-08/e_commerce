@@ -16,6 +16,8 @@ import {
   demoProducts,
 } from "./fixtures/demo-catalog.ts";
 
+import { assignVariantKeys } from "../src/modules/catalog/urls.ts";
+
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
 const approved = args.has("--approve");
@@ -210,6 +212,28 @@ async function seed() {
         },
         { upsert: true, session },
       );
+      const existingKeys = await handle.db
+        .collection("variants")
+        .find(
+          { productId },
+          { session, projection: { urlKey: 1, title: 1, sku: 1, options: 1 } },
+        )
+        .toArray();
+      const urlKeys = assignVariantKeys(
+        [
+          ...existingKeys.map((v) => ({
+            id: v._id.toString(),
+            urlKey: v.urlKey as string | undefined,
+            title: String(v.title ?? ""),
+            sku: String(v.sku),
+            options: v.options as (typeof variants)[number]["options"],
+          })),
+          ...variants.filter(
+            (v) => !existingKeys.some((old) => old._id.toString() === v.id),
+          ),
+        ],
+        demoAttributes.map((a) => ({ id: a.id, options: [...a.options] })),
+      );
       for (const variant of variants) {
         const { id, barcode, onHand, ...variantFields } = variant;
         const taxPolicyKey = `gst-v1-${variant.priceMode.toLowerCase()}-${variant.gstRateBps}`;
@@ -236,6 +260,7 @@ async function seed() {
           {
             $set: {
               ...variantFields,
+              urlKey: urlKeys.get(id),
               productId,
               normalizedSku: normalizeSku(variant.sku),
               combinationKey: combinationKey(variant.options),

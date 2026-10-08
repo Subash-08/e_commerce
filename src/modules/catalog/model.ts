@@ -77,6 +77,7 @@ const productSchema = new Schema(
 const variantSchema = new Schema(
   {
     productId: Schema.Types.ObjectId,
+    urlKey: String,
     sku: String,
     normalizedSku: String,
     barcode: String,

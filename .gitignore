@@ -14,3 +14,4 @@ playwright-report/
 .cache/
 next-env.d.ts
 .vitest/
+.build-check/

@@ -34,6 +34,8 @@
     "check:production-driver": "node scripts/check-production-driver.mjs",
     "auth:bootstrap": "node --conditions=react-server --experimental-strip-types scripts/auth-bootstrap.ts",
     "auth:repair": "node --conditions=react-server --experimental-strip-types scripts/auth-repair.ts",
+    "catalog:urls:check": "node --conditions=react-server --experimental-strip-types scripts/migrate-variant-urls.ts --dry-run",
+    "catalog:urls:apply": "node --conditions=react-server --experimental-strip-types scripts/migrate-variant-urls.ts --approve",
     "seed:demo:check": "node --conditions=react-server --experimental-strip-types scripts/seed-demo-catalog.ts --dry-run",
     "seed:demo": "node --conditions=react-server --experimental-strip-types scripts/seed-demo-catalog.ts"
   },

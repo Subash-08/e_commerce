@@ -5,6 +5,7 @@ import type { ProductInput, VariantInput } from "./validation";
 export type VariantRecord = Omit<VariantInput, "id" | "barcode" | "onHand"> & {
   _id: ObjectId;
   productId: ObjectId;
+  urlKey?: string;
   normalizedSku: string;
   combinationKey: string;
   barcode?: string;

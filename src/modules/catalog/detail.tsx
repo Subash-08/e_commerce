@@ -1,7 +1,13 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import {
+  useSearchParams,
+  useParams,
+  usePathname,
+  useRouter,
+} from "next/navigation";
+import { variantPath } from "./urls";
 import { ProductGallery } from "./gallery";
 import type { PublicProduct } from "./public";
 import { selectVariant } from "./selection";
@@ -20,15 +26,26 @@ export function ProductDetail({
   initialVariant?: string;
 }) {
   const query = useSearchParams();
-  const requested = query ? query.get("variant") : initialVariant;
+  const params = useParams<{ variantKey?: string }>();
+  const pathname = usePathname();
+  const router = useRouter();
+  const preview = pathname.startsWith("/admin/");
+  const requested = params.variantKey
+    ? (product.variants.find((v) => v.urlKey === params.variantKey)?.id ??
+      "unavailable")
+    : (query?.get("variant") ?? initialVariant);
   const { variant, unavailable } = selectVariant(product, requested);
 
   const gallery = variant?.images.length ? variant.images : product.images;
 
+  function hrefFor(id: string) {
+    const target = product.variants.find((v) => v.id === id)!;
+    return preview
+      ? pathname + "?variant=" + id
+      : variantPath(product.slug, target.urlKey);
+  }
   function choose(id: string) {
-    const url = new URL(window.location.href);
-    url.searchParams.set("variant", id);
-    window.history.pushState({ variant: id }, "", url);
+    router.push(hrefFor(id), { scroll: false });
   }
 
   return (
@@ -58,8 +75,8 @@ export function ProductDetail({
                 ⚠️
               </span>
               <span>
-                The requested variant is no longer available. Showing an
-                available selection.
+                The requested variant is no longer available. Showing the
+                default selection.
               </span>
             </div>
           )}
@@ -110,15 +127,8 @@ export function ProductDetail({
                         (o) => o.optionId === option.id,
                       );
 
-                      return (
-                        <button
-                          type="button"
-                          key={option.id}
-                          disabled={!target}
-                          aria-pressed={selected}
-                          onClick={() => target && choose(target.id)}
-                          className="product-axis-btn"
-                        >
+                      const content = (
+                        <>
                           {axis.type === "COLOUR" && (
                             <span
                               className="product-swatch"
@@ -129,9 +139,31 @@ export function ProductDetail({
                           <span>{option.label}</span>
                           {target && !target.available && (
                             <span className="product-axis-soldout">
+                              {" "}
                               · sold out
                             </span>
                           )}
+                        </>
+                      );
+                      return target ? (
+                        <Link
+                          key={option.id}
+                          href={hrefFor(target.id)}
+                          scroll={false}
+                          prefetch={false}
+                          aria-current={selected ? "true" : undefined}
+                          className="product-axis-btn"
+                        >
+                          {content}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          key={option.id}
+                          disabled
+                          className="product-axis-btn"
+                        >
+                          {content}
                         </button>
                       );
                     })}

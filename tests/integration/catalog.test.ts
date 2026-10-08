@@ -10,6 +10,7 @@ import { catalogFixture } from "../fixtures/catalog";
 import type { DatabaseHandle } from "../../src/server/db/connection";
 import { catalogService } from "../../src/modules/catalog/service";
 import { readPublicProduct } from "../../src/modules/catalog/public";
+import { productRedirect } from "../../src/modules/catalog/url-resolution";
 import { selectVariant } from "../../src/modules/catalog/selection";
 import { catalogIndexes } from "../../src/modules/catalog/indexes";
 import { categoryIndexes } from "../../src/modules/categories/indexes";
@@ -159,5 +160,90 @@ describe("catalog transactional boundaries", () => {
         .collection("variants")
         .countDocuments({ productId: new ObjectId(created.id) }),
     ).toBe(1);
+  });
+  it("keeps keys immutable, prevents duplicate keys and resolves repeated renames in one hop", async () => {
+    const value = input("url-routing");
+    value.variants[0].title = "24 inch";
+    const created = await service.save(new Headers(), value);
+    const productId = new ObjectId(created.id);
+    const variantId = new ObjectId(value.defaultVariantId);
+    const variant = await database.db
+      .collection("variants")
+      .findOne({ _id: variantId });
+    expect(variant?.urlKey).toBe("24-inch");
+    await expect(
+      database.db.collection("variants").insertOne({
+        ...variant,
+        _id: new ObjectId(),
+        normalizedSku: "UNIQUE-URL-CONFLICT",
+        combinationKey: "unique-url-conflict",
+      }),
+    ).rejects.toMatchObject({ code: 11000 });
+    await service.save(new Headers(), {
+      ...value,
+      id: created.id,
+      revision: 0,
+      slug: "url-second",
+      variants: [{ ...value.variants[0], title: "Renamed label" }],
+    });
+    await service.save(new Headers(), {
+      ...value,
+      id: created.id,
+      revision: 1,
+      slug: "url-final",
+    });
+    expect(
+      await productRedirect(
+        database.db,
+        value.slug,
+        undefined,
+        value.defaultVariantId,
+      ),
+    ).toBe("/product/url-final/24-inch");
+    expect(await productRedirect(database.db, "url-second", "24-inch")).toBe(
+      "/product/url-final/24-inch",
+    );
+    expect(
+      await productRedirect(database.db, "url-final", "24-inch"),
+    ).toBeNull();
+    expect(
+      await productRedirect(
+        database.db,
+        "url-final",
+        undefined,
+        new ObjectId().toString(),
+      ),
+    ).toBe("/product/url-final/unavailable");
+    await database.db
+      .collection("variants")
+      .updateOne(
+        { _id: variantId },
+        { $set: { archived: true, active: false } },
+      );
+    expect(
+      await productRedirect(
+        database.db,
+        value.slug,
+        undefined,
+        value.defaultVariantId,
+      ),
+    ).toBe("/product/url-final/24-inch");
+    expect(
+      (await readPublicProduct("url-final", false, database))?.variants,
+    ).toHaveLength(0);
+    for (const status of ["DRAFT", "ARCHIVED"]) {
+      await database.db
+        .collection("products")
+        .updateOne({ _id: productId }, { $set: { status } });
+      expect(
+        await productRedirect(
+          database.db,
+          value.slug,
+          undefined,
+          value.defaultVariantId,
+        ),
+      ).toBeNull();
+      expect(await readPublicProduct("url-final", false, database)).toBeNull();
+    }
   });
 });

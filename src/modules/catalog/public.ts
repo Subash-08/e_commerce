@@ -65,6 +65,7 @@ export async function readPublicProduct(
         {
           projection: {
             sku: 1,
+            urlKey: 1,
             barcode: 1,
             title: 1,
             options: 1,
@@ -86,6 +87,9 @@ export async function readPublicProduct(
       .toArray(),
   ]);
   if ((!brand || !category) && !preview) return null;
+  // Do not cache ID-based stand-ins while the additive migration is pending.
+  if (!preview && variants.some((v) => !v.urlKey))
+    throw new Error("CATALOG_URL_MIGRATION_REQUIRED");
   const imageIds = [
     ...new Set(
       [
@@ -203,6 +207,7 @@ export async function readPublicProduct(
       })),
     variants: variants.map((v) => ({
       id: v._id.toString(),
+      urlKey: v.urlKey ?? v._id.toString(),
       sku: v.sku,
       barcode: v.barcode,
       title: v.title,
@@ -251,7 +256,7 @@ export async function readPublicProduct(
 }
 export const publicProduct = unstable_cache(
   (slug: string) => readPublicProduct(slug),
-  ["product-detail-v1"],
+  ["product-detail-v3-readable-urls"],
   { tags: ["catalog"], revalidate: 60 },
 );
 export type PublicProduct = NonNullable<

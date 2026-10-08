@@ -11,6 +11,7 @@ import {
 } from "./repository";
 import type { AttributeRecord } from "../attributes/repository";
 import { priceBreakdown } from "./pricing";
+import { assignVariantKeys } from "./urls";
 
 export function listingSummary(variants: VariantRecord[], revision: number) {
   const active = variants.filter((v) => v.active && !v.archived);
@@ -314,6 +315,15 @@ export function catalogService(
         const definitions = new Map(
           attributes.map((a) => [a._id.toString(), a]),
         );
+        const urlKeys = assignVariantKeys(
+          [
+            ...existing.map((v) => ({ ...v, id: v._id.toString() })),
+            ...value.variants.filter(
+              (v) => !existing.some((old) => old._id.toString() === v.id),
+            ),
+          ],
+          attributes.map((a) => ({ id: a._id.toString(), options: a.options })),
+        );
         const combinations = new Set<string>();
         const skus = new Set<string>();
         const barcodes = new Set<string>();
@@ -386,6 +396,7 @@ export function catalogService(
             ...fields,
             _id: new ObjectId(variant.id),
             productId: id,
+            urlKey: urlKeys.get(variant.id)!,
             normalizedSku: sku,
             combinationKey: key,
             ...(barcode ? { barcode } : {}),
@@ -443,6 +454,7 @@ export function catalogService(
             requireFact(!old.reserved, "RESERVATIONS_EXIST");
             next.push({
               ...old,
+              urlKey: urlKeys.get(old._id.toString())!,
               archived: true,
               active: false,
               revision: old.revision + 1,
