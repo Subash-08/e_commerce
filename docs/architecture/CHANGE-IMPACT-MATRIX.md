@@ -1,5 +1,7 @@
 # Change-impact matrix
 
+Shipping policy edits: validate the entire document, enforce ADMIN and expected revision, atomically preserve before/after audit snapshots, refresh the Admin page. No policy cache exists. Subsequent previews/resolution re-read policy and immutable tax references. Future order acceptance must revalidate revision; historical orders keep their snapshot. Restoring audit history creates a new revision and cannot grant tax approval. See [ADR 0012](../adr/0012-shipping-policy-and-calculation.md).
+
 Rule: mutable catalog/profile/settings changes never rewrite existing order pricing/customer/address snapshots or issued invoices. Unpaid orders also preserve their accepted snapshot; expired or edited purchases require a new quote/order. Public cache is not a transaction authority.
 
 | Change | Immediate authoritative writes | Live dependents | Invalidation/recovery | Historical behavior / tests |

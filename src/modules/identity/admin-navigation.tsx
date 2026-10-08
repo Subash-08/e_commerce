@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const items = [
+  { href: "/admin/settings", title: "Settings", icon: "⚙" },
   { href: "/admin/coupons", title: "Coupons", icon: "%" },
   { href: "/admin/products", title: "Products", icon: "□" },
   { href: "/admin/attributes", title: "Attributes", icon: "≡" },

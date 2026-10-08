@@ -4,6 +4,7 @@ const skipped = new Set([
   ".git",
   "node_modules",
   ".next",
+  ".build-check",
   ".tools",
   ".cache",
   ".validation",

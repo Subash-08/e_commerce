@@ -8,8 +8,10 @@ Finish, verify, report and stop after each gate:
 
 1. **1A — Shipping policy and calculator.** Versioned Admin settings and one pure shipping service.
 2. **1B — Checkout and authoritative quotes.** Guest/account contact, addresses, coupon/shipping preview and short-lived server quotes. No order, reservation or claim.
-3. **2 — Order acceptance and payment.** Atomic order snapshots, tracked-stock reservations, coupon claims, optional COD and Razorpay test payments.
-4. **3 — Purchase operations.** Customer/admin orders, guest tracking, reconciliation, notifications, invoices, shipping and refunds.
+3. **2A — Order acceptance.** Atomic snapshots, tracked-stock reservations, coupon claims and COD; no provider calls. Report and stop.
+4. **2B — Razorpay binding.** Provider order binding, verified callback and webhook. Record exact SDK compatibility/version; report and stop.
+5. **2C — Recovery.** Expiry, reconciliation and late capture with/without stock. Report and stop. Online purchasing must remain disabled until this recovery gate passes.
+6. **3 — Purchase operations.** Customer/admin orders, guest tracking, notifications, invoices, shipping and refunds.
 
 Wishlist is independent and may follow 1B or phase 3. Browser prices, totals, stock, roles, coverage and payment results are untrusted hints. The server reads fresh Atlas facts and invokes the existing integer-paise pricing engine. React only renders returned facts.
 
@@ -35,9 +37,9 @@ type ShippingPolicy = {
     stateCodes: string[];
     pinPrefixes: string[];
   };
-  shippingTaxPolicyKey: string;
+  shippingTaxPolicyKey: string | null;
   taxReview: {
-    status: "REQUIRES_CA_REVIEW" | "APPROVED";
+    approved: boolean; // Derived from independently reviewed immutable tax facts, not Admin input.
     reviewedAt: Date | null;
     reviewReference: string | null;
   };
@@ -63,13 +65,17 @@ Money is integer paise. The form may accept rupee strings only through the exist
 
 Shipping tax never follows a guessed or dominant item rate. `shippingTaxPolicyKey` references an immutable reviewed `INCLUSIVE`, `EXCLUSIVE` or `EXEMPT` tax policy. Checkout remains visibly non-production-ready while CA review is pending. The same applies to a taxable COD surcharge.
 
-India V1 accepts a normalized state code and six-digit PIN matching `^[1-9][0-9]{5}$`. PIN prefixes contain 1–6 digits; lists are deduplicated and bounded. `ALLOW_LIST` requires at least one state or PIN entry and allows any match. `BLOCK_LIST` rejects any match. PIN entries take precedence over state entries when more specific. These rules express merchant policy, not courier-confirmed availability.
+India V1 accepts an application allowlisted state/UT code and six-digit PIN matching `^[1-9][0-9]{5}$`. PIN prefixes contain 1–6 digits; lists are deduplicated and bounded. `ALLOW_LIST` requires at least one state or PIN entry and allows any match. `BLOCK_LIST` rejects any match. There is no state/PIN precedence. COD is evaluated only after serviceability and cannot widen coverage. These rules express merchant policy, not courier-confirmed availability.
 
 The pure shipping service receives destination, merchandise payable after discounts, payment choice, policy and tax facts. It returns serviceability, standard/waived/surcharge amounts, waiver reason (`NONE`, `THRESHOLD`, `FREE_SHIPPING_COUPON`), COD eligibility and public issue codes.
 
 Automatic free-shipping basis is GST-inclusive merchandise payable after item/order discounts, excluding shipping and COD fees. Comparison is `>=` in paise: ₹1,999.00 qualifies at ₹1,999; ₹1,998.99 does not. A discount that drops merchandise below the threshold restores shipping. A coupon cannot make an unsupported destination serviceable.
 
-Every save uses revision compare-and-swap inside an Atlas transaction, fresh ADMIN authority and minimal audit. Settings contain business policy, never provider credentials.
+Every save validates the full document and uses revision compare-and-swap inside an Atlas transaction with fresh ADMIN authority. Audit retains complete previous/new policy snapshots, including monetary values, and canonical auth actor IDs; it stores no unrelated personal data. Settings contain business policy, never provider credentials. Missing/invalid/future-version settings fail closed. See [ADR 0012](../adr/0012-shipping-policy-and-calculation.md) for the implemented contract.
+
+Quote TTL is 600–900 seconds; online payment deadline is 900–1800 seconds. Future provider sessions must fit the remaining deadline with at least a 60-second margin, alongside mandatory late-capture recovery. COD reservationDeadlineHours is a 1–168-hour alert only; no automatic release. Normal Admin Save cannot approve tax. Reviewed tax facts are provisioned separately; draft settings and clearly labelled estimates remain usable.
+
+Later gate clarifications: guest ownership uses a signed httpOnly checkout-session cookie, rotated for each new checkout session. Clearing it requires a new quote and never transfers order ownership by email. placeOrder receives normalized full inputs again and compares their fingerprint with the stored quote; hashes cannot reconstruct addresses. FREE_SHIPPING lands with pricing, registry, coupon admin/preview and focused tests in one commit. Record host, scheduler and durable rate-limit strategy before 2A. Select an HTTPS tunnel or deployed staging webhook URL before 2B; no tunnel or provider is installed in 1A. Consent versions initially come from typed settings with a later pages-collection migration.
 
 ### 1A acceptance
 

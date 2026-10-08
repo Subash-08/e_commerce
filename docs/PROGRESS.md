@@ -1,6 +1,18 @@
 # Foundation progress
 
-Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
+Updated 2026-10-09. Workspace: D:\AI\e-commerce. Branch: codex/shipping-settings.
+
+### Phase 1A shipping implementation, 2026-10-09
+
+Implemented /admin/settings navigation and /admin/settings/shipping with delivery charge, discounted-GST-inclusive free-shipping threshold, any-match state/PIN coverage, COD exclusions/surcharge/fulfillment alert, immutable tax-reference selection, bounded quote/payment timing, inline validation, save feedback, revision conflicts and loading previous policy snapshots into a draft. India/INR only is enforced by the server; there is no alternate currency setting. Admin preview invokes the shared pure calculator on the server, including unsaved form values; it never mutates a cart, stock, order or payment.
+
+Atlas settings saves require active ADMIN authority and current authVersion, validate the entire policy, compare revision, and transactionally record full before/after policy snapshots with canonical actor IDs. The reviewed settings_key_unique index was dry-run then applied; no existing indexes or business records were deleted. There is no configuration cache or silently seeded delivery fee. Missing/invalid policy, disabled shipping, unsupported destination and missing/unreviewed tax facts fail closed. Normal Save cannot approve tax: reviewed immutable shipping/COD references must be provisioned separately after actual CA review. Unreviewed Admin calculations are estimates. See [ADR 0012](adr/0012-shipping-policy-and-calculation.md).
+
+Verification: TypeScript, ESLint, isolated production build, 200 unit checks, and the focused real-Atlas shipping transaction check passed. Coverage includes the state/PIN any-match table, one-paisa threshold, COD serviceability ordering, tax review gating, INR-only validation, full audit snapshots, concurrent saves, STAFF/CUSTOMER denial, stale authVersion and unsupported schema versions. Formatting, docs links, enum/secret checks and all eleven Mermaid renders passed. The source scanner now excludes the ignored .build-check output. The new shipping route is registered in the manifest; structural route validation is separate from the older scaffold runtime script, which assumes every page is a placeholder and deliberately disables database/auth configuration.
+
+Browser limitation: CUA failed to initialize. Authenticated browser save/reload, mobile layout and keyboard walkthrough are not claimed; the user has opened the new page and reported its initial configuration banner. No provider credential, dependency or tax approval was added. Feature code is implemented; the authenticated browser acceptance walkthrough and the client's actual shipping/tax values remain to be verified/configured.
+
+Stop here. Next authorized gate requires approval: 1B guest/account checkout and authoritative quotes. Later gates are now split into 2A acceptance/reservations/claims/COD, 2B Razorpay binding/callback/webhook and 2C expiry/reconciliation/late capture, with a stop after each. Host/scheduler precede 2A; live online purchasing stays off until 2C recovery is complete. FREE_SHIPPING must land with pricing, coupon UI/preview, registry and tests in one later commit. No checkout, order, claim, reservation or provider payment has been implemented in 1A.
 
 ### Cart and coupon preview checkpoint, 2026-10-08
 

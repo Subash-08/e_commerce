@@ -27,6 +27,10 @@ const source = (await filesUnder("src/app"))
   );
 if (source.length !== all.length || source.some((r) => !all.includes(r)))
   throw new Error("Manifest and filesystem route mismatch");
+if (process.argv.includes("--structure-only")) {
+  console.log("Route manifest, documentation and filesystem agree.");
+  process.exit(0);
+}
 const require = createRequire(import.meta.url);
 const mermaidRequire = createRequire(
   require.resolve("@mermaid-js/mermaid-cli"),

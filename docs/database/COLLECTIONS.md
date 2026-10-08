@@ -1,5 +1,7 @@
 # Conceptual collection contracts
 
+Phase 1A shipping uses a flat typed settings document (instead of the generic value wrapper) with key shipping, schemaVersion 1, revision, timestamps, canonical updatedBy, delivery/coverage/COD/timing fields and derived taxReview. Reviewed additive index: settings_key_unique on key. Full previous/new policies are retained transactionally in auditLogs. Immutable tax policies may carry separately provisioned deliveryReview evidence; Admin Save cannot approve it. See [ADR 0012](../adr/0012-shipping-policy-and-calculation.md).
+
 Purpose: define ownership, shape and persistence rules before Mongoose schemas exist. No database collections have been created. Types: ID is an opaque stable identifier; commerce uses ObjectId serialized as string at boundaries. Auth IDs follow the pinned adapter and are never blindly cast to ObjectId. Money is integer paise; Date is UTC; basis points are integers. All application documents have _id, createdAt, updatedAt, schemaVersion (initial 1); mutable aggregates also have revision (initial 0). State domains reference [STATE-MACHINES](../commerce/STATE-MACHINES.md), not separate enums.
 
 Required fields are listed without ?. Optional fields use ?. Defaults apply to new documents only; never silently invent missing historical financial values. Limits are proposed product safeguards and tested at implementation.

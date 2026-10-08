@@ -1,5 +1,7 @@
 # Approved architecture decisions
 
+Shipping policy checkpoint: [ADR 0012](../adr/0012-shipping-policy-and-calculation.md) defines Phase 1A settings, tax-review separation, any-match coverage and reuse of the pure pricing engine.
+
 Approval recorded: **2026-10-06**, from the user's two attached Stage 1 reviews. Status: approved with amendments; authentication remains conditional. This supersedes the Stage 1 pending proposal. Stage 1 history is preserved in Git commit 5572b1f.
 
 ## Approval record

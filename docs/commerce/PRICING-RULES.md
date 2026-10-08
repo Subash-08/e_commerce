@@ -1,5 +1,7 @@
 # Pricing rules
 
+Phase 1A delivery implementation: [ADR 0012](../adr/0012-shipping-policy-and-calculation.md). Shipping is India/INR only; all amounts are paise. The threshold uses discounted GST-inclusive goods payable, excludes delivery/COD, and qualifies at equality. Separate delivery/COD taxes reuse calculateTax; no guessed rate or duplicated floating-point formula. A zero configured fee is permitted; disabled/unsupported delivery is unavailable, not free. Missing/unreviewed tax facts block authoritative calculation; Admin estimates are clearly labelled. FREE_SHIPPING remains a later atomic pricing/coupon/UI change.
+
 One pure pricing engine receives validated current catalog, address, coupon, shipping and tax facts. It does not fetch DB/provider data. All monetary input/output is integer paise, nonnegative and bounded to a safe maximum chosen below JS safe integer overflow. Percentage/tax rates are integer basis points. Use integer/rational intermediates (BigInt internally if necessary) with explicit conversion bounds; no binary floating-point money operations.
 
 ## Calculation order

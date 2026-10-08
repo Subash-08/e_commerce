@@ -1,5 +1,14 @@
 {
   "pages": [
+    "/admin/attributes",
+    "/admin/brands/new",
+    "/admin/brands/[id]/edit",
+    "/admin/categories/new",
+    "/admin/categories/[id]/edit",
+    "/admin/coupons/new",
+    "/admin/coupons/[id]/edit",
+    "/admin/products/[id]/preview",
+    "/product/[slug]/[variantKey]",
     "/",
     "/about",
     "/contact",
@@ -54,11 +63,14 @@
     "/admin/navigation",
     "/admin/users",
     "/admin/settings",
+    "/admin/settings/shipping",
     "/admin/logs",
     "/admin/enquiries",
     "/admin/work"
   ],
   "apis": {
+    "/api/cart": ["GET", "POST"],
+    "/api/media/video": ["POST"],
     "/api/auth/[...all]": ["GET", "POST"],
     "/api/catalog/resolve": ["POST"],
     "/api/search/suggestions": ["GET"],

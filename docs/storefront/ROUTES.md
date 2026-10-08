@@ -30,7 +30,7 @@ Legend: PUBLIC = cached public Server Component content; DYNAMIC = per-request s
 | /admin/coupons, /admin/reports | PRIVATE | uncached | noindex | Admin |
 | /admin/import, /admin/export | PRIVATE | uncached | noindex | Staff/admin catalog only |
 | /admin/homepage, /admin/pages, /admin/navigation | PRIVATE | uncached | noindex | Staff/admin; homepage placeholder only |
-| /admin/users, /admin/settings, /admin/logs | PRIVATE | uncached | noindex | Admin |
+| /admin/users, /admin/settings, /admin/settings/shipping, /admin/logs | PRIVATE | uncached | noindex | Admin |
 | /admin/enquiries | PRIVATE | uncached | noindex | Staff/admin |
 | /admin/work | PRIVATE; optional/off | uncached | noindex | Staff/admin when enabled |
 
