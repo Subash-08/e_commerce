@@ -11,6 +11,8 @@ export const demoIds = {
   brands: {
     northstar: "670000000000000000000001",
     pixelworks: "670000000000000000000002",
+    soundcraft: "670000000000000000000003",
+    hometech: "670000000000000000000004",
   },
   categories: {
     computers: "671000000000000000000001",
@@ -18,6 +20,9 @@ export const demoIds = {
     desktops: "671000000000000000000003",
     accessories: "671000000000000000000004",
     monitors: "671000000000000000000005",
+    audio: "671000000000000000000006",
+    networking: "671000000000000000000007",
+    storage: "671000000000000000000008",
   },
   attributes: {
     memory: "672000000000000000000001",
@@ -36,6 +41,7 @@ export const demoIds = {
     silver: "673000000000000000000008",
     screen24: "673000000000000000000009",
     screen27: "67300000000000000000000a",
+    screen32: "67300000000000000000000b",
   },
   products: {
     notebook: "674000000000000000000001",
@@ -43,6 +49,14 @@ export const demoIds = {
     miniPc: "674000000000000000000003",
     monitor: "674000000000000000000004",
     keyboard: "674000000000000000000005",
+    studioLaptop: "674000000000000000000006",
+    officeTower: "674000000000000000000007",
+    visionMonitor: "674000000000000000000008",
+    mouse: "674000000000000000000009",
+    earbuds: "67400000000000000000000a",
+    headset: "67400000000000000000000b",
+    router: "67400000000000000000000c",
+    portableSsd: "67400000000000000000000d",
   },
   variants: {
     notebook8: "675000000000000000000001",
@@ -55,6 +69,14 @@ export const demoIds = {
     monitor27: "675000000000000000000008",
     keyboardBlack: "675000000000000000000009",
     keyboardSilver: "67500000000000000000000a",
+    studioLaptop: "67500000000000000000000b",
+    officeTower: "67500000000000000000000c",
+    visionMonitor: "67500000000000000000000d",
+    mouse: "67500000000000000000000e",
+    earbuds: "67500000000000000000000f",
+    headset: "675000000000000000000010",
+    router: "675000000000000000000011",
+    portableSsd: "675000000000000000000012",
   },
 } as const;
 
@@ -76,6 +98,23 @@ export const demoBrands = [
       "Displays and desk accessories used to exercise catalog presentation.",
     featured: true,
     displayOrder: 20,
+  },
+  {
+    id: demoIds.brands.soundcraft,
+    name: "Demo Soundcraft",
+    slug: "demo-soundcraft",
+    description:
+      "Personal audio products for testing category and price filters.",
+    featured: true,
+    displayOrder: 30,
+  },
+  {
+    id: demoIds.brands.hometech,
+    name: "Demo HomeTech",
+    slug: "demo-hometech",
+    description: "Networking and storage products for home and small offices.",
+    featured: true,
+    displayOrder: 40,
   },
 ] as const;
 
@@ -124,6 +163,33 @@ export const demoCategories = [
     description: "Productivity and entertainment displays.",
     featured: false,
     displayOrder: 21,
+  },
+  {
+    id: demoIds.categories.audio,
+    name: "Demo Audio",
+    slug: "demo-audio",
+    parentId: demoIds.categories.accessories,
+    description: "Headphones, earbuds and personal listening products.",
+    featured: true,
+    displayOrder: 22,
+  },
+  {
+    id: demoIds.categories.networking,
+    name: "Demo Networking",
+    slug: "demo-networking",
+    parentId: null,
+    description: "Routers and connected-home equipment.",
+    featured: true,
+    displayOrder: 30,
+  },
+  {
+    id: demoIds.categories.storage,
+    name: "Demo Storage",
+    slug: "demo-storage",
+    parentId: demoIds.categories.accessories,
+    description: "Portable and desktop storage products.",
+    featured: true,
+    displayOrder: 23,
   },
 ] as const;
 
@@ -238,6 +304,12 @@ export const demoAttributes = [
         colour: "",
         active: true,
       },
+      {
+        id: demoIds.options.screen32,
+        label: "32 inch",
+        colour: "",
+        active: true,
+      },
     ],
   },
 ] as const;
@@ -262,6 +334,26 @@ const monitorImage = image(
 const keyboardImage = image(
   "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
   "Mechanical keyboard",
+);
+const audioImage = image(
+  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80",
+  "Over-ear headphones",
+);
+const earbudsImage = image(
+  "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=1200&q=80",
+  "Wireless earbuds",
+);
+const routerImage = image(
+  "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?auto=format&fit=crop&w=1200&q=80",
+  "Wireless network router",
+);
+const storageImage = image(
+  "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?auto=format&fit=crop&w=1200&q=80",
+  "Portable storage drive",
+);
+const mouseImage = image(
+  "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=1200&q=80",
+  "Computer mouse",
 );
 
 function variant(
@@ -319,6 +411,73 @@ function product(value: ProductFields): ProductInput {
   });
 }
 
+type SimpleProductFields = {
+  name: string;
+  slug: string;
+  brandId: string;
+  categoryIds: string[];
+  primaryCategoryId: string;
+  summary: string;
+  description: string;
+  modelNumber: string;
+  hsn: string;
+  tags: string[];
+  warranty: string;
+  thumbnail: ReturnType<typeof image>;
+  variantId: string;
+  sku: string;
+  variantTitle: string;
+  mrpPaise: number;
+  salePaise: number;
+  options: VariantInput["options"];
+  onHand: number | null;
+};
+
+function simpleProduct(value: SimpleProductFields): ProductInput {
+  return product({
+    name: value.name,
+    slug: value.slug,
+    brandId: value.brandId,
+    categoryIds: value.categoryIds,
+    primaryCategoryId: value.primaryCategoryId,
+    summary: value.summary,
+    description: value.description,
+    modelNumber: value.modelNumber,
+    hsn: value.hsn,
+    tags: value.tags,
+    warranty: value.warranty,
+    thumbnail: value.thumbnail,
+    hoverImage: null,
+    media: [value.thumbnail],
+    attributes: [],
+    specifications: [
+      {
+        heading: "Overview",
+        entries: [{ label: "Model", value: value.modelNumber }],
+      },
+    ],
+    features: [
+      {
+        title: "Demo catalog coverage",
+        description:
+          "Seeded to exercise storefront navigation, filters and pagination.",
+      },
+    ],
+    linkedProductIds: [],
+    defaultVariantId: value.variantId,
+    variants: [
+      variant(
+        value.variantId,
+        value.sku,
+        value.variantTitle,
+        value.mrpPaise,
+        value.salePaise,
+        value.options,
+        value.onHand,
+      ),
+    ],
+  });
+}
 export const demoProducts: ReadonlyArray<{
   id: string;
   input: ProductInput;
@@ -680,6 +839,252 @@ export const demoProducts: ReadonlyArray<{
           null,
         ),
       ],
+    }),
+  },
+  {
+    id: demoIds.products.studioLaptop,
+    input: simpleProduct({
+      name: "Demo Northstar Studio 15",
+      slug: "demo-northstar-studio-15",
+      brandId: demoIds.brands.northstar,
+      categoryIds: [demoIds.categories.computers, demoIds.categories.laptops],
+      primaryCategoryId: demoIds.categories.laptops,
+      summary: "A larger productivity laptop with 16 GB memory.",
+      description:
+        "A practical notebook fixture for listing and brand-category cross-filter checks.",
+      modelNumber: "DEMO-NSS15",
+      hsn: "84713010",
+      tags: ["demo", "laptop", "productivity"],
+      warranty: "1 year demonstration warranty",
+      thumbnail: laptopImage,
+      variantId: demoIds.variants.studioLaptop,
+      sku: "DEMO-NSS15-16",
+      variantTitle: "16 GB / 512 GB",
+      mrpPaise: 8_299_900,
+      salePaise: 7_499_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.memory,
+          optionId: demoIds.options.memory16,
+        },
+        {
+          attributeId: demoIds.attributes.storage,
+          optionId: demoIds.options.storage512,
+        },
+      ],
+      onHand: 7,
+    }),
+  },
+  {
+    id: demoIds.products.officeTower,
+    input: simpleProduct({
+      name: "Demo Northstar Office Tower",
+      slug: "demo-northstar-office-tower",
+      brandId: demoIds.brands.northstar,
+      categoryIds: [demoIds.categories.computers, demoIds.categories.desktops],
+      primaryCategoryId: demoIds.categories.desktops,
+      summary: "A dependable desktop tower for office workloads.",
+      description:
+        "A desktop fixture that broadens category and storage facet coverage.",
+      modelNumber: "DEMO-NSOT",
+      hsn: "84715000",
+      tags: ["demo", "desktop", "office"],
+      warranty: "2 year demonstration warranty",
+      thumbnail: desktopImage,
+      variantId: demoIds.variants.officeTower,
+      sku: "DEMO-NSOT-16-1T",
+      variantTitle: "16 GB / 1 TB SSD",
+      mrpPaise: 7_899_900,
+      salePaise: 6_999_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.memory,
+          optionId: demoIds.options.memory16,
+        },
+        {
+          attributeId: demoIds.attributes.storage,
+          optionId: demoIds.options.storage1tb,
+        },
+      ],
+      onHand: 4,
+    }),
+  },
+  {
+    id: demoIds.products.visionMonitor,
+    input: simpleProduct({
+      name: "Demo Pixelworks Vision 32",
+      slug: "demo-pixelworks-vision-32",
+      brandId: demoIds.brands.pixelworks,
+      categoryIds: [
+        demoIds.categories.accessories,
+        demoIds.categories.monitors,
+      ],
+      primaryCategoryId: demoIds.categories.monitors,
+      summary: "A spacious 32-inch display for creative and office work.",
+      description:
+        "A large-display fixture for screen-size and price-range filters.",
+      modelNumber: "DEMO-PWV32",
+      hsn: "85285200",
+      tags: ["demo", "monitor", "display"],
+      warranty: "3 year demonstration warranty",
+      thumbnail: monitorImage,
+      variantId: demoIds.variants.visionMonitor,
+      sku: "DEMO-PWV32",
+      variantTitle: "32 inch",
+      mrpPaise: 2_899_900,
+      salePaise: 2_499_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.screenSize,
+          optionId: demoIds.options.screen32,
+        },
+      ],
+      onHand: null,
+    }),
+  },
+  {
+    id: demoIds.products.mouse,
+    input: simpleProduct({
+      name: "Demo Pixelworks QuietMouse",
+      slug: "demo-pixelworks-quietmouse",
+      brandId: demoIds.brands.pixelworks,
+      categoryIds: [demoIds.categories.accessories],
+      primaryCategoryId: demoIds.categories.accessories,
+      summary: "A quiet wireless mouse in a dark finish.",
+      description:
+        "An out-of-stock fixture for availability filtering and empty-state checks.",
+      modelNumber: "DEMO-PWQM",
+      hsn: "84716060",
+      tags: ["demo", "mouse", "wireless"],
+      warranty: "1 year demonstration warranty",
+      thumbnail: mouseImage,
+      variantId: demoIds.variants.mouse,
+      sku: "DEMO-PWQM-BLK",
+      variantTitle: "Midnight black",
+      mrpPaise: 249_900,
+      salePaise: 199_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.colour,
+          optionId: demoIds.options.black,
+        },
+      ],
+      onHand: 0,
+    }),
+  },
+  {
+    id: demoIds.products.earbuds,
+    input: simpleProduct({
+      name: "Demo Soundcraft Wave Buds",
+      slug: "demo-soundcraft-wave-buds",
+      brandId: demoIds.brands.soundcraft,
+      categoryIds: [demoIds.categories.accessories, demoIds.categories.audio],
+      primaryCategoryId: demoIds.categories.audio,
+      summary: "Compact wireless earbuds for everyday listening.",
+      description:
+        "A personal-audio fixture for category navigation and lower-price filters.",
+      modelNumber: "DEMO-SCWB",
+      hsn: "85183000",
+      tags: ["demo", "audio", "earbuds", "wireless"],
+      warranty: "1 year demonstration warranty",
+      thumbnail: earbudsImage,
+      variantId: demoIds.variants.earbuds,
+      sku: "DEMO-SCWB-BLK",
+      variantTitle: "Midnight black",
+      mrpPaise: 499_900,
+      salePaise: 399_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.colour,
+          optionId: demoIds.options.black,
+        },
+      ],
+      onHand: null,
+    }),
+  },
+  {
+    id: demoIds.products.headset,
+    input: simpleProduct({
+      name: "Demo Soundcraft Studio Headset",
+      slug: "demo-soundcraft-studio-headset",
+      brandId: demoIds.brands.soundcraft,
+      categoryIds: [demoIds.categories.accessories, demoIds.categories.audio],
+      primaryCategoryId: demoIds.categories.audio,
+      summary: "Comfortable over-ear headphones for focused listening.",
+      description:
+        "A higher-price audio fixture for brand, category and colour filtering.",
+      modelNumber: "DEMO-SCSH",
+      hsn: "85183000",
+      tags: ["demo", "audio", "headphones"],
+      warranty: "2 year demonstration warranty",
+      thumbnail: audioImage,
+      variantId: demoIds.variants.headset,
+      sku: "DEMO-SCSH-SLV",
+      variantTitle: "Silver",
+      mrpPaise: 1_199_900,
+      salePaise: 999_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.colour,
+          optionId: demoIds.options.silver,
+        },
+      ],
+      onHand: 9,
+    }),
+  },
+  {
+    id: demoIds.products.router,
+    input: simpleProduct({
+      name: "Demo HomeTech Mesh Router",
+      slug: "demo-hometech-mesh-router",
+      brandId: demoIds.brands.hometech,
+      categoryIds: [demoIds.categories.networking],
+      primaryCategoryId: demoIds.categories.networking,
+      summary: "A compact mesh router for connected homes.",
+      description:
+        "A networking fixture for top-level category and brand navigation.",
+      modelNumber: "DEMO-HTMR",
+      hsn: "85176290",
+      tags: ["demo", "networking", "router", "mesh"],
+      warranty: "2 year demonstration warranty",
+      thumbnail: routerImage,
+      variantId: demoIds.variants.router,
+      sku: "DEMO-HTMR-WHT",
+      variantTitle: "Home mesh unit",
+      mrpPaise: 899_900,
+      salePaise: 749_900,
+      options: [],
+      onHand: 5,
+    }),
+  },
+  {
+    id: demoIds.products.portableSsd,
+    input: simpleProduct({
+      name: "Demo HomeTech Pocket SSD",
+      slug: "demo-hometech-pocket-ssd",
+      brandId: demoIds.brands.hometech,
+      categoryIds: [demoIds.categories.accessories, demoIds.categories.storage],
+      primaryCategoryId: demoIds.categories.storage,
+      summary: "A portable solid-state drive with 1 TB capacity.",
+      description:
+        "A storage fixture for accessory, storage and capacity filter checks.",
+      modelNumber: "DEMO-HTPS",
+      hsn: "85235100",
+      tags: ["demo", "storage", "ssd", "portable"],
+      warranty: "3 year demonstration warranty",
+      thumbnail: storageImage,
+      variantId: demoIds.variants.portableSsd,
+      sku: "DEMO-HTPS-1T",
+      variantTitle: "1 TB SSD",
+      mrpPaise: 1_099_900,
+      salePaise: 899_900,
+      options: [
+        {
+          attributeId: demoIds.attributes.storage,
+          optionId: demoIds.options.storage1tb,
+        },
+      ],
+      onHand: 11,
     }),
   },
 ];

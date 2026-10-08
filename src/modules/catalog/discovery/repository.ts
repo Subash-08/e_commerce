@@ -456,43 +456,44 @@ export function catalogPipeline(
 
 export async function readCatalogMetadata(db: Db): Promise<CatalogMetadata> {
   const opts = { maxTimeMS: 1500 };
-  const [brands, categories, attributes] = await Promise.all([
-    db
-      .collection("brands")
-      .find(
-        { active: true, archivedAt: null },
-        { ...opts, projection: { name: 1, slug: 1 } },
-      )
-      .limit(1001)
-      .toArray(),
-    db
-      .collection("categories")
-      .find(
-        { active: true, archivedAt: null },
-        { ...opts, projection: { name: 1, slug: 1, parentId: 1 } },
-      )
-      .limit(1001)
-      .toArray(),
-    db
-      .collection("attributes")
-      .find(
-        { active: true, visible: true, filterable: true },
-        {
-          ...opts,
-          projection: {
-            code: 1,
-            name: 1,
-            type: 1,
-            unit: 1,
-            options: 1,
-            displayOrder: 1,
-          },
+  // Keep metadata reads sequential. With the intentionally small Atlas pool,
+  // three parallel checkouts per render can starve a second concurrent render
+  // before either request reaches the main aggregation.
+  const brands = await db
+    .collection("brands")
+    .find(
+      { active: true, archivedAt: null },
+      { ...opts, projection: { name: 1, slug: 1 } },
+    )
+    .limit(1001)
+    .toArray();
+  const categories = await db
+    .collection("categories")
+    .find(
+      { active: true, archivedAt: null },
+      { ...opts, projection: { name: 1, slug: 1, parentId: 1 } },
+    )
+    .limit(1001)
+    .toArray();
+  const attributes = await db
+    .collection("attributes")
+    .find(
+      { active: true, visible: true, filterable: true },
+      {
+        ...opts,
+        projection: {
+          code: 1,
+          name: 1,
+          type: 1,
+          unit: 1,
+          options: 1,
+          displayOrder: 1,
         },
-      )
-      .sort({ displayOrder: 1, _id: 1 })
-      .limit(41)
-      .toArray(),
-  ]);
+      },
+    )
+    .sort({ displayOrder: 1, _id: 1 })
+    .limit(41)
+    .toArray();
   if (
     brands.length > 1000 ||
     categories.length > 1000 ||

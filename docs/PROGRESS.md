@@ -2,6 +2,13 @@
 
 Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
 
+### Expanded demo catalog, navigation and homepage checkpoint, 2026-10-08
+
+Expanded the idempotent Atlas demo fixture to four brands, eight categories, four attributes, thirteen products and eighteen variants. The dataset now exercises a second listing page, meaningful brand/category intersections, wider price ranges, tracked and status-only availability, and an explicit out-of-stock product. Dry-run identity checks passed before the transaction was applied to the configured non-production Atlas database.
+
+Added one cached public navigation projection shared by the header and homepage. Desktop navigation now has keyboard-accessible Categories and Brands menus; the existing mobile drawer shows both groups as touch-friendly links. The homepage placeholder was replaced with a responsive hero, live catalog totals, featured category cards, eight public product cards, brand cards and compact catalog-information panels. All styling stays under the storefront sf namespace.
+
+Resolved the reported MongoOperationTimeoutError. Discovery metadata reads no longer request three pool connections simultaneously, and the shared client now allows five seconds for connection checkout/operation completion while each catalog query retains its stricter 1.5–1.8 second server maxTimeMS. After restarting on pinned Node 24, twelve simultaneous live product-listing requests all returned 200 without checkout or operation timeout output.
 ### Catalog discovery storefront stage, 2026-10-08
 
 Connected the shared Atlas discovery engine to /products, /search, /category/[slug] and /brand/[slug]. The routes now render consistent public product cards, route-specific dynamic facets, inclusive-GST price bounds, selected-filter chips, deterministic sorting, twelve-product pagination, empty/invalid-query states and a catalog-shaped loading skeleton. Filters use GET URLs and remain server-authoritative. Desktop uses a sticky filter panel; mobile uses a native modal dialog. Product cards keep image, price, availability and URL tied to one representative matching variant and link to readable variant paths. Cart and wishlist mutations remain deliberately absent until their services exist.
@@ -45,7 +52,7 @@ Limits: Real catalog listing grids, faceted filters, pagination, and live checko
 
 ### Demo catalog seed fixture delivered, 2026-10-08
 
-Implemented `scripts/fixtures/demo-catalog.ts` and `scripts/seed-demo-catalog.ts` with 2 brands, 5 categories, 4 attributes with 10 options, 5 products, and 10 variants. Records are tagged `demo-catalog-v1` and demo products are flagged `noindex`. The seeder operates exclusively against the configured MongoDB Atlas database, rejects production environments, never drops collections, and executes inside an atomic database transaction. Added explicit `.ts` extensions to relative imports across catalog validation, pricing, and domain modules for Node 24 `--experimental-strip-types` compatibility.
+Implemented `scripts/fixtures/demo-catalog.ts` and `scripts/seed-demo-catalog.ts` with 4 brands, 8 categories, 4 attributes with 11 options, 13 products, and 18 variants. Records are tagged `demo-catalog-v1` and demo products are flagged `noindex`. The seeder operates exclusively against the configured MongoDB Atlas database, rejects production environments, never drops collections, and executes inside an atomic database transaction. Added explicit `.ts` extensions to relative imports across catalog validation, pricing, and domain modules for Node 24 `--experimental-strip-types` compatibility.
 
 Verification: `npm run seed:demo:check` (dry run) confirmed matching record counts; `npm run seed:demo -- --approve` committed seed data to Atlas; typecheck and lint passed.
 

@@ -9,12 +9,18 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
+interface CatalogGroup {
+  label: string;
+  items: Array<{ href: string; label: string }>;
+}
+
 interface Props {
   navItems: NavItem[];
   accountItems: NavItem[];
+  catalogGroups: CatalogGroup[];
 }
 
-export function MobileMenu({ navItems, accountItems }: Props) {
+export function MobileMenu({ navItems, accountItems, catalogGroups }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -204,6 +210,25 @@ export function MobileMenu({ navItems, accountItems }: Props) {
                   {item.icon}
                   {item.label}
                 </Link>
+              ))}
+              {catalogGroups.map((group) => (
+                <div key={group.label} className="sf-drawer-catalog-group">
+                  <p className="sf-drawer-section-label">{group.label}</p>
+                  <div className="sf-drawer-catalog-links">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={
+                          pathname === item.href ? "page" : undefined
+                        }
+                        onClick={() => setOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
               <div className="sf-drawer-divider" aria-hidden="true" />
               <p className="sf-drawer-section-label">Account &amp; Support</p>

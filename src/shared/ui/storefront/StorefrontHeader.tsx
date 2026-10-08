@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DesktopNav } from "./DesktopNav.tsx";
 import { MobileMenu } from "./MobileMenu.tsx";
+import { catalogNavigation } from "@/modules/catalog/navigation";
 
 // ── SVG icon helpers (inline, no package) ─────────────────────────────────
 
@@ -138,12 +139,7 @@ function IconHelpCircle() {
 
 // ── Navigation data ────────────────────────────────────────────────────────
 
-const mainNavItems = [
-  { href: "/products", label: "Products" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-  { href: "/faq", label: "FAQ" },
-];
+const desktopStaticItems = [{ href: "/about", label: "About" }] as const;
 
 const mobileNavItems = [
   { href: "/products", label: "Products", icon: <IconGrid /> },
@@ -160,7 +156,60 @@ const mobileAccountItems = [
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export function StorefrontHeader() {
+export async function StorefrontHeader() {
+  const catalog = await catalogNavigation();
+  const mainNavItems = [
+    { href: "/products", label: "Products" },
+    {
+      href: "/products",
+      label: "Categories",
+      matchPrefix: "/category/",
+      children: catalog.categories.flatMap((category) => [
+        {
+          href: "/category/" + category.slug,
+          label: category.name,
+        },
+        ...category.children.map((child) => ({
+          href: "/category/" + child.slug,
+          label: child.name,
+          group: category.name,
+        })),
+      ]),
+    },
+    {
+      href: "/products",
+      label: "Brands",
+      matchPrefix: "/brand/",
+      children: catalog.brands.map((brand) => ({
+        href: "/brand/" + brand.slug,
+        label: brand.name,
+      })),
+    },
+    ...desktopStaticItems,
+  ];
+  const catalogGroups = [
+    {
+      label: "Categories",
+      items: catalog.categories.flatMap((category) => [
+        {
+          href: "/category/" + category.slug,
+          label: category.name,
+        },
+        ...category.children.map((child) => ({
+          href: "/category/" + child.slug,
+          label: child.name,
+        })),
+      ]),
+    },
+    {
+      label: "Brands",
+      items: catalog.brands.map((brand) => ({
+        href: "/brand/" + brand.slug,
+        label: brand.name,
+      })),
+    },
+  ];
+
   return (
     <header className="sf-header" role="banner">
       <div className="sf-header-inner">
@@ -223,6 +272,7 @@ export function StorefrontHeader() {
           <MobileMenu
             navItems={mobileNavItems}
             accountItems={mobileAccountItems}
+            catalogGroups={catalogGroups}
           />
         </div>
       </div>

@@ -45,8 +45,8 @@ export async function openDatabase(
       minPoolSize: 0,
       serverSelectionTimeoutMS: 1500,
       connectTimeoutMS: 1500,
-      waitQueueTimeoutMS: 1500,
-      timeoutMS: 2000,
+      waitQueueTimeoutMS: 5000,
+      timeoutMS: 5000,
       retryWrites: true,
     });
     await client.connect();

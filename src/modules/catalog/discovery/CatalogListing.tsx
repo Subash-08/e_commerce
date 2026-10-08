@@ -33,7 +33,7 @@ function removeValue(params: URLSearchParams, key: string, value: string) {
   params.delete("page");
 }
 
-function ProductCard({ item }: { item: ProductCardData }) {
+export function CatalogProductCard({ item }: { item: ProductCardData }) {
   return (
     <article className="sf-product-card">
       <Link
@@ -413,7 +413,7 @@ export function CatalogListing({
           {result.items.length ? (
             <div className="sf-product-grid">
               {result.items.map((item) => (
-                <ProductCard key={item.id} item={item} />
+                <CatalogProductCard key={item.id} item={item} />
               ))}
             </div>
           ) : (
