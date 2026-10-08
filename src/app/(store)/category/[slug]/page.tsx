@@ -1,9 +1,10 @@
 import { cache } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { publicCategory } from "@/modules/categories/public";
+import { Breadcrumbs } from "@/shared/ui/storefront/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
 const read = cache(publicCategory);
@@ -57,55 +58,75 @@ export default async function CategoryPage({
     })),
   };
 
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    ...row.crumbs.map((c, i) => ({
+      label: c.name,
+      href: i === row.crumbs.length - 1 ? undefined : "/category/" + c.slug,
+    })),
+  ];
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <div className="sf-catalog-container">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(breadcrumbs).replace(/</g, "\u003c"),
         }}
       />
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-6 flex flex-wrap gap-3 text-sm"
-      >
-        <Link href="/">Home</Link>
-        {row.crumbs.map((item) => (
-          <Link key={item.slug} href={"/category/" + item.slug}>
-            / {item.name}
-          </Link>
-        ))}
-      </nav>
-      {row.image && (
-        <Image
-          unoptimized
-          src={row.image.url}
-          alt={row.image.alt}
-          width={1200}
-          height={360}
-          className="mb-8 max-h-80 w-full rounded-xl object-cover"
-        />
-      )}
-      <h1 className="text-3xl font-semibold">{row.name}</h1>
-      <p className="my-5 whitespace-pre-wrap text-slate-600">
-        {row.description}
-      </p>
-      {row.children.length > 0 && (
-        <section>
-          <h2 className="mb-4 text-xl font-semibold">Browse categories</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <section className="sf-category-hero">
+        {row.image && (
+          <div className="sf-category-image-wrap">
+            <Image
+              unoptimized
+              src={row.image.url}
+              alt={row.image.alt}
+              width={1200}
+              height={360}
+              className="sf-category-banner"
+            />
+          </div>
+        )}
+        <div className="sf-category-header">
+          <span className="sf-category-badge">Category</span>
+          <h1 className="sf-category-title">{row.name}</h1>
+          {row.description && (
+            <p className="sf-category-desc">{row.description}</p>
+          )}
+        </div>
+      </section>
+
+      {row.children.length > 0 ? (
+        <section className="sf-category-section">
+          <h2 className="sf-category-section-title">Browse categories</h2>
+          <div className="sf-child-category-grid">
             {row.children.map((child) => (
               <Link
-                className="rounded-xl border p-5 hover:border-violet-500"
                 key={child.slug}
                 href={"/category/" + child.slug}
+                className="sf-child-category-card"
               >
-                {child.name} →
+                <div className="sf-child-category-content">
+                  <span className="sf-child-category-name">{child.name}</span>
+                  <span className="sf-child-category-sub">View category</span>
+                </div>
+                <span className="sf-child-category-arrow" aria-hidden="true">
+                  →
+                </span>
               </Link>
             ))}
           </div>
         </section>
+      ) : (
+        <div className="sf-catalog-notice">
+          <p>
+            Products in <strong>{row.name}</strong> will be displayed here once
+            catalog listing is released.
+          </p>
+        </div>
       )}
-    </main>
+    </div>
   );
 }

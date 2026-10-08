@@ -1,18 +1,22 @@
 import { Suspense, cache } from "react";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { publicProduct } from "@/modules/catalog/public";
 import { ProductDetail } from "@/modules/catalog/detail";
 import { selectVariant } from "@/modules/catalog/selection";
 import { getDatabase } from "@/server/db/connection";
+import { Breadcrumbs } from "@/shared/ui/storefront/Breadcrumbs";
+import { ProductDetailSkeleton } from "@/shared/ui/storefront/ProductDetailSkeleton";
 import "@/shared/styles/product.css";
+
 const read = cache(publicProduct);
+
 function origin() {
   const value = process.env.APP_URL;
   if (!value) throw new Error("APP_URL_REQUIRED");
   return value;
 }
+
 export async function generateMetadata({
   params,
 }: {
@@ -34,6 +38,7 @@ export async function generateMetadata({
     },
   };
 }
+
 export default async function Page({
   params,
   searchParams,
@@ -102,24 +107,27 @@ export default async function Page({
         Number(b.sku === selected?.sku) - Number(a.sku === selected?.sku),
     ),
   };
+
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    ...(p.category
+      ? [{ label: p.category.name, href: "/category/" + p.category.slug }]
+      : []),
+    { label: p.name },
+  ];
+
   return (
-    <main className="product-page">
+    <div className="sf-catalog-container product-page">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
         }}
       />
-      <nav className="product-breadcrumb" aria-label="Breadcrumb">
-        <Link href="/">Home</Link>
-        {p.category && (
-          <Link href={"/category/" + p.category.slug}>{p.category.name}</Link>
-        )}
-        <span>{p.name}</span>
-      </nav>
-      <Suspense fallback={<p>Loading product options…</p>}>
+      <Breadcrumbs items={breadcrumbItems} />
+      <Suspense fallback={<ProductDetailSkeleton />}>
         <ProductDetail product={p} initialVariant={requested} />
       </Suspense>
-    </main>
+    </div>
   );
 }

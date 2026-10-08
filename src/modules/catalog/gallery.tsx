@@ -2,7 +2,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { PublicProduct } from "./public";
+
 type Photo = { url: string; alt: string };
+
 function Video({ video }: { video: PublicProduct["videos"][number] }) {
   const [playing, setPlaying] = useState(false);
   if (video.source === "CLOUDINARY")
@@ -35,6 +37,7 @@ function Video({ video }: { video: PublicProduct["videos"][number] }) {
     </button>
   );
 }
+
 export function ProductGallery({
   images,
   videos,
@@ -58,6 +61,7 @@ export function ProductGallery({
         ? hoverImage
         : current.image
       : null;
+
   return (
     <div className="product-gallery">
       <div
@@ -79,7 +83,12 @@ export function ProductGallery({
       >
         {photo ? (
           failed.includes(photo.url) ? (
-            <div className="product-no-image">This image is unavailable.</div>
+            <div className="product-no-image">
+              <span className="product-no-image-icon" aria-hidden="true">
+                🖼️
+              </span>
+              <span>This image is unavailable.</span>
+            </div>
           ) : (
             <Image
               key={photo.url}
@@ -97,9 +106,15 @@ export function ProductGallery({
         ) : current?.kind === "video" ? (
           <Video key={current.video.url} video={current.video} />
         ) : (
-          <div className="product-no-image">No product media</div>
+          <div className="product-no-image">
+            <span className="product-no-image-icon" aria-hidden="true">
+              📷
+            </span>
+            <span>No product media</span>
+          </div>
         )}
       </div>
+
       <div
         className="product-thumbnails"
         aria-label="Product images and videos"
@@ -149,6 +164,7 @@ export function ProductGallery({
           </button>
         ))}
       </div>
+
       <p className="product-gallery-count" aria-live="polite">
         {items.length
           ? String(Math.min(selected, items.length - 1) + 1) +

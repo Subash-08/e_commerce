@@ -1,13 +1,17 @@
 "use client";
-import { ProductGallery } from "./gallery";
-import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { ProductGallery } from "./gallery";
 import type { PublicProduct } from "./public";
 import { selectVariant } from "./selection";
+
 const money = (amount: number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
-    amount / 100,
-  );
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(amount / 100);
+
 export function ProductDetail({
   product,
   initialVariant,
@@ -20,11 +24,13 @@ export function ProductDetail({
   const { variant, unavailable } = selectVariant(product, requested);
 
   const gallery = variant?.images.length ? variant.images : product.images;
+
   function choose(id: string) {
     const url = new URL(window.location.href);
     url.searchParams.set("variant", id);
-    window.history.pushState(null, "", url);
+    window.history.pushState({ variant: id }, "", url);
   }
+
   return (
     <>
       <section className="product-hero">
@@ -35,15 +41,29 @@ export function ProductDetail({
           hoverImage={variant?.images.length ? null : product.hoverImage}
         />
         <div className="product-buy-panel">
-          <p className="product-brand">{product.brand?.name}</p>
+          {product.brand && (
+            <Link
+              href={"/brand/" + product.brand.slug}
+              className="product-brand"
+            >
+              {product.brand.name}
+            </Link>
+          )}
           <h1>{product.name}</h1>
           <p className="product-summary">{product.summary}</p>
+
           {unavailable && (
-            <p role="status" className="product-warning">
-              The requested variant is no longer available. Showing an available
-              selection.
-            </p>
+            <div role="status" className="product-warning">
+              <span className="product-warning-icon" aria-hidden="true">
+                ⚠️
+              </span>
+              <span>
+                The requested variant is no longer available. Showing an
+                available selection.
+              </span>
+            </div>
           )}
+
           {variant ? (
             <>
               <div className="product-price">
@@ -62,54 +82,74 @@ export function ProductDetail({
                 )}
               </div>
               <p className="product-tax">Inclusive of applicable GST</p>
+
               {product.axes.map((axis) => (
                 <fieldset className="product-axis" key={axis.id}>
                   <legend>{axis.name}</legend>
-                  {axis.options.map((option) => {
-                    const target = product.variants.find(
-                      (v) =>
-                        v.options.some(
-                          (o) =>
-                            o.attributeId === axis.id &&
-                            o.optionId === option.id,
-                        ) &&
-                        variant.options
-                          .filter((o) => o.attributeId !== axis.id)
-                          .every((o) =>
+                  <div className="product-axis-options">
+                    {axis.options.map((option) => {
+                      const target =
+                        product.variants.find(
+                          (v) =>
                             v.options.some(
-                              (x) =>
-                                x.attributeId === o.attributeId &&
-                                x.optionId === o.optionId,
-                            ),
+                              (o) =>
+                                o.attributeId === axis.id &&
+                                o.optionId === option.id,
+                            ) &&
+                            variant.options
+                              .filter((o) => o.attributeId !== axis.id)
+                              .every((o) =>
+                                v.options.some(
+                                  (x) =>
+                                    x.attributeId === o.attributeId &&
+                                    x.optionId === o.optionId,
+                                ),
+                              ),
+                        ) ??
+                        product.variants.find((v) =>
+                          v.options.some(
+                            (o) =>
+                              o.attributeId === axis.id &&
+                              o.optionId === option.id,
                           ),
-                    );
-                    const selected = variant.options.some(
-                      (o) => o.optionId === option.id,
-                    );
-                    return (
-                      <button
-                        type="button"
-                        key={option.id}
-                        disabled={!target}
-                        aria-pressed={selected}
-                        onClick={() => target && choose(target.id)}
-                      >
-                        {axis.type === "COLOUR" && (
-                          <span
-                            className="product-swatch"
-                            style={{ backgroundColor: option.colour }}
-                          />
-                        )}
-                        {option.label}
-                        {target && !target.available ? " · sold out" : ""}
-                      </button>
-                    );
-                  })}
+                        );
+
+                      const selected = variant.options.some(
+                        (o) => o.optionId === option.id,
+                      );
+
+                      return (
+                        <button
+                          type="button"
+                          key={option.id}
+                          disabled={!target}
+                          aria-pressed={selected}
+                          onClick={() => target && choose(target.id)}
+                          className="product-axis-btn"
+                        >
+                          {axis.type === "COLOUR" && (
+                            <span
+                              className="product-swatch"
+                              style={{ backgroundColor: option.colour }}
+                              aria-hidden="true"
+                            />
+                          )}
+                          <span>{option.label}</span>
+                          {target && !target.available && (
+                            <span className="product-axis-soldout">
+                              · sold out
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </fieldset>
               ))}
+
               {product.variants.length > 1 && (
                 <label className="product-variant-select">
-                  All combinations
+                  <span>All combinations</span>
                   <select
                     value={variant.id}
                     onChange={(e) => choose(e.target.value)}
@@ -134,38 +174,72 @@ export function ProductDetail({
                   </select>
                 </label>
               )}
-              <p
-                className={
-                  variant.available ? "product-in-stock" : "product-out-stock"
-                }
-              >
-                {variant.available ? "In stock" : "Currently out of stock"}
-              </p>
-              <p className="product-sku">SKU: {variant.sku}</p>
-              <p className="product-checkout-note">
-                Online ordering will be available when checkout launches.
-              </p>
+
+              <div className="product-availability">
+                <p
+                  className={
+                    variant.available ? "product-in-stock" : "product-out-stock"
+                  }
+                >
+                  <span className="product-stock-dot" aria-hidden="true">
+                    ●
+                  </span>
+                  {variant.available ? "In stock" : "Currently out of stock"}
+                </p>
+              </div>
+
+              <div className="product-meta">
+                <span className="product-sku">SKU: {variant.sku}</span>
+                {product.modelNumber && (
+                  <span className="product-model">
+                    Model: {product.modelNumber}
+                  </span>
+                )}
+              </div>
+
+              <div className="product-checkout-note">
+                <span className="product-note-icon" aria-hidden="true">
+                  ℹ️
+                </span>
+                <span>
+                  Online ordering will be available when checkout launches.
+                </span>
+              </div>
             </>
           ) : (
-            <p>No available variants.</p>
+            <p className="product-empty">No available variants.</p>
           )}
-          {product.warranty && <p>Warranty: {product.warranty}</p>}
+
+          {product.warranty && (
+            <div className="product-warranty">
+              <span className="product-warranty-icon" aria-hidden="true">
+                🛡️
+              </span>
+              <span>Warranty: {product.warranty}</span>
+            </div>
+          )}
         </div>
       </section>
+
       {product.features.length > 0 && (
-        <section className="product-section product-features">
-          {product.features.map((f, i) => (
-            <div key={i}>
-              <h3>{f.title}</h3>
-              <p>{f.description}</p>
-            </div>
-          ))}
+        <section className="product-section product-features-section">
+          <h2>Key Features</h2>
+          <div className="product-features">
+            {product.features.map((f, i) => (
+              <div key={i} className="product-feature-card">
+                <h3>{f.title}</h3>
+                <p>{f.description}</p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
+
       <section className="product-section">
         <h2>About this product</h2>
         <p className="product-description">{product.description}</p>
       </section>
+
       <section className="product-section">
         <h2>Specifications</h2>
         <dl className="product-specs">
@@ -183,7 +257,7 @@ export function ProductDetail({
           ))}
         </dl>
         {product.specifications.map((group, i) => (
-          <div key={i}>
+          <div key={i} className="product-spec-group">
             <h3>{group.heading}</h3>
             <dl className="product-specs">
               {group.entries.map((s, j) => (
@@ -196,11 +270,12 @@ export function ProductDetail({
           </div>
         ))}
       </section>
+
       {product.manufacturerContent.length > 0 && (
         <section className="product-section product-manufacturer">
           <h2>From the manufacturer</h2>
           {product.manufacturerContent.map((section, index) => (
-            <section key={index}>
+            <div key={index} className="product-manufacturer-block">
               {section.heading && <h3>{section.heading}</h3>}
               {section.body && (
                 <p className="product-description">{section.body}</p>
@@ -217,7 +292,7 @@ export function ProductDetail({
                   className="product-manufacturer-image"
                 />
               ))}
-            </section>
+            </div>
           ))}
         </section>
       )}

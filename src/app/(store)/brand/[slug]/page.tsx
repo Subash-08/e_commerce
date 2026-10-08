@@ -1,9 +1,9 @@
 import { cache } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { publicBrand } from "@/modules/brands/public";
+import { Breadcrumbs } from "@/shared/ui/storefront/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
 const read = cache(publicBrand);
@@ -45,6 +45,7 @@ export default async function BrandPage({
   const row = await read((await params).slug);
   if (!row) notFound();
   if (row.kind === "redirect") permanentRedirect(row.destination);
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Brand",
@@ -53,35 +54,55 @@ export default async function BrandPage({
     url: new URL("/brand/" + row.slug, appOrigin()).toString(),
     ...(row.logo ? { logo: row.logo.url } : {}),
   };
+
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: "Products", href: "/products" },
+    { label: row.name },
+  ];
+
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <div className="sf-catalog-container">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
         }}
       />
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm">
-        <Link href="/">Home</Link> / {row.name}
-      </nav>
-      <section className="flex flex-col items-start gap-6 rounded-xl border p-8 sm:flex-row sm:items-center">
-        {row.logo && (
-          <Image
-            unoptimized
-            src={row.logo.url}
-            alt={row.logo.alt}
-            width={180}
-            height={100}
-            className="max-h-24 object-contain"
-          />
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <section className="sf-brand-hero">
+        {row.logo ? (
+          <div className="sf-brand-logo-wrap">
+            <Image
+              unoptimized
+              src={row.logo.url}
+              alt={row.logo.alt}
+              width={180}
+              height={100}
+              className="sf-brand-logo-img"
+            />
+          </div>
+        ) : (
+          <div className="sf-brand-logo-fallback" aria-hidden="true">
+            {row.name.slice(0, 2).toUpperCase()}
+          </div>
         )}
-        <div>
-          <h1 className="text-3xl font-semibold">{row.name}</h1>
-          <p className="mt-3 whitespace-pre-wrap text-slate-600">
-            {row.description}
-          </p>
+        <div className="sf-brand-header-info">
+          <span className="sf-brand-badge">Brand</span>
+          <h1 className="sf-brand-title">{row.name}</h1>
+          {row.description && (
+            <p className="sf-brand-desc">{row.description}</p>
+          )}
         </div>
       </section>
-    </main>
+
+      <div className="sf-catalog-notice">
+        <p>
+          Products from <strong>{row.name}</strong> will appear here once the
+          catalog discovery grid launches.
+        </p>
+      </div>
+    </div>
   );
 }
