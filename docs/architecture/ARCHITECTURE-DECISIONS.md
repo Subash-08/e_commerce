@@ -33,3 +33,6 @@ Native Next Node runtime, npm single lockfile, dynamic server filtered results w
 ## Remaining gates
 
 Authentication exact-version compatibility/security; hosting budget/plan/cadence and recovery targets; client legal/CA tax/invoice/privacy configuration; homepage design; selected private artifact storage. See [Stage 3 contract](../development/STAGE-3-SCAFFOLD.md). These do not require rebuilding the architecture, but none may be assumed resolved at deployment.
+
+
+Cart/coupon checkpoint (2026-10-08): [ADR 0011](../adr/0011-cart-and-coupon-preview.md) records live cart resolution, bounded idempotent transfers, targeted coupon previews and the separate checkout redemption gate. Pricing arithmetic remains unchanged.

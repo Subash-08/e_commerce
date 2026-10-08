@@ -1,3 +1,5 @@
+import "@/shared/styles/cart.css";
+import { CartProvider } from "@/modules/cart/client";
 import "@/shared/styles/auth.css";
 import "@/shared/styles/base.css";
 import "@/shared/styles/storefront.css";
@@ -19,16 +21,18 @@ export default function StoreLayout({
   return (
     <html lang="en">
       <body data-shell="store">
-        <a href="#sf-main-content" className="sf-skip-link">
-          Skip to main content
-        </a>
-        <div className="sf-layout">
-          <StorefrontHeader />
-          <main id="sf-main-content" className="sf-main" tabIndex={-1}>
-            {children}
-          </main>
-          <StorefrontFooter />
-        </div>
+        <CartProvider>
+          <a href="#sf-main-content" className="sf-skip-link">
+            Skip to main content
+          </a>
+          <div className="sf-layout">
+            <StorefrontHeader />
+            <main id="sf-main-content" className="sf-main" tabIndex={-1}>
+              {children}
+            </main>
+            <StorefrontFooter />
+          </div>
+        </CartProvider>
       </body>
     </html>
   );

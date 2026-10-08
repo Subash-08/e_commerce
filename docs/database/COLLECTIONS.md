@@ -79,3 +79,8 @@ CustomerSnapshot: name/email/mobile; policyVersions stores accepted terms versio
 | workTasks (optional)             | title, assigneeId?, relatedType?, relatedId?, priority:TaskPriority, state:TaskState, dueAt?, notes?                                                                                   | Admin/staff only; no effect on fulfillment authority                                                               |
 
 Application deletion: archive referenced catalog; expire transient tokens/jobs per policy after resolution; financial retention reviewed per client. Database backups/access grants are operations, not additional commerce models.
+
+
+## Cart/coupon implementation checkpoint
+
+See [ADR 0011](../adr/0011-cart-and-coupon-preview.md). Implemented carts use authUserId:string, validated productId/variantId string references, quantity, revision, schemaVersion and document timestamps; the current ceiling is 50 lines (superseding the planned 100-line storage bound). cartReceipts stores a signed-ticket hash as _id, payload fingerprint, remaining merge selections and expiresAt with TTL. commerceRateLimits uses per-owner fixed-minute keys and TTL. Coupons use uppercase code as the unique normalized key, UTC ISO schedule strings, explicit bounded target/exclusion IDs, audience, limits, active/archived flags and revision/audit fields. couponClaims capacity reads expect couponId, state and canonical authUserId for per-account limits; claim creation remains a Checkout responsibility.

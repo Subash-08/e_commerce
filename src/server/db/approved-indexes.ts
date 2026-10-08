@@ -1,3 +1,5 @@
+import { cartIndexes } from "../../modules/cart/indexes.ts";
+import { couponIndexes } from "../../modules/coupons/indexes.ts";
 import { attributeIndexes } from "../../modules/attributes/indexes.ts";
 import { catalogIndexes } from "../../modules/catalog/indexes.ts";
 import "server-only";
@@ -11,4 +13,6 @@ export const approvedIndexes: readonly CollectionIndexes[] = [
   ...brandIndexes,
   ...attributeIndexes,
   ...catalogIndexes,
+  ...cartIndexes,
+  ...couponIndexes,
 ];

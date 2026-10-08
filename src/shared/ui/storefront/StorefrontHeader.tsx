@@ -1,3 +1,4 @@
+import { CartButton } from "@/modules/cart/client";
 import Link from "next/link";
 import { DesktopNav } from "./DesktopNav.tsx";
 import { MobileMenu } from "./MobileMenu.tsx";
@@ -264,9 +265,7 @@ export async function StorefrontHeader() {
           <Link href="/wishlist" className="sf-icon-btn" aria-label="Wishlist">
             <IconHeart />
           </Link>
-          <Link href="/cart" className="sf-icon-btn" aria-label="Cart">
-            <IconCart />
-          </Link>
+          <CartButton />
 
           {/* Mobile menu trigger + drawer (client island) */}
           <MobileMenu

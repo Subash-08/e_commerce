@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { broadcastSessionChange } from "../../shared/ui/storefront/session-change";
 export function SignOutButton() {
-  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   return (
@@ -20,8 +19,10 @@ export function SignOutButton() {
               body: "{}",
             });
             if (!result.ok) throw new Error();
-            router.push("/login");
-            router.refresh();
+            broadcastSessionChange();
+            // A full navigation deliberately discards session-scoped client state.
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+            window.location.assign("/login");
           } catch {
             setError("Could not sign out. Try again.");
             setPending(false);

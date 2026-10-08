@@ -1,3 +1,4 @@
+import { AddToCart } from "../../cart/client";
 import Image from "next/image";
 import Link from "next/link";
 import type {
@@ -96,9 +97,18 @@ export function CatalogProductCard({ item }: { item: ProductCardData }) {
         <p className={item.available ? "sf-stock-in" : "sf-stock-out"}>
           {item.available ? "In stock" : "Currently unavailable"}
         </p>
-        <Link href={item.url} className="sf-product-card-action">
-          View product
-        </Link>
+        {item.matchingVariantCount === 1 ? (
+          <AddToCart
+            productId={item.id}
+            variantId={item.variantId}
+            available={item.available}
+            label="Add this option"
+          />
+        ) : (
+          <Link href={item.url} className="sf-product-card-action">
+            Choose options
+          </Link>
+        )}
       </div>
     </article>
   );

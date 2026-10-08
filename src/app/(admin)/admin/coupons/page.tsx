@@ -1,4 +1,1 @@
-import { Placeholder } from "@/shared/ui/placeholder";
-export default function Page() {
-  return <Placeholder title="/admin/coupons" />;
-}
+export { CouponListPage as default } from "@/modules/coupons/list-page";

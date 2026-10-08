@@ -11,6 +11,7 @@ import { variantPath } from "./urls";
 import { ProductGallery } from "./gallery";
 import type { PublicProduct } from "./public";
 import { selectVariant } from "./selection";
+import { AddToCart } from "../cart/client";
 
 const money = (amount: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -221,6 +222,13 @@ export function ProductDetail({
                 )}
               </div>
 
+              {!preview && (
+                <AddToCart
+                  productId={product.id}
+                  variantId={variant.id}
+                  available={variant.available}
+                />
+              )}
               <div className="product-checkout-note">
                 <span className="product-note-icon" aria-hidden="true">
                   ℹ️

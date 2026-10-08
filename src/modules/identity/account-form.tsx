@@ -1,4 +1,5 @@
 "use client";
+import { broadcastSessionChange } from "../../shared/ui/storefront/session-change";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { InputField } from "@/shared/ui/fields";
@@ -96,9 +97,14 @@ export function AccountForm({ mode }: { mode: Mode }) {
       }
       form.reset();
       if (signedIn) {
+        broadcastSessionChange();
+        // A full navigation deliberately discards session-scoped client state.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.assign("/login");
         setSignedIn(false);
         setMessage("You have signed out.");
       } else if (mode === "login") {
+        broadcastSessionChange();
         const session = await fetch("/api/auth/get-session", {
           cache: "no-store",
         }).then((response) => response.json());

@@ -1255,3 +1255,43 @@ select:focus-visible {
     gap: 8px;
   }
 }
+
+.coupon-selection {
+  margin: 16px;
+  padding: 16px;
+  border: 1px solid var(--admin-border, #e2e5ed);
+  border-radius: 8px;
+}
+.coupon-selection > div {
+  max-height: 240px;
+  overflow: auto;
+  margin-top: 12px;
+}
+.coupon-selection > div > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+.coupon-selection input[type="search"] {
+  display: block;
+  padding: 8px;
+  width: 100%;
+  min-height: 40px;
+}
+.coupon-save-bar {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border: 1px solid #e2e5ed;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 8px;
+  z-index: 2;
+}
+.coupon-save-bar > span {
+  margin-right: auto;
+  font-size: 12px;
+}

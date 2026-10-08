@@ -2,6 +2,18 @@
 
 Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
 
+### Cart and coupon preview checkpoint, 2026-10-08
+
+Implemented live guest/account carts, selected-variant Add to Cart on detail and unambiguous listing cards, header count, drawer, /cart, quantity/remove/clear, and explicit guest-to-account transfer. Authenticated carts use canonical Better Auth ownership, revision guards and atomic expiring operation receipts. Guest overflow is retained; local acknowledgment is atomic with remaining selections. Fresh Atlas resolution preserves existing catalog eligibility, excludes blocking lines from totals, and never reserves stock or exposes private product fields.
+
+Implemented /admin/coupons list/new/edit and cart preview: fixed/percentage, product/variant/category/brand scope, descendant inclusion, product exclusions, sale exclusions, eligible-spend threshold, discount cap, scheduling, account restrictions, total/per-account limits, archive, revision and audit. Preview reads existing claims but creates none. Six reviewed additive indexes were applied after dry run. No dependency was installed and no credentials were read or printed. [ADR 0011](adr/0011-cart-and-coupon-preview.md) explains the choices and checkout boundary.
+
+Fixed the reported repeated cart loading: background refresh retains the current cart; initial load uses matching skeleton rows/summary; failures use an explicit retry state; focus refresh is throttled and concurrent reads deduplicated. Shared timed toasts identify add/remove/quantity/clear actions. Real Chromium checks passed guest add, reload persistence, background refresh without skeleton replacement, simulated failure/retry, 360px overflow check, quantity/remove notifications, and zero browser page errors. CUA itself remains blocked by the Windows sandbox helper; the existing Puppeteer dependency supplied this browser evidence.
+
+Verification so far: 189 unit tests and six focused real-Atlas integration checks passed; TypeScript and ESLint passed. Integration evidence includes duplicate request/payload mismatch, account isolation, concurrent revisions, double-tab-equivalent merge replay, overflow, deactivation, expired tickets, draft/archive exclusion, public-field safety, coupon capacity, exclusive-price GST savings, fresh administrator authority and concurrent coupon edits. Isolated production build, docs-link, enum and secret checks also passed. The final formatting pass corrected the new integration fixture and existing ESLint configuration formatting. Cross-tab sign-in/out now broadcasts an identity-only invalidation, forcing old private views to reload; no account ID or token is broadcast.
+
+Remaining scope: Wishlist, checkout, actual coupon claims/releases/payment recovery, free-shipping offers and first-order eligibility are not implemented. Shipping remains “at checkout,” not a fabricated flat estimate. The guest import is explicit; expired unresolved imports require account review and explicit guest clearing rather than potentially duplicating quantities. No production payment or launch readiness is claimed.
+
 ### Expanded demo catalog, navigation and homepage checkpoint, 2026-10-08
 
 Expanded the idempotent Atlas demo fixture to four brands, eight categories, four attributes, thirteen products and eighteen variants. The dataset now exercises a second listing page, meaningful brand/category intersections, wider price ranges, tracked and status-only availability, and an explicit out-of-stock product. Dry-run identity checks passed before the transaction was applied to the configured non-production Atlas database.
