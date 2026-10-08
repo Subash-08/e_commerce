@@ -75,6 +75,7 @@
     "/api/catalog/resolve": ["POST"],
     "/api/search/suggestions": ["GET"],
     "/api/checkout": ["POST"],
+    "/api/checkout/quote": ["POST"],
     "/api/payments/verify": ["POST"],
     "/api/webhooks/razorpay": ["POST"],
     "/api/orders/lookup/request": ["POST"],

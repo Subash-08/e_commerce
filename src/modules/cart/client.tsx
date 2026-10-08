@@ -441,7 +441,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     </Context.Provider>
   );
 }
-function useCart() {
+export function useCart() {
   const value = useContext(Context);
   if (!value) throw new Error("Cart provider is required");
   return value;
@@ -732,10 +732,16 @@ export function CartContents({ compact = false }: { compact?: boolean }) {
                     ? "Your items are available now. Adding to cart does not reserve stock."
                     : "Resolve unavailable items before checkout."}
                 </p>
-                <p>
-                  Checkout is not available yet. Shipping, final tax and coupon
-                  eligibility will be confirmed there.
-                </p>
+                {view.ready && !compact ? (
+                  <Link href="/checkout" className="sf-product-card-action">
+                    Continue to checkout
+                  </Link>
+                ) : (
+                  <p>
+                    Shipping, final tax and coupon eligibility are confirmed at
+                    checkout.
+                  </p>
+                )}
               </aside>
             </div>
           )}

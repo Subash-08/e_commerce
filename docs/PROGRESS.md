@@ -1,5 +1,13 @@
 # Foundation progress
 
+### Phase 1B checkout quote foundation, 2026-10-09
+
+Replaced the checkout placeholder with a responsive India/INR delivery, contact, billing, optional business GSTIN, coupon and payment-preference form. The cart now links to checkout when its current lines are usable. `POST /api/checkout/quote` accepts bounded guest lines or the authenticated cart revision, ignores all browser prices/totals, refreshes catalog/coupon availability, invokes the authoritative shipping policy, and returns a private no-store quote. It creates no order, reservation, payment or coupon claim.
+
+Quote evidence stores a random ID, signed owner hash, request/address-contact fingerprint, source revisions, safe public totals and expiry; raw checkout PII is not copied into checkoutQuotes. Guest ownership uses a signed httpOnly one-hour checkout cookie. The endpoint is same-origin, body-limited and rate-limited. Three reviewed indexes cover quote ID, owner/expiry lookup and TTL cleanup. TTL is cleanup only; future quote consumption must still check expiresAt.
+
+This is a Phase 1B implementation checkpoint, not Phase 1B acceptance. Remaining before that gate can be marked complete: owned saved-address CRUD/revisions and selection, FREE_SHIPPING in the canonical pricing/coupon/admin contract, typed terms/privacy versions, focused Atlas quote ownership/expiry/stale-fact tests, and authenticated/guest browser checks. Actual quotes also remain intentionally blocked until a separately reviewed shipping tax reference is configured. No granular RBAC is being added: active ADMIN retains all admin-management authority and CUSTOMER remains outside Admin.
+
 Updated 2026-10-09. Workspace: D:\AI\e-commerce. Branch: codex/shipping-settings.
 
 ### Phase 1A shipping implementation, 2026-10-09
