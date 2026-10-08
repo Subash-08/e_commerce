@@ -41,6 +41,7 @@ export type ProductRecord = Omit<
   updatedAt: Date;
   createdBy: string;
   updatedBy: string;
+  publishedAt?: Date;
   listing: {
     minPricePaise: number | null;
     maxPricePaise: number | null;

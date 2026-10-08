@@ -2,6 +2,14 @@
 
 Updated 2026-10-08. Workspace: D:\AI\e-commerce. Branch: codex/product-variant-attributes.
 
+### Catalog discovery query-engine stage, 2026-10-08
+
+Implemented the server-only shared engine under src/modules/catalog/discovery: validated scope/filter/sort/page contracts; Atlas same-variant matching; distinct-product facets excluding their own filters; inclusive-GST price bounds; active taxonomy/descendant resolution; SKU/product search with real deterministic scoring; twelve-product pagination; safe representative-variant card projection and batched image resolution. All four future listing routes can reuse this entry point. First-publication time is preserved by product saves, with compatible historical fallback.
+
+Verified against isolated Atlas fixtures of exactly 250 products and 750 variants. All four focused checks and 184 unit checks pass. Six query cases measured four DB operations each (three metadata reads plus one aggregation), no per-option/product queries, indexed product/variant scans, and empirical p95 values of 280–683 ms across five samples per case. Existing indexes suffice. [Full evidence and limitations](database/CATALOG-DISCOVERY-VERIFICATION.md) include execution-plan details and setup failures corrected during measurement. Typecheck/lint/build pass. No live catalog data or production indexes were modified.
+
+Stop gate: query engine delivered; listing UI and route wiring are intentionally next. No claim that /products or /search now renders real grids. Next approved slice is shared cards, desktop/mobile filters, category/brand/search listings, URL navigation, route SEO and loading/empty/error states. Cart/wishlist/payment remain separate feature slices.
+
 ### Readable variant URL stage, 2026-10-08
 
 Amended ADR 0010 under the user's approved stage gates. Implemented /product/[slug]/[variantKey] with server-owned immutable keys, length/reserved-word rules, deterministic collision suffixes, retained archived keys and a reviewed per-product unique index. Product saves preserve keys; demo seeding now assigns keys compatibly. Public detail/structured data and crawlable variant links use readable paths. Product-level canonical/OG remain; demo noindex is independent. Authenticated preview retains query selection. A Next proxy returns actual one-hop 301s from ID selectors and product slug history to the current readable URL, without revealing private products.

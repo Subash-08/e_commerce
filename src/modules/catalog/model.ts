@@ -60,6 +60,7 @@ const productSchema = new Schema(
     linkedProductIds: [Schema.Types.ObjectId],
     defaultVariantId: Schema.Types.ObjectId,
     seo: { title: String, description: String, robotsIndex: Boolean },
+    publishedAt: Date,
     listing: {
       minPricePaise: Number,
       maxPricePaise: Number,

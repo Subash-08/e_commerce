@@ -577,6 +577,13 @@ export function catalogService(
           defaultVariantId: new ObjectId(value.defaultVariantId),
           nameNormalized: value.name.normalize("NFKC").toLowerCase(),
           revision,
+          publishedAt:
+            prior?.publishedAt ??
+            (prior?.status === "ACTIVE"
+              ? prior.createdAt
+              : value.status === "ACTIVE"
+                ? new Date()
+                : undefined),
           listing: listingSummary(next, revision),
           schemaVersion: 1,
           createdBy: prior?.createdBy ?? actor.authUserId,
