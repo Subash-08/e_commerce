@@ -41,6 +41,14 @@ export async function persistShipping(
   revision: unknown,
 ) {
   const value = shippingInput.parse(input);
+  if (value.enabled && !value.shippingTaxPolicyKey)
+    throw new Error("SHIPPING_TAX_POLICY_REQUIRED");
+  if (
+    value.cod.enabled &&
+    value.cod.surchargePaise > 0 &&
+    !value.cod.surchargeTaxPolicyKey
+  )
+    throw new Error("COD_TAX_POLICY_REQUIRED");
   const expected = z
     .number()
     .int()

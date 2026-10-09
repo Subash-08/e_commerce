@@ -1,5 +1,11 @@
 # Foundation progress
 
+### Shipping reviewed-policy selection repair, 2026-10-09
+
+Atlas inspection confirmed the professional review evidence was recorded on the immutable tax policy, while Shipping revision 7 still stored a null shipping tax-policy key. Recording review evidence refreshed the route and discarded an unsaved policy selection in the separate Shipping Settings form. The review action now preserves that form state, and enabled shipping cannot be saved without an explicitly selected reviewed shipping policy. A positive enabled COD surcharge likewise requires its own selected reviewed policy. Existing review evidence remains valid; the administrator only needs to select the reviewed policy and save Shipping Settings once.
+
+Verification: focused formatting, ESLint, direct TypeScript compilation, all 205 unit checks and git diff validation passed. No database values, tax evidence or checkout records were changed by this repair.
+
 ### Shipping tax review workflow, 2026-10-09
 
 Diagnosed the checkout block from Atlas metadata: shipping revision 4 had no selected shipping or COD tax-policy key. Added a separate Admin workflow to record genuine professional review evidence against an immutable tax policy. It requires policy, reference, non-future date, approved purpose and explicit confirmation; uses fresh ADMIN authority, a guarded transaction and a complete audit event. Normal Shipping Settings Save still cannot approve tax. The page now derives its review badge from the live selected immutable policy instead of the stored historical summary. The date maximum is supplied by the server to avoid hydration drift.

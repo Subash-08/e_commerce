@@ -17,6 +17,10 @@ function failure(error: unknown) {
       "Stored shipping configuration is invalid or from an unsupported version. Restore a reviewed policy before proceeding.",
     SHIPPING_TAX_CONFIGURATION_REQUIRED:
       "Choose an existing valid tax policy, or leave it unconfigured while awaiting review.",
+    SHIPPING_TAX_POLICY_REQUIRED:
+      "Enabled shipping requires a selected shipping tax policy. Select the reviewed policy and save again.",
+    COD_TAX_POLICY_REQUIRED:
+      "A positive COD surcharge requires a selected COD tax policy.",
   };
   return {
     ok: false as const,
@@ -36,11 +40,10 @@ function failure(error: unknown) {
 export async function recordTaxReviewAction(input: unknown) {
   try {
     await recordTaxReview(new Headers(await headers()), input);
-    revalidatePath("/admin/settings/shipping");
     return {
       ok: true as const,
       message:
-        "Reviewed tax evidence recorded. Select this policy above and save Shipping Settings before checkout.",
+        "Reviewed tax evidence recorded. Now select this policy in Tax references and save Shipping Settings.",
     };
   } catch (error) {
     return failure(error);

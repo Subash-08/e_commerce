@@ -1,6 +1,5 @@
 "use client";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { recordTaxReviewAction } from "./actions";
 
 type Choice = {
@@ -16,7 +15,6 @@ export function TaxReviewPanel({
   choices: Choice[];
   today: string;
 }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
   const [message, setMessage] = useState("");
   return (
@@ -48,7 +46,6 @@ export function TaxReviewPanel({
               confirmed: form.has("review.confirmed"),
             });
             setMessage(result.message);
-            if (result.ok) router.refresh();
           });
         }}
       >
