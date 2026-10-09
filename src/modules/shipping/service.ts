@@ -172,6 +172,33 @@ export async function recordTaxReview(requestHeaders: Headers, raw: unknown) {
       reviewedAt,
       purposes: [...new Set(value.purposes)].sort(),
     };
+    const existing = prior.deliveryReview as
+      | {
+          reference?: unknown;
+          reviewedAt?: unknown;
+          purposes?: unknown;
+        }
+      | undefined;
+    const existingDate =
+      existing?.reviewedAt instanceof Date
+        ? existing.reviewedAt
+        : typeof existing?.reviewedAt === "string"
+          ? new Date(existing.reviewedAt)
+          : null;
+    const existingPurposes = Array.isArray(existing?.purposes)
+      ? existing.purposes.filter(
+          (purpose): purpose is string => typeof purpose === "string",
+        )
+      : [];
+    if (
+      existing?.reference === review.reference &&
+      existingDate?.getTime() === review.reviewedAt.getTime() &&
+      existingPurposes.length === review.purposes.length &&
+      existingPurposes.every(
+        (purpose, index) => purpose === review.purposes[index],
+      )
+    )
+      return;
     const result = await collection.updateOne(
       {
         _id: prior._id,

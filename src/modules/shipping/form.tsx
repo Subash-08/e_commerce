@@ -70,10 +70,21 @@ function decimal(value: number | null) {
   return value === null || value < 0 ? "" : (value / 100).toFixed(2);
 }
 export function ShippingForm({ data }: { data: Data }) {
+  const stored = data.value ?? blank;
+  const reviewedShipping = data.choices.filter((choice) => choice.approved);
+  const suggestedPolicyKey =
+    stored.enabled &&
+    !stored.shippingTaxPolicyKey &&
+    reviewedShipping.length === 1
+      ? reviewedShipping[0]!.key
+      : null;
   const [source, setSource] = useState({
-    value: data.value ?? blank,
+    value: suggestedPolicyKey
+      ? { ...stored, shippingTaxPolicyKey: suggestedPolicyKey }
+      : stored,
     key: 0,
     restored: false,
+    suggested: !!suggestedPolicyKey,
   });
   return (
     <>
@@ -82,8 +93,14 @@ export function ShippingForm({ data }: { data: Data }) {
         data={data}
         initial={source.value}
         restored={source.restored}
+        suggested={source.suggested}
         restore={(value) =>
-          setSource((s) => ({ value, key: s.key + 1, restored: true }))
+          setSource((s) => ({
+            value,
+            key: s.key + 1,
+            restored: true,
+            suggested: false,
+          }))
         }
       />
       <TaxReviewPanel choices={data.choices} today={data.today} />
@@ -94,17 +111,20 @@ function ShippingEditor({
   data,
   initial,
   restored,
+  suggested,
   restore,
 }: {
   data: Data;
   initial: ShippingInput;
   restored: boolean;
+  suggested: boolean;
   restore: (v: ShippingInput) => void;
 }) {
   const router = useRouter();
   const form = useRef<HTMLFormElement>(null);
-  const dirtyRef = useRef(restored);
-  const [dirty, setDirty] = useState(restored),
+  const dirtyRef = useRef(restored || suggested);
+  const [dirty, setDirty] = useState(restored || suggested),
+    [suggestionPending, setSuggestionPending] = useState(suggested),
     [revision, setRevision] = useState(data.revision),
     [pending, start] = useTransition();
   const [free, setFree] = useState(initial.automaticFreeShipping.enabled),
@@ -213,6 +233,7 @@ function ShippingEditor({
               dirtyRef.current = false;
               setRevision(result.revision);
               setDirty(false);
+              setSuggestionPending(false);
               setErrors({});
               setMessage(
                 "Shipping settings saved. Tax approval is managed separately.",
@@ -242,6 +263,12 @@ function ShippingEditor({
               {data.taxReviewedAt
                 ? ` · ${new Date(data.taxReviewedAt).toLocaleDateString()}`
                 : ""}
+            </span>
+          )}
+          {suggestionPending && (
+            <span>
+              The only reviewed shipping policy is selected below. Save settings
+              to use it and enable checkout quotes.
             </span>
           )}
         </div>

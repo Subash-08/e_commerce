@@ -2,7 +2,7 @@
 
 ### Shipping reviewed-policy selection repair, 2026-10-09
 
-Atlas inspection confirmed the professional review evidence was recorded on the immutable tax policy, while Shipping revision 7 still stored a null shipping tax-policy key. Recording review evidence refreshed the route and discarded an unsaved policy selection in the separate Shipping Settings form. The review action now preserves that form state, and enabled shipping cannot be saved without an explicitly selected reviewed shipping policy. A positive enabled COD surcharge likewise requires its own selected reviewed policy. Existing review evidence remains valid; the administrator only needs to select the reviewed policy and save Shipping Settings once.
+Atlas inspection confirmed the professional review evidence was recorded on the immutable tax policy, while Shipping revision 7 still stored a null shipping tax-policy key. Recording review evidence refreshed the route and discarded an unsaved policy selection in the separate Shipping Settings form. The review action now preserves that form state, and enabled shipping cannot be saved without an explicitly selected reviewed shipping policy. A positive enabled COD surcharge likewise requires its own selected reviewed policy. When exactly one reviewed shipping policy exists, the Admin form now preselects it as a clearly marked unsaved suggestion; the administrator only needs to use the main Save settings action. Repeating identical review evidence is idempotent instead of reporting a false revision conflict.
 
 Verification: focused formatting, ESLint, direct TypeScript compilation, all 205 unit checks and git diff validation passed. No database values, tax evidence or checkout records were changed by this repair.
 
