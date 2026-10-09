@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 export function CancelOrderButton({
@@ -10,6 +11,7 @@ export function CancelOrderButton({
   revision: number;
   admin?: boolean;
 }) {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();
   if (message === "cancelled")
@@ -42,7 +44,10 @@ export function CancelOrderButton({
             const data = await response.json();
             if (!response.ok)
               setMessage(data.message ?? "Cancellation failed.");
-            else setMessage("cancelled");
+            else {
+              setMessage("cancelled");
+              router.refresh();
+            }
           });
         }}
       >
