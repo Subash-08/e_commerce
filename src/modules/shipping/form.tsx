@@ -14,6 +14,7 @@ import { saveShippingAction, previewShippingAction } from "./actions";
 import { stateCodes, type ShippingInput } from "./contracts";
 import type { loadShippingAdmin } from "./service";
 import { StatusBadge } from "../../shared/ui/admin";
+import { TaxReviewPanel } from "./tax-review-panel";
 import "./shipping.css";
 
 type Data = Awaited<ReturnType<typeof loadShippingAdmin>>;
@@ -75,15 +76,18 @@ export function ShippingForm({ data }: { data: Data }) {
     restored: false,
   });
   return (
-    <ShippingEditor
-      key={source.key}
-      data={data}
-      initial={source.value}
-      restored={source.restored}
-      restore={(value) =>
-        setSource((s) => ({ value, key: s.key + 1, restored: true }))
-      }
-    />
+    <>
+      <ShippingEditor
+        key={source.key}
+        data={data}
+        initial={source.value}
+        restored={source.restored}
+        restore={(value) =>
+          setSource((s) => ({ value, key: s.key + 1, restored: true }))
+        }
+      />
+      <TaxReviewPanel choices={data.choices} today={data.today} />
+    </>
   );
 }
 function ShippingEditor({

@@ -84,6 +84,18 @@
 .shipping-save-bar > span {
   font-size: 14px;
 }
+.shipping-tax-review {
+  margin-top: 16px;
+}
+.shipping-tax-review .wide {
+  grid-column: 1 / -1;
+}
+.shipping-review-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
 @media (max-width: 640px) {
   .shipping-save-bar {
     flex-direction: column;

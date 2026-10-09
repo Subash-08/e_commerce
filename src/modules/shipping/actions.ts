@@ -2,9 +2,10 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
-import { saveShipping, previewShipping } from "./service";
+import { saveShipping, previewShipping, recordTaxReview } from "./service";
 function failure(error: unknown) {
   const messages: Record<string, string> = {
+    TAX_REVIEW_DATE_INVALID: "Review date cannot be in the future.",
     REVISION_CONFLICT:
       "Another administrator saved changes. Reload and review the current revision before saving.",
     DB_DUPLICATE_KEY:
@@ -31,6 +32,19 @@ function failure(error: unknown) {
           )
         : {},
   };
+}
+export async function recordTaxReviewAction(input: unknown) {
+  try {
+    await recordTaxReview(new Headers(await headers()), input);
+    revalidatePath("/admin/settings/shipping");
+    return {
+      ok: true as const,
+      message:
+        "Reviewed tax evidence recorded. Select this policy above and save Shipping Settings before checkout.",
+    };
+  } catch (error) {
+    return failure(error);
+  }
 }
 export async function saveShippingAction(input: unknown, revision: unknown) {
   try {

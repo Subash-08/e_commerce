@@ -1,5 +1,9 @@
 # Foundation progress
 
+### Shipping tax review workflow, 2026-10-09
+
+Diagnosed the checkout block from Atlas metadata: shipping revision 4 had no selected shipping or COD tax-policy key. Added a separate Admin workflow to record genuine professional review evidence against an immutable tax policy. It requires policy, reference, non-future date, approved purpose and explicit confirmation; uses fresh ADMIN authority, a guarded transaction and a complete audit event. Normal Shipping Settings Save still cannot approve tax. The page now derives its review badge from the live selected immutable policy instead of the stored historical summary. The date maximum is supplied by the server to avoid hydration drift.
+
 ### Phase 1B checkout quote foundation, 2026-10-09
 
 Replaced the checkout placeholder with a responsive India/INR delivery, contact, billing, optional business GSTIN, coupon and payment-preference form. The cart now links to checkout when its current lines are usable. `POST /api/checkout/quote` accepts bounded guest lines or the authenticated cart revision, ignores all browser prices/totals, refreshes catalog/coupon availability, invokes the authoritative shipping policy, and returns a private no-store quote. It creates no order, reservation, payment or coupon claim.

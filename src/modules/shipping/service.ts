@@ -105,12 +105,16 @@ export async function loadShippingAdmin(requestHeaders: Headers) {
   const policy = await readPolicy(database.db);
   const choices = await taxChoices(database.db);
   const rows = await history(database.db);
+  const liveTax = policy
+    ? await readTax(database.db, policy.shippingTaxPolicyKey, "SHIPPING")
+    : null;
   return {
     value: policy ? policyFields(policy) : null,
     revision: policy?.revision ?? -1,
-    taxApproved: policy?.taxReview.approved ?? false,
-    taxReviewReference: policy?.taxReview.reviewReference ?? null,
-    taxReviewedAt: policy?.taxReview.reviewedAt?.toISOString() ?? null,
+    taxApproved: liveTax?.approved ?? false,
+    taxReviewReference: liveTax?.reviewReference ?? null,
+    taxReviewedAt: liveTax?.reviewedAt?.toISOString() ?? null,
+    today: new Date().toISOString().slice(0, 10),
     choices,
     history: rows.map((r) => ({
       revision: r.after.revision,
@@ -118,6 +122,81 @@ export async function loadShippingAdmin(requestHeaders: Headers) {
       value: policyFields(r.after),
     })),
   };
+}
+const taxReviewInput = z
+  .object({
+    key: z.string().trim().min(1).max(120),
+    reference: z.string().trim().min(3).max(200),
+    reviewedAt: z.string().datetime(),
+    purposes: z
+      .array(z.enum(["SHIPPING", "COD"]))
+      .min(1)
+      .max(2),
+    confirmed: z.literal(true),
+  })
+  .strict();
+export async function recordTaxReview(requestHeaders: Headers, raw: unknown) {
+  const value = taxReviewInput.parse(raw);
+  const { actor, database } = await admin(requestHeaders);
+  await rateLimit(database.db, "shipping-tax-review:" + actor.authUserId, 10);
+  const reviewedAt = new Date(value.reviewedAt);
+  if (reviewedAt.getTime() > Date.now())
+    throw new Error("TAX_REVIEW_DATE_INVALID");
+  await transaction(async (session) => {
+    await authority(database, actor, session);
+    const collection = database.db.collection("taxPolicies");
+    const prior = await collection.findOne(
+      { key: value.key, version: 1, schemaVersion: 1 },
+      {
+        session,
+        projection: {
+          key: 1,
+          mode: 1,
+          rateBps: 1,
+          exemptionReason: 1,
+          deliveryReview: 1,
+        },
+      },
+    );
+    if (!prior) throw new Error("SHIPPING_TAX_CONFIGURATION_REQUIRED");
+    const review = {
+      reference: value.reference,
+      reviewedAt,
+      purposes: [...new Set(value.purposes)].sort(),
+    };
+    const result = await collection.updateOne(
+      {
+        _id: prior._id,
+        ...(prior.deliveryReview
+          ? { deliveryReview: prior.deliveryReview }
+          : { deliveryReview: { $exists: false } }),
+      },
+      { $set: { deliveryReview: review } },
+      { session },
+    );
+    if (!result.modifiedCount) throw new Error("REVISION_CONFLICT");
+    const snapshot = {
+      key: prior.key,
+      mode: prior.mode,
+      rateBps: prior.rateBps,
+      exemptionReason: prior.exemptionReason ?? null,
+    };
+    await database.db.collection("auditLogs").insertOne(
+      {
+        actorType: "ACCOUNT",
+        actorId: actor.authUserId,
+        action: "SHIPPING_TAX_REVIEW_RECORDED",
+        entityType: "taxPolicy",
+        entityId: value.key,
+        before: { ...snapshot, deliveryReview: prior.deliveryReview ?? null },
+        after: { ...snapshot, deliveryReview: review },
+        occurredAt: new Date(),
+        createdAt: new Date(),
+        schemaVersion: 1,
+      },
+      { session },
+    );
+  }, database);
 }
 export async function saveShipping(
   requestHeaders: Headers,
