@@ -11,7 +11,7 @@ import { privateOwner, rateLimit } from "../cart/security";
 import { resolveShipping } from "../shipping/service";
 import { checkoutQuoteInput, type CheckoutQuoteDto } from "./contracts";
 
-function fingerprint(value: unknown) {
+export function checkoutFingerprint(value: unknown) {
   return privateOwner("checkout-input:" + JSON.stringify(value));
 }
 export async function readOwnedCheckoutQuote(
@@ -176,9 +176,9 @@ export async function createCheckoutQuote(
   await database.db.collection("checkoutQuotes").insertOne({
     quoteId,
     ownerKeyHash,
-    requestFingerprint: fingerprint(quoteBoundInput),
+    requestFingerprint: checkoutFingerprint(quoteBoundInput),
     cartRevision: owner ? (cart?.revision ?? 0) : null,
-    guestLinesHash: owner ? null : fingerprint(lines),
+    guestLinesHash: owner ? null : checkoutFingerprint(lines),
     sourceRevisions: {
       variants: variants.map((v) => ({
         id: String(v._id),

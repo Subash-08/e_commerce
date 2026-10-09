@@ -1,6 +1,7 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { stateCodes } from "../shipping/contracts";
 import type { CartLine } from "../cart/contracts";
 import { useCart } from "../cart/client";
@@ -30,6 +31,7 @@ export function CheckoutClient({
   addresses: SavedAddressDto[];
   legalVersions: { terms: string; privacy: string };
 }) {
+  const router = useRouter();
   const defaultShipping =
     addresses.find((address) => address.defaultShipping) ??
     addresses[0] ??
@@ -47,6 +49,7 @@ export function CheckoutClient({
     [quote, setQuote] = useState<CheckoutQuoteDto | null>(null),
     [error, setError] = useState(""),
     [pending, start] = useTransition();
+  const idempotencyKey = useRef(crypto.randomUUID());
   async function submit(form: HTMLFormElement) {
     const f = new FormData(form),
       text = (k: string) => String(f.get(k) ?? "").trim();
@@ -93,6 +96,22 @@ export function CheckoutClient({
           })) ?? guestLines()),
       cartRevision: cart?.revision ?? 0,
     };
+    if (quote) {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId: quote.quoteId,
+          idempotencyKey: idempotencyKey.current,
+          checkout: body,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      if (!account) localStorage.removeItem("commerce.guest-cart.v1");
+      router.push("/order/" + data.order.orderNumber);
+      return;
+    }
     const response = await fetch("/api/checkout/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -105,6 +124,12 @@ export function CheckoutClient({
   return (
     <form
       className="checkout"
+      onChange={() => {
+        if (quote) {
+          setQuote(null);
+          idempotencyKey.current = crypto.randomUUID();
+        }
+      }}
       onSubmit={(e) => {
         e.preventDefault();
         setError("");
@@ -279,17 +304,12 @@ export function CheckoutClient({
           <section>
             <h2>Payment preference</h2>
             <label className="checkout-check">
-              <input
-                type="radio"
-                name="payment"
-                value="ONLINE"
-                defaultChecked
-              />{" "}
+              <input type="radio" name="payment" value="ONLINE" disabled />{" "}
               Online payment
             </label>
             <label className="checkout-check">
-              <input type="radio" name="payment" value="COD" /> Cash on
-              delivery, when eligible
+              <input type="radio" name="payment" value="COD" defaultChecked />{" "}
+              Cash on delivery, when eligible
             </label>
           </section>
           <section>
@@ -352,7 +372,13 @@ export function CheckoutClient({
             </p>
           )}
           <button disabled={pending} type="submit">
-            {pending ? "Checking live prices…" : "Review live quote"}
+            {pending
+              ? quote
+                ? "Placing order…"
+                : "Checking live prices…"
+              : quote
+                ? "Place COD order"
+                : "Review live quote"}
           </button>
           <Link href="/cart">Return to cart</Link>
         </aside>

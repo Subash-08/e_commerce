@@ -66,7 +66,8 @@
     "/admin/settings/shipping",
     "/admin/logs",
     "/admin/enquiries",
-    "/admin/work"
+    "/admin/work",
+    "/order/[orderNumber]"
   ],
   "apis": {
     "/api/cart": ["GET", "POST"],
@@ -80,12 +81,13 @@
     "/api/webhooks/razorpay": ["POST"],
     "/api/orders/lookup/request": ["POST"],
     "/api/orders/lookup/verify": ["POST"],
-    "/api/orders/[orderNumber]": ["GET"],
+    "/api/orders/[orderNumber]": ["GET", "DELETE"],
     "/api/invoices/[id]/download": ["GET"],
     "/api/media/sign": ["POST"],
     "/api/imports": ["POST"],
     "/api/jobs/run": ["POST"],
     "/api/health": ["GET"],
-    "/api/ready": ["GET"]
+    "/api/ready": ["GET"],
+    "/api/admin/orders/[orderNumber]/cancel": ["POST"]
   }
 }

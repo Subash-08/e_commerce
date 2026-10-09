@@ -1,5 +1,6 @@
 import { shippingIndexes } from "../../modules/shipping/indexes.ts";
 import { checkoutIndexes } from "../../modules/checkout/indexes.ts";
+import { orderIndexes } from "../../modules/orders/indexes.ts";
 import { cartIndexes } from "../../modules/cart/indexes.ts";
 import { couponIndexes } from "../../modules/coupons/indexes.ts";
 import { attributeIndexes } from "../../modules/attributes/indexes.ts";
@@ -19,4 +20,5 @@ export const approvedIndexes: readonly CollectionIndexes[] = [
   ...couponIndexes,
   ...shippingIndexes,
   ...checkoutIndexes,
+  ...orderIndexes,
 ];

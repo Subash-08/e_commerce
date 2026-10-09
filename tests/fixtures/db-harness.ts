@@ -157,7 +157,7 @@ export async function createTestDatabaseContext(
 
   // Dedicated admin client for collection setup and guarded drops
   const contextClient = new MongoClient(config.uri, {
-    serverSelectionTimeoutMS: 2000,
+    serverSelectionTimeoutMS: 10000,
   });
   const db = contextClient.db(config.databaseName);
   try {

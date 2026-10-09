@@ -1,6 +1,10 @@
 import "server-only";
 import type { RecoveryEmail } from "./recovery-email";
-type Letter = RecoveryEmail & { expiresAt: number };
+type Letter = RecoveryEmail & {
+  subject?: string;
+  kind?: "recovery" | "order";
+  expiresAt: number;
+};
 const storage = globalThis as typeof globalThis & {
   __commerceDevelopmentMail?: Letter[];
 };
@@ -11,7 +15,9 @@ function enabled() {
     process.env.EMAIL_PROVIDER === "development"
   );
 }
-export async function deliverDevelopmentMail(message: RecoveryEmail) {
+export async function deliverDevelopmentMail(
+  message: RecoveryEmail & { subject?: string; kind?: "recovery" | "order" },
+) {
   if (!enabled()) throw new Error("DEV_MAIL_DISABLED");
   const letters = (storage.__commerceDevelopmentMail ??= []);
   letters.unshift({ ...message, expiresAt: Date.now() + 15 * 60 * 1000 });
@@ -42,9 +48,9 @@ export function developmentMailbox(request: Request) {
       (letter) =>
         "<article><strong>" +
         escape(letter.email) +
-        '</strong><p>Password recovery · expires within 15 minutes</p><a href="' +
+        '</strong><p>" + escape(letter.subject ?? "Password recovery · expires within 15 minutes") + "</p><a href="' +
         escape(letter.url) +
-        '">Open reset link</a></article>',
+        '">Open message</a></article>',
     )
     .join("");
   return new Response(

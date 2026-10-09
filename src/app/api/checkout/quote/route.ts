@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         httpOnly: true,
         sameSite: "lax",
         secure: new URL(request.url).protocol === "https:",
-        path: "/checkout",
+        path: "/",
         maxAge: 3600,
       });
     }

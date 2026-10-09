@@ -25,7 +25,7 @@ function applicationCache() {
   return productionCache;
 }
 export async function assertTransactionTopology(db: Db): Promise<void> {
-  const hello = await db.admin().command({ hello: 1 }, { timeoutMS: 2000 });
+  const hello = await db.admin().command({ hello: 1 }, { timeoutMS: 10000 });
   if (typeof hello.setName !== "string" && hello.msg !== "isdbgrid")
     throw new DatabaseError("DB_TOPOLOGY_REQUIRED");
   if (hello.logicalSessionTimeoutMinutes == null)
@@ -43,10 +43,10 @@ export async function openDatabase(
     client = new MongoClient(config.uri, {
       maxPoolSize: config.maxPoolSize,
       minPoolSize: 0,
-      serverSelectionTimeoutMS: 1500,
-      connectTimeoutMS: 1500,
-      waitQueueTimeoutMS: 5000,
-      timeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      waitQueueTimeoutMS: 10000,
+      timeoutMS: 10000,
       retryWrites: true,
     });
     await client.connect();

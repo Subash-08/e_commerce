@@ -1,5 +1,16 @@
-# Orders
+# Orders module
 
-Pure order lifecycle and lateCapture guards are implemented in state.ts. They return audited next-state proposals and effect descriptions; they do not create durable orders, execute jobs or mutate stock. Trusted services must establish authorization and fresh verified facts and commit all effects atomically.
+Phase 2A implements the COD acceptance boundary. Routes call the service; the service owns quote/stock/coupon/order rules; MongoDB operations are explicit and participate in one Atlas transaction. Orders keep immutable accepted snapshots and separate order, financial and fulfillment-exception state.
 
-Contracts: [canonical states](../../../docs/commerce/STATE-MACHINES.md), [ADR 0008](../../../docs/adr/0008-pure-domain-foundation.md). Creation/snapshot persistence and operator/customer UI remain later work.
+Implemented:
+
+- buyer-scoped idempotent COD acceptance;
+- tracked-stock reservations and status-only availability checks;
+- effective coupon capacity consumption;
+- consecutive yearly order numbering;
+- account and signed guest ownership;
+- account/Admin lists and private detail;
+- pre-shipment cancellation with atomic stock/coupon recovery;
+- notification outbox creation.
+
+Online payments, provider observations, shipment consumption, invoices and late-capture recovery remain later gates. See ADR 0014 and the canonical state registry.

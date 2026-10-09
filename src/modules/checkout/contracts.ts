@@ -105,3 +105,11 @@ export type CheckoutQuoteDto = {
   paymentMethods: Array<"ONLINE" | "COD">;
   notices: string[];
 };
+export const placeCodOrderInput = z
+  .object({
+    quoteId: z.string().uuid(),
+    idempotencyKey: z.string().uuid(),
+    checkout: checkoutQuoteInput,
+  })
+  .strict();
+export type PlaceCodOrderInput = z.infer<typeof placeCodOrderInput>;

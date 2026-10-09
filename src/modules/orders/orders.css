@@ -1,0 +1,143 @@
+.order-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  color: var(--sf-text, #172033);
+}
+.order-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.order-hero span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #635bff;
+}
+.order-hero h1 {
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  margin: 6px 0;
+}
+.order-hero p,
+.order-card p,
+.order-line span {
+  color: #667085;
+}
+.order-state {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #067647;
+  font-size: 0.8rem;
+}
+.state-cancelled {
+  background: #fef3f2;
+  color: #b42318;
+}
+.order-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 20px;
+}
+.order-side {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.order-card {
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.04);
+}
+.order-card h2 {
+  font-size: 1rem;
+  margin: 0 0 16px;
+}
+.order-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #eaecf0;
+}
+.order-line div {
+  display: grid;
+  gap: 4px;
+}
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.15rem;
+  padding-top: 18px;
+}
+.order-cancel button {
+  min-height: 40px;
+  border: 1px solid #d92d20;
+  border-radius: 8px;
+  background: #fff;
+  color: #b42318;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+.order-card.danger {
+  border-color: #fecdca;
+}
+.order-error {
+  color: #b42318;
+}
+.order-success {
+  color: #067647;
+}
+.order-back {
+  display: inline-flex;
+  margin-top: 24px;
+  color: #5145cd;
+  font-weight: 700;
+}
+.order-list {
+  display: grid;
+  gap: 12px;
+}
+.order-list-row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.8fr 0.7fr 0.7fr auto;
+  gap: 16px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+.order-list-row small {
+  color: #667085;
+}
+.order-empty {
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed #d0d5dd;
+  border-radius: 14px;
+}
+@media (max-width: 760px) {
+  .order-page {
+    padding: 24px 16px 48px;
+  }
+  .order-layout {
+    grid-template-columns: 1fr;
+  }
+  .order-hero {
+    display: grid;
+  }
+  .order-list-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .order-list-row > :last-child {
+    grid-column: 1/-1;
+  }
+}

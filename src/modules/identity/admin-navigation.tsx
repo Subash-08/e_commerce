@@ -8,6 +8,7 @@ const items = [
   { href: "/admin/settings", title: "Settings", icon: "⚙" },
   { href: "/admin/coupons", title: "Coupons", icon: "%" },
   { href: "/admin/products", title: "Products", icon: "□" },
+  { href: "/admin/orders", title: "Orders", icon: "▣" },
   { href: "/admin/attributes", title: "Attributes", icon: "≡" },
   { href: "/admin/categories", title: "Categories", icon: "▦" },
   { href: "/admin/brands", title: "Brands", icon: "◆" },

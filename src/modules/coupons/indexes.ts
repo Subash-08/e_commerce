@@ -7,6 +7,11 @@ export const couponIndexes: readonly CollectionIndexes[] = [
         name: "coupon_claims_capacity",
         key: { couponId: 1, state: 1, authUserId: 1 },
       },
+      {
+        name: "coupon_claim_order_generation_unique",
+        key: { orderId: 1, couponId: 1, generation: 1 },
+        unique: true,
+      },
     ],
   },
   {
