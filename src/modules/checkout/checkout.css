@@ -60,6 +60,13 @@
 .checkout-grid .wide {
   grid-column: 1/-1;
 }
+.checkout-saved-select {
+  display: grid;
+  gap: 7px;
+  max-width: 520px;
+  font-size: 13px;
+  font-weight: 600;
+}
 .checkout input,
 .checkout select,
 .checkout textarea {

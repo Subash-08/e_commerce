@@ -1,28 +1,10 @@
 import { z } from "zod";
 import { cartLines } from "../cart/contracts";
-import { stateCode } from "../shipping/contracts";
+import { addressFields } from "../addresses/contracts";
+import { legalPolicyVersions } from "./legal";
 
 const short = z.string().trim().min(1).max(100);
-export const checkoutAddress = z
-  .object({
-    name: short,
-    mobile: z
-      .string()
-      .trim()
-      .regex(/^[6-9][0-9]{9}$/, "Enter a valid 10-digit Indian mobile number"),
-    line1: z.string().trim().min(3).max(150),
-    line2: z.string().trim().max(150).default(""),
-    landmark: z.string().trim().max(100).default(""),
-    city: short,
-    district: z.string().trim().max(100).default(""),
-    stateCode,
-    postalCode: z
-      .string()
-      .trim()
-      .regex(/^[1-9][0-9]{5}$/, "Enter a valid six-digit PIN"),
-    countryCode: z.literal("IN"),
-  })
-  .strict();
+export const checkoutAddress = addressFields;
 
 export const checkoutQuoteInput = z
   .object({
@@ -60,7 +42,13 @@ export const checkoutQuoteInput = z
       .toUpperCase()
       .max(20)
       .regex(/^[A-Z0-9_-]*$/),
-    termsAccepted: z.literal(true),
+    legal: z
+      .object({
+        termsVersion: z.literal(legalPolicyVersions.terms),
+        privacyVersion: z.literal(legalPolicyVersions.privacy),
+        accepted: z.literal(true),
+      })
+      .strict(),
     marketingConsent: z.boolean(),
     guestLines: cartLines,
     cartRevision: z.number().int().min(0),
@@ -102,6 +90,7 @@ export type CheckoutQuoteDto = {
     chargePaise: number;
     taxPaise: number;
     waiverPaise: number;
+    couponWaiverPaise: number;
     automaticFree: boolean;
     remainingPaise: number | null;
   };

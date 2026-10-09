@@ -23,7 +23,7 @@ export const couponInput = z
     name: z.string().trim().min(1).max(100),
     description: z.string().trim().max(500).default(""),
     kind: z.enum(stateValues.CouponKind),
-    value: z.number().int().positive().max(10000000000),
+    value: z.number().int().min(0).max(10000000000),
     maxDiscountPaise: money.nullable().default(null),
     minEligiblePaise: money.default(0),
     startsAt: z.string().datetime(),
@@ -46,6 +46,10 @@ export const couponInput = z
       ctx.addIssue({ code: "custom", path: [path], message });
     if (value.kind === "PERCENTAGE" && value.value > 10000)
       fail("value", "Percentage cannot exceed 100%.");
+    if (value.kind === "FREE_SHIPPING" && value.value !== 0)
+      fail("value", "Free-shipping coupons do not use a merchandise value.");
+    if (value.kind !== "FREE_SHIPPING" && value.value === 0)
+      fail("value", "Enter a positive merchandise discount.");
     if (value.kind === "FIXED" && value.maxDiscountPaise !== null)
       fail("maxDiscountPaise", "A fixed coupon already has a fixed maximum.");
     if (value.maxDiscountPaise === 0)

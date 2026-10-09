@@ -30,7 +30,7 @@ export const stateValues = {
   RefundState: ["PENDING", "SUCCEEDED", "FAILED"],
   FulfillmentException: ["NONE", "REVIEW_REQUIRED", "REFUND_REQUIRED"],
   ReservationState: ["ACTIVE", "CONSUMED", "RELEASED"],
-  CouponKind: ["FIXED", "PERCENTAGE"],
+  CouponKind: ["FIXED", "PERCENTAGE", "FREE_SHIPPING"],
   ClaimState: ["HELD", "CONSUMED", "RELEASED"],
   InvoiceState: ["ISSUED", "VOID"],
   JobState: ["PENDING", "RUNNING", "RETRY", "SUCCEEDED", "DEAD"],

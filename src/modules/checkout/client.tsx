@@ -5,6 +5,7 @@ import { stateCodes } from "../shipping/contracts";
 import type { CartLine } from "../cart/contracts";
 import { useCart } from "../cart/client";
 import type { CheckoutQuoteDto } from "./contracts";
+import type { SavedAddressDto } from "../addresses/contracts";
 import "./checkout.css";
 const money = (v: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
@@ -22,11 +23,27 @@ function guestLines(): CartLine[] {
 }
 export function CheckoutClient({
   account,
+  addresses,
+  legalVersions,
 }: {
   account: { name: string; email: string } | null;
+  addresses: SavedAddressDto[];
+  legalVersions: { terms: string; privacy: string };
 }) {
+  const defaultShipping =
+    addresses.find((address) => address.defaultShipping) ??
+    addresses[0] ??
+    null;
+  const defaultBilling =
+    addresses.find((address) => address.defaultBilling) ?? defaultShipping;
   const { view: cart } = useCart();
   const [billingSame, setBillingSame] = useState(true),
+    [shippingAddressId, setShippingAddressId] = useState(
+      defaultShipping?.id ?? "",
+    ),
+    [billingAddressId, setBillingAddressId] = useState(
+      defaultBilling?.id ?? "",
+    ),
     [quote, setQuote] = useState<CheckoutQuoteDto | null>(null),
     [error, setError] = useState(""),
     [pending, start] = useTransition();
@@ -61,7 +78,11 @@ export function CheckoutClient({
       deliveryNote: text("deliveryNote"),
       payment: text("payment"),
       coupon: text("coupon"),
-      termsAccepted: f.has("termsAccepted"),
+      legal: {
+        termsVersion: legalVersions.terms,
+        privacyVersion: legalVersions.privacy,
+        accepted: f.has("termsAccepted"),
+      },
       marketingConsent: f.has("marketingConsent"),
       guestLines: account
         ? []
@@ -146,7 +167,34 @@ export function CheckoutClient({
               </label>
             </div>
           </section>
-          <Address prefix="shipping." title="Shipping address" />
+          {addresses.length > 0 && (
+            <section>
+              <h2>Saved delivery address</h2>
+              <label className="checkout-saved-select">
+                Choose an address
+                <select
+                  value={shippingAddressId}
+                  onChange={(event) => setShippingAddressId(event.target.value)}
+                >
+                  <option value="">Enter a different address</option>
+                  {addresses.map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {address.label} · {address.city} {address.postalCode}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
+          )}
+          <Address
+            key={"shipping-" + shippingAddressId}
+            prefix="shipping."
+            title="Shipping address"
+            value={
+              addresses.find((address) => address.id === shippingAddressId) ??
+              null
+            }
+          />
           <section>
             <label className="checkout-check">
               <input
@@ -158,7 +206,39 @@ export function CheckoutClient({
             </label>
           </section>
           {!billingSame && (
-            <Address prefix="billing." title="Billing address" />
+            <>
+              {addresses.length > 0 && (
+                <section>
+                  <h2>Saved billing address</h2>
+                  <label className="checkout-saved-select">
+                    Choose an address
+                    <select
+                      value={billingAddressId}
+                      onChange={(event) =>
+                        setBillingAddressId(event.target.value)
+                      }
+                    >
+                      <option value="">Enter a different address</option>
+                      {addresses.map((address) => (
+                        <option key={address.id} value={address.id}>
+                          {address.label} · {address.city} {address.postalCode}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+              )}
+              <Address
+                key={"billing-" + billingAddressId}
+                prefix="billing."
+                title="Billing address"
+                value={
+                  addresses.find(
+                    (address) => address.id === billingAddressId,
+                  ) ?? null
+                }
+              />
+            </>
           )}
           <section>
             <h2>
@@ -280,14 +360,27 @@ export function CheckoutClient({
     </form>
   );
 }
-function Address({ prefix, title }: { prefix: string; title: string }) {
+function Address({
+  prefix,
+  title,
+  value,
+}: {
+  prefix: string;
+  title: string;
+  value: SavedAddressDto | null;
+}) {
   return (
     <section>
       <h2>{title}</h2>
       <div className="checkout-grid">
         <label>
           Recipient name
-          <input name={prefix + "name"} autoComplete="name" required />
+          <input
+            name={prefix + "name"}
+            autoComplete="name"
+            required
+            defaultValue={value?.name ?? ""}
+          />
         </label>
         <label>
           Mobile
@@ -297,6 +390,7 @@ function Address({ prefix, title }: { prefix: string; title: string }) {
             autoComplete="tel"
             required
             pattern="[6-9][0-9]{9}"
+            defaultValue={value?.mobile ?? ""}
           />
         </label>
         <label className="wide">
@@ -305,15 +399,23 @@ function Address({ prefix, title }: { prefix: string; title: string }) {
             name={prefix + "line1"}
             autoComplete="address-line1"
             required
+            defaultValue={value?.line1 ?? ""}
           />
         </label>
         <label className="wide">
           Address line 2
-          <input name={prefix + "line2"} autoComplete="address-line2" />
+          <input
+            name={prefix + "line2"}
+            autoComplete="address-line2"
+            defaultValue={value?.line2 ?? ""}
+          />
         </label>
         <label>
           Landmark
-          <input name={prefix + "landmark"} />
+          <input
+            name={prefix + "landmark"}
+            defaultValue={value?.landmark ?? ""}
+          />
         </label>
         <label>
           City
@@ -321,11 +423,15 @@ function Address({ prefix, title }: { prefix: string; title: string }) {
             name={prefix + "city"}
             autoComplete="address-level2"
             required
+            defaultValue={value?.city ?? ""}
           />
         </label>
         <label>
           District
-          <input name={prefix + "district"} />
+          <input
+            name={prefix + "district"}
+            defaultValue={value?.district ?? ""}
+          />
         </label>
         <label>
           State / UT
@@ -333,7 +439,7 @@ function Address({ prefix, title }: { prefix: string; title: string }) {
             name={prefix + "stateCode"}
             autoComplete="address-level1"
             required
-            defaultValue=""
+            defaultValue={value?.stateCode ?? ""}
           >
             <option value="" disabled>
               Select state
@@ -351,6 +457,7 @@ function Address({ prefix, title }: { prefix: string; title: string }) {
             autoComplete="postal-code"
             pattern="[1-9][0-9]{5}"
             required
+            defaultValue={value?.postalCode ?? ""}
           />
         </label>
       </div>

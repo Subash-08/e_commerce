@@ -195,29 +195,37 @@ export function CouponForm({
                 onChange={(e) =>
                   update({
                     kind: e.target.value as CouponInput["kind"],
-                    value: e.target.value === "PERCENTAGE" ? 1000 : 10000,
+                    value:
+                      e.target.value === "FREE_SHIPPING"
+                        ? 0
+                        : e.target.value === "PERCENTAGE"
+                          ? 1000
+                          : 10000,
                     maxDiscountPaise: null,
                   })
                 }
               >
                 <option value="PERCENTAGE">Percentage off</option>
                 <option value="FIXED">Fixed amount off</option>
+                <option value="FREE_SHIPPING">Free delivery</option>
               </select>
             </label>
-            <label>
-              {value.kind === "PERCENTAGE" ? "Discount (%)" : "Discount (₹)"}
-              <input
-                type="number"
-                min="0.01"
-                max={value.kind === "PERCENTAGE" ? "100" : undefined}
-                step="0.01"
-                required
-                value={value.value / 100}
-                onChange={(e) =>
-                  update({ value: Math.round(Number(e.target.value) * 100) })
-                }
-              />
-            </label>
+            {value.kind !== "FREE_SHIPPING" && (
+              <label>
+                {value.kind === "PERCENTAGE" ? "Discount (%)" : "Discount (₹)"}
+                <input
+                  type="number"
+                  min="0.01"
+                  max={value.kind === "PERCENTAGE" ? "100" : undefined}
+                  step="0.01"
+                  required
+                  value={value.value / 100}
+                  onChange={(e) =>
+                    update({ value: Math.round(Number(e.target.value) * 100) })
+                  }
+                />
+              </label>
+            )}
             <label>
               Minimum eligible spend (₹)
               <input
@@ -236,9 +244,12 @@ export function CouponForm({
                 inclusive/exclusive price basis.
               </small>
             </label>
-            {value.kind === "PERCENTAGE" && (
+            {(value.kind === "PERCENTAGE" ||
+              value.kind === "FREE_SHIPPING") && (
               <label>
-                Maximum discount (₹, optional)
+                {value.kind === "FREE_SHIPPING"
+                  ? "Maximum delivery saving (₹, optional)"
+                  : "Maximum discount (₹, optional)"}
                 <input
                   type="number"
                   min="0.01"
@@ -256,6 +267,12 @@ export function CouponForm({
                     })
                   }
                 />
+                {value.kind === "FREE_SHIPPING" && (
+                  <small>
+                    Leave empty to waive the full delivery charge. COD fees are
+                    never waived.
+                  </small>
+                )}
               </label>
             )}
             <label>
@@ -294,7 +311,8 @@ export function CouponForm({
             <h2>Eligible catalog</h2>
             <p>
               Exclusions always win. A fixed discount applies once across the
-              eligible items.
+              eligible items. Free delivery uses the same item eligibility and
+              minimum-spend rules.
             </p>
           </header>
           <div className="admin-form-grid">

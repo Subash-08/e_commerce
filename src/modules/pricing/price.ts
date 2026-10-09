@@ -123,6 +123,48 @@ export function calculateTax(amount: number, facts: TaxFacts) {
     })),
   };
 }
+export function applyShippingCoupon(
+  chargePaise: number,
+  tax: TaxFacts,
+  maximumSavingPaise?: number,
+) {
+  paise(chargePaise);
+  const before = calculateTax(chargePaise, tax);
+  const cap =
+    maximumSavingPaise === undefined
+      ? before.payablePaise
+      : Math.min(paise(maximumSavingPaise), before.payablePaise);
+  if (!cap)
+    return { before, after: before, discountPaise: paise(0), effective: false };
+  if (cap === before.payablePaise) {
+    const after = calculateTax(0, tax);
+    return {
+      before,
+      after,
+      discountPaise: before.payablePaise,
+      effective: before.payablePaise > 0,
+    };
+  }
+  // Find the smallest tax input whose payable amount stays above the capped
+  // customer total. This keeps both inclusive and exclusive tax internally
+  // consistent without exceeding the configured paise cap.
+  const minimumPayable = before.payablePaise - cap;
+  let low = 0,
+    high = chargePaise;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (calculateTax(middle, tax).payablePaise >= minimumPayable) high = middle;
+    else low = middle + 1;
+  }
+  const after = calculateTax(low, tax);
+  const discountPaise = subtractPaise(before.payablePaise, after.payablePaise);
+  return {
+    before,
+    after,
+    discountPaise,
+    effective: discountPaise > 0,
+  };
+}
 export function priceQuote(input: PricingInput) {
   const currencyCode = currency(input.currency);
   requireFact(input.country === "IN", "UNSUPPORTED_COUNTRY");
@@ -160,6 +202,7 @@ export function priceQuote(input: PricingInput) {
   const saleSubtotalPaise = sumPaise(prepared.map((l) => l.salePaise));
   const listSubtotalPaise = sumPaise(prepared.map((l) => l.listPaise));
   let couponDiscountPaise = paise(0);
+  let shippingCoupon: CouponFacts | undefined;
   let allocations: ReadonlyMap<string, number> = new Map();
   if (input.coupon) {
     const coupon = input.coupon;
@@ -193,13 +236,21 @@ export function priceQuote(input: PricingInput) {
       "COUPON_MINIMUM",
     );
     requireFact(
-      coupon.kind === "FIXED" || coupon.kind === "PERCENTAGE",
+      coupon.kind === "FIXED" ||
+        coupon.kind === "PERCENTAGE" ||
+        coupon.kind === "FREE_SHIPPING",
       "INVALID_COUPON_KIND",
     );
+    if (coupon.kind === "FREE_SHIPPING") {
+      requireFact(coupon.value === 0, "INVALID_COUPON_VALUE");
+      shippingCoupon = coupon;
+    }
     const requested =
-      coupon.kind === "FIXED"
-        ? paise(coupon.value)
-        : percentage(eligiblePaise, coupon.value);
+      coupon.kind === "FREE_SHIPPING"
+        ? paise(0)
+        : coupon.kind === "FIXED"
+          ? paise(coupon.value)
+          : percentage(eligiblePaise, coupon.value);
     couponDiscountPaise = paise(
       Math.min(
         requested,
@@ -235,13 +286,19 @@ export function priceQuote(input: PricingInput) {
   const free =
     input.shipping.freeAtGoodsPayablePaise !== undefined &&
     goodsPayablePaise >= paise(input.shipping.freeAtGoodsPayablePaise);
-  const shipping = calculateTax(
-    free ? 0 : input.shipping.chargePaise,
-    input.shipping.tax,
-  );
+  const shippingResult = shippingCoupon
+    ? applyShippingCoupon(
+        free ? 0 : input.shipping.chargePaise,
+        input.shipping.tax,
+        shippingCoupon.maxDiscountPaise,
+      )
+    : null;
+  const shipping =
+    shippingResult?.after ??
+    calculateTax(free ? 0 : input.shipping.chargePaise, input.shipping.tax);
   return {
     currency: currencyCode,
-    pricingVersion: "1",
+    pricingVersion: "2",
     policyVersion: input.policyVersion,
     inputs: structuredClone(input),
     lines,
@@ -251,6 +308,7 @@ export function priceQuote(input: PricingInput) {
       saleSubtotalPaise,
       itemDiscountPaise: subtractPaise(listSubtotalPaise, saleSubtotalPaise),
       couponDiscountPaise,
+      shippingCouponDiscountPaise: shippingResult?.discountPaise ?? paise(0),
       taxableSubtotalPaise: sumPaise(lines.map((l) => l.basePaise)),
       taxPaise: sumPaise(lines.map((l) => l.taxPaise)),
       goodsPayablePaise,

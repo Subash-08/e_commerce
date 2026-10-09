@@ -115,5 +115,20 @@ describe("bounded cart and coupon contracts", () => {
     expect(couponInput.safeParse({ ...value, value: 10001 }).success).toBe(
       false,
     );
+    expect(
+      couponInput.safeParse({
+        ...value,
+        kind: "FREE_SHIPPING",
+        value: 0,
+        maxDiscountPaise: 5000,
+      }).success,
+    ).toBe(true);
+    expect(
+      couponInput.safeParse({
+        ...value,
+        kind: "FREE_SHIPPING",
+        value: 1,
+      }).success,
+    ).toBe(false);
   });
 });

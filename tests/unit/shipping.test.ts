@@ -61,6 +61,39 @@ describe("shipping policy and pricing", () => {
       ),
     ).toMatchObject({ ok: true, payablePaise: 8000 });
   });
+  it("waives only delivery for a free-shipping coupon and keeps COD separate", () => {
+    expect(
+      calculateShipping(
+        {
+          ...policy,
+          automaticFreeShipping: { enabled: false, thresholdPaise: null },
+        },
+        { ...destination, payment: "COD" },
+        taxes,
+        { couponWaiverCapPaise: null },
+      ),
+    ).toMatchObject({
+      ok: true,
+      couponWaiverPaise: 8000,
+      couponEffective: true,
+      shipping: { payablePaise: 0 },
+      cod: { payablePaise: 2360 },
+      payablePaise: 2360,
+    });
+    expect(
+      calculateShipping(
+        policy,
+        { ...destination, merchandisePaise: 199900 },
+        taxes,
+        { couponWaiverCapPaise: null },
+      ),
+    ).toMatchObject({
+      ok: true,
+      automaticFree: true,
+      couponWaiverPaise: 0,
+      couponEffective: false,
+    });
+  });
   it("fails closed on missing/disabled policy, tax and review; only admin estimates permit unreviewed tax", () => {
     expect(calculateShipping(null, destination, taxes)).toMatchObject({
       ok: false,

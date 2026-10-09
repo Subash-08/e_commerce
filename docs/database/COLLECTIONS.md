@@ -34,14 +34,14 @@ Tracked variants require onHand/reserved integers >=0 with reserved <=onHand; in
 | Collection family                      | Fields                                                                                                                | Constraints / privacy                                                                                                               |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | auth user/account/session/verification | Library-owned IDs, normalized email, credentials, session/token expiry and adapter fields                             | Exact names/indexes from selected adapter; only library APIs/repository boundary mutate these; no copied passwordHash in profile    |
-| profiles                               | authUserId:AuthID, role:Role, status:AccountState, authVersion:int, name?:string, mobile?:string, addresses:Address[] | Unique authUserId; CUSTOMER default; bounded 20 addresses with stable IDs; all PII private                                          |
+| profiles                               | authUserId:AuthID, role:Role, status:AccountState, authVersion:int, name?:string, mobile?:string, addresses:Address[] | Unique authUserId; CUSTOMER default; bounded 10 addresses with stable IDs and revisions; all PII private                            |
 | securityGuards                         | key:string, revision:int, activeAdminCount:int                                                                        | Unique last-admin guard; serialize role/deactivation/bootstrap changes; count repaired only by audited procedure                    |
 | carts                                  | userId:AuthID, items:CartLine[], couponCode?:string, revision:int                                                     | Unique userId, max 100 lines; no authoritative totals                                                                               |
 | wishlists                              | userId:AuthID, items:WishlistLine[]                                                                                   | Unique userId, bounded 200 refs; unavailable references explainable                                                                 |
 | mergeReceipts                          | userId:AuthID, tokenHash:string, fingerprint:string, resultRevision:int, expiresAt:Date                               | Unique user/token; repeat same merge cannot sum quantities twice                                                                    |
 | guestAccessGrants                      | orderId:ID, tokenHash:string, purpose:string, expiresAt:Date, usedAt?:Date, attempts:int                              | Random high-entropy bearer secret never stored plaintext/logged; neutral verification response; purpose-scoped invoice/order access |
 
-Address: id, name, mobile, line1, line2?, landmark?, city, district?, stateCode, postalCode, countryCode, defaultShipping/defaultBilling; normalize India state/PIN and max lengths; no unsupported country accepted. Authenticated address edits are mutable; order addresses are copied.
+Address: id, revision, label, name, mobile, line1, line2?, landmark?, city, district?, stateCode, postalCode, countryCode, defaultShipping/defaultBilling, createdAt/updatedAt; normalize India state/PIN and max lengths; no unsupported country accepted. Authenticated address edits are mutable; order addresses are copied.
 CartLine: productId, variantId, quantity (integer 1–99 proposed), addedAt. WishlistLine: productId, variantId, addedAt. For product-level wishlist intent resolve and persist a chosen default variant; archive does not silently switch a buyer's variant. Guests store these references locally, not PII.
 
 ## Financial and transaction records
@@ -81,7 +81,6 @@ CustomerSnapshot: name/email/mobile; policyVersions stores accepted terms versio
 | workTasks (optional)             | title, assigneeId?, relatedType?, relatedId?, priority:TaskPriority, state:TaskState, dueAt?, notes?                                                                                   | Admin/staff only; no effect on fulfillment authority                                                               |
 
 Application deletion: archive referenced catalog; expire transient tokens/jobs per policy after resolution; financial retention reviewed per client. Database backups/access grants are operations, not additional commerce models.
-
 
 ## Cart/coupon implementation checkpoint
 

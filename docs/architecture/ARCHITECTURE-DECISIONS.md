@@ -2,18 +2,20 @@
 
 Shipping policy checkpoint: [ADR 0012](../adr/0012-shipping-policy-and-calculation.md) defines Phase 1A settings, tax-review separation, any-match coverage and reuse of the pure pricing engine.
 
+Checkout Phase 1B closure: [ADR 0013](../adr/0013-checkout-addresses-consent-and-free-shipping.md) defines owned saved addresses, versioned legal acceptance and pricing-version-2 free-delivery coupons.
+
 Approval recorded: **2026-10-06**, from the user's two attached Stage 1 reviews. Status: approved with amendments; authentication remains conditional. This supersedes the Stage 1 pending proposal. Stage 1 history is preserved in Git commit 5572b1f.
 
 ## Approval record
 
-| Gate | Recorded decision | Controlling ADR |
-| --- | --- | --- |
-| A | APPROVED: owned custom single-tenant Next.js modular monolith, Mongoose commerce, one deployment/database per client; no separate Express/unnecessary infrastructure | [0001](../adr/0001-custom-single-tenant-monolith.md) |
-| B | APPROVED: separate stable sellable variants, unique SKU, default variant for simple products, inline editor | [0002](../adr/0002-catalog-identity.md) |
-| C | AUTH-DECIDE accepted 2026-10-07 for pinned minimal configuration; AUTH-CORE authorized; one production driver, dev tooling exception enforced; no second credential implementation | [0003](../adr/0003-auth-and-connections.md) |
-| D | APPROVED WITH SIMPLIFICATION: integer paise/snapshots/idempotency/reconciliation; reservations ONLY for trackQuantity=true; small closed durable jobs/outbox | [0004](../adr/0004-transaction-correctness.md) |
-| E | AMENDED: provider-neutral; cost-focused VPS preferred, paid Vercel supported; managed Atlas, no self-hosted production DB | [0005](../adr/0005-provider-neutral-operations.md) |
-| F | APPROVED: India/INR physical goods, guest/account checkout; optional Work last, static blog, homepage schema after design | [0006](../adr/0006-scope-and-client-reuse.md) |
+| Gate | Recorded decision                                                                                                                                                                  | Controlling ADR                                      |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| A    | APPROVED: owned custom single-tenant Next.js modular monolith, Mongoose commerce, one deployment/database per client; no separate Express/unnecessary infrastructure               | [0001](../adr/0001-custom-single-tenant-monolith.md) |
+| B    | APPROVED: separate stable sellable variants, unique SKU, default variant for simple products, inline editor                                                                        | [0002](../adr/0002-catalog-identity.md)              |
+| C    | AUTH-DECIDE accepted 2026-10-07 for pinned minimal configuration; AUTH-CORE authorized; one production driver, dev tooling exception enforced; no second credential implementation | [0003](../adr/0003-auth-and-connections.md)          |
+| D    | APPROVED WITH SIMPLIFICATION: integer paise/snapshots/idempotency/reconciliation; reservations ONLY for trackQuantity=true; small closed durable jobs/outbox                       | [0004](../adr/0004-transaction-correctness.md)       |
+| E    | AMENDED: provider-neutral; cost-focused VPS preferred, paid Vercel supported; managed Atlas, no self-hosted production DB                                                          | [0005](../adr/0005-provider-neutral-operations.md)   |
+| F    | APPROVED: India/INR physical goods, guest/account checkout; optional Work last, static blog, homepage schema after design                                                          | [0006](../adr/0006-scope-and-client-reuse.md)        |
 
 Both reviews request Stage 2 only, followed by a stop/report before Stage 3. Where the second says approve E as originally recommended, the first's explicit detailed hosting replacement controls; its scheduler/auth/Node/invariant/testing amendments also apply. Ownership/reuse is the approved reason for custom build; no further speed-versus-ownership approval is needed.
 
@@ -35,6 +37,5 @@ Native Next Node runtime, npm single lockfile, dynamic server filtered results w
 ## Remaining gates
 
 Authentication exact-version compatibility/security; hosting budget/plan/cadence and recovery targets; client legal/CA tax/invoice/privacy configuration; homepage design; selected private artifact storage. See [Stage 3 contract](../development/STAGE-3-SCAFFOLD.md). These do not require rebuilding the architecture, but none may be assumed resolved at deployment.
-
 
 Cart/coupon checkpoint (2026-10-08): [ADR 0011](../adr/0011-cart-and-coupon-preview.md) records live cart resolution, bounded idempotent transfers, targeted coupon previews and the separate checkout redemption gate. Pricing arithmetic remains unchanged.

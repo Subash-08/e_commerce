@@ -1,4 +1,8 @@
-import { calculateTax, type TaxFacts } from "../pricing/price.ts";
+import {
+  applyShippingCoupon,
+  calculateTax,
+  type TaxFacts,
+} from "../pricing/price.ts";
 import { sumPaise } from "../pricing/money.ts";
 import {
   previewInput,
@@ -15,7 +19,7 @@ export function calculateShipping(
   policy: ShippingInput | null,
   destination: ShippingDestination,
   taxes: ShippingTaxes,
-  options: { estimate?: boolean } = {},
+  options: { estimate?: boolean; couponWaiverCapPaise?: number | null } = {},
 ) {
   const normalized = shippingInput.safeParse(policy);
   if (!normalized.success)
@@ -80,7 +84,17 @@ export function calculateShipping(
       ...base,
     };
   try {
-    const shipping = calculateTax(shippingChargePaise, taxes.shipping.facts);
+    const couponResult =
+      options.couponWaiverCapPaise !== undefined && !automaticFree
+        ? applyShippingCoupon(
+            shippingChargePaise,
+            taxes.shipping.facts,
+            options.couponWaiverCapPaise ?? undefined,
+          )
+        : null;
+    const shipping =
+      couponResult?.after ??
+      calculateTax(shippingChargePaise, taxes.shipping.facts);
     const cod =
       codChargePaise > 0
         ? calculateTax(codChargePaise, taxes.cod!.facts)
@@ -91,6 +105,8 @@ export function calculateShipping(
       estimate: !approved,
       shipping,
       cod,
+      couponWaiverPaise: couponResult?.discountPaise ?? 0,
+      couponEffective: couponResult?.effective ?? false,
       payablePaise: sumPaise([shipping.payablePaise, cod.payablePaise]),
     };
   } catch {

@@ -94,9 +94,11 @@ export async function CouponListPage({
                       {row.name}
                     </td>
                     <td>
-                      {row.kind === "PERCENTAGE"
-                        ? `${row.value / 100}%`
-                        : `₹${(row.value / 100).toFixed(2)}`}
+                      {row.kind === "FREE_SHIPPING"
+                        ? "Free delivery"
+                        : row.kind === "PERCENTAGE"
+                          ? `${row.value / 100}%`
+                          : `₹${(row.value / 100).toFixed(2)}`}
                     </td>
                     <td>{row.scope.toLowerCase()}</td>
                     <td>

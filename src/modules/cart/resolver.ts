@@ -3,6 +3,7 @@ import { ObjectId, type ClientSession, type Db } from "mongodb";
 import { priceQuote, calculateTax, type PriceLine } from "../pricing/price";
 import { couponPreview } from "../coupons/service";
 import type { CartLine, CartView, ResolvedLine } from "./contracts";
+import type { CouponFacts } from "../pricing/price";
 
 /** Fresh, batched, allowlisted projection. Never resolve checkout authority from a public cache. */
 export async function resolveCart(
@@ -186,6 +187,7 @@ export async function resolveCart(
     };
   });
   let couponMessage: string | null = null;
+  let appliedCoupon: CouponFacts | null = null;
   const input = {
     currency: "INR",
     country: "IN",
@@ -207,9 +209,12 @@ export async function resolveCart(
   if (coupon && quote) {
     try {
       const result = await couponPreview(db, coupon, owner, facts, session);
+      appliedCoupon = result;
       quote = priceQuote({ ...input, coupon: result });
       couponMessage =
-        "Coupon preview applied. Eligibility and availability are checked again at checkout.";
+        result.kind === "FREE_SHIPPING"
+          ? "Free-delivery coupon is eligible. Delivery savings are calculated at checkout."
+          : "Coupon preview applied. Eligibility and availability are checked again at checkout.";
     } catch (error) {
       if (
         error instanceof Error &&
@@ -237,6 +242,13 @@ export async function resolveCart(
     totalPaise: quote?.totals.goodsPayablePaise ?? 0,
     coupon,
     couponMessage,
+    couponEffect: appliedCoupon
+      ? {
+          kind: appliedCoupon.kind,
+          revision: appliedCoupon.revision,
+          maxDiscountPaise: appliedCoupon.maxDiscountPaise ?? null,
+        }
+      : null,
     ready: Boolean(items.length) && items.every((item) => !item.issue),
   };
 }

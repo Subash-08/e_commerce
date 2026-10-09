@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkoutQuoteInput } from "../../src/modules/checkout/contracts";
+import { savedAddressInput } from "../../src/modules/addresses/contracts";
 const address = {
   name: "Subash",
   mobile: "9876543210",
@@ -25,7 +26,11 @@ const valid = {
   deliveryNote: "",
   payment: "ONLINE",
   coupon: "",
-  termsAccepted: true,
+  legal: {
+    termsVersion: "terms-v1-2026-10-09",
+    privacyVersion: "privacy-v1-2026-10-09",
+    accepted: true,
+  },
   marketingConsent: false,
   guestLines: [
     {
@@ -43,11 +48,35 @@ describe("checkout quote input", () => {
     expect(result).not.toHaveProperty("total");
   });
   it.each([
-    { ...valid, termsAccepted: false },
+    { ...valid, legal: { ...valid.legal, accepted: false } },
     { ...valid, shippingAddress: { ...address, postalCode: "000000" } },
     { ...valid, contact: { ...valid.contact, mobile: "123" } },
     { ...valid, billingSameAsShipping: false, billingAddress: null },
+    {
+      ...valid,
+      legal: { ...valid.legal, termsVersion: "stale-terms-version" },
+    },
   ])("rejects unsafe or incomplete checkout input", (value) =>
     expect(checkoutQuoteInput.safeParse(value).success).toBe(false),
   );
+  it("validates bounded saved-address metadata separately from checkout facts", () => {
+    expect(
+      savedAddressInput.parse({
+        ...address,
+        label: "Home",
+        revision: 0,
+        defaultShipping: true,
+        defaultBilling: true,
+      }).label,
+    ).toBe("Home");
+    expect(
+      savedAddressInput.safeParse({
+        ...address,
+        label: "",
+        revision: 0,
+        defaultShipping: false,
+        defaultBilling: false,
+      }).success,
+    ).toBe(false);
+  });
 });

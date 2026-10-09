@@ -4,9 +4,9 @@ import { filesUnder } from "./files.mjs";
 await checkGeneratedStates();
 const registry = "docs/commerce/STATE-MACHINES.md";
 const canonical = await readFile(registry, "utf8");
-const domains = [...canonical.matchAll(/^\| (\w+) \| ([A-Z_][^|]*) \|$/gm)].map(
-  (m) => m[1],
-);
+const domains = [
+  ...canonical.matchAll(/^\|\s+(\w+)\s+\|\s+([A-Z_][^|]*?)\s+\|$/gm),
+].map((m) => m[1]);
 if (domains.length < 20 || new Set(domains).size !== domains.length)
   throw new Error("Invalid canonical enum registry");
 const errors = [];

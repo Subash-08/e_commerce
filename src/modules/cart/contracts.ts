@@ -40,6 +40,11 @@ export type CartView = {
   totalPaise: number;
   coupon: string;
   couponMessage: string | null;
+  couponEffect: {
+    kind: "FIXED" | "PERCENTAGE" | "FREE_SHIPPING";
+    revision: string;
+    maxDiscountPaise: number | null;
+  } | null;
   ready: boolean;
 };
 

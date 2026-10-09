@@ -1,6 +1,6 @@
 # Checkout, orders and payment implementation plan
 
-Status: approved planning baseline, 2026-10-09. This follows the implemented cart and coupon-preview checkpoint at commit `f680ee6`. It does not mark checkout, orders, payments, coupon redemption, COD, invoices or fulfillment as implemented.
+Status: Phase 1B implemented, 2026-10-09. Shipping policy and authoritative guest/account quotes are operational; saved addresses, versioned legal acceptance and free-delivery coupon pricing are included. No order, reservation, coupon claim, provider payment, invoice or fulfillment behavior is implemented.
 
 ## Delivery gates
 
@@ -150,6 +150,8 @@ Until editable Pages exists, terms/privacy version IDs come from typed Admin che
 - No order, reservation, claim or provider call exists.
 - Manual browser checks cover 360 px, desktop, keyboard errors, summary collapse, announced totals, loading/retry and DB outage preservation.
 - Focused tests cover manipulated totals, private fields, threshold/coupon interaction, stale facts, owner/expiry and unsupported PIN. Stop and report.
+
+Implementation record: [ADR 0013](../adr/0013-checkout-addresses-consent-and-free-shipping.md). The quote remains evidence only. Phase 2A is blocked until the deployment host, scheduler and durable jobs/outbox execution strategy are recorded.
 
 ## 2 — Order acceptance, claims, stock and Razorpay test payments
 

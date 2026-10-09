@@ -273,6 +273,7 @@ export async function previewShipping(
 export async function resolveShipping(
   database: DatabaseHandle,
   destination: unknown,
+  couponWaiverCapPaise?: number | null,
 ) {
   const policy = await readPolicy(database.db);
   if (!policy)
@@ -292,6 +293,7 @@ export async function resolveShipping(
       policyFields(policy),
       previewInput.parse(destination),
       { shipping, cod },
+      { couponWaiverCapPaise },
     ),
     revision: policy.revision,
   };

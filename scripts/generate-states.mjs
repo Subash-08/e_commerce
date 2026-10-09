@@ -3,9 +3,9 @@ import { format } from "prettier";
 export const generatedPath = "src/shared/domain/states.generated.ts";
 export async function generatedStates() {
   const source = await readFile("docs/commerce/STATE-MACHINES.md", "utf8");
-  const entries = [...source.matchAll(/^\| (\w+) \| ([A-Z_][^|]*) \|$/gm)].map(
-    (m) => [m[1], [...new Set(m[2].match(/\b[A-Z][A-Z_]+\b/g))]],
-  );
+  const entries = [
+    ...source.matchAll(/^\|\s+(\w+)\s+\|\s+([A-Z_][^|]*?)\s+\|$/gm),
+  ].map((m) => [m[1], [...new Set(m[2].match(/\b[A-Z][A-Z_]+\b/g))]]);
   if (entries.length !== 23)
     throw new Error("Canonical registry changed; review the generator");
   return format(

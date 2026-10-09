@@ -176,6 +176,54 @@ describe("pricing input and coupon gates", () => {
   });
 });
 describe("rounding, shipping and conservation", () => {
+  it("applies free-shipping coupons after item eligibility without waiving COD", () => {
+    const full = priceQuote(
+      quote({
+        coupon: coupon({
+          kind: "FREE_SHIPPING",
+          value: 0,
+        }),
+        shipping: { chargePaise: 118, tax: inclusive },
+      }),
+    );
+    expect(full.pricingVersion).toBe("2");
+    expect(full.totals).toMatchObject({
+      couponDiscountPaise: 0,
+      shippingCouponDiscountPaise: 118,
+      shippingBasePaise: 0,
+      shippingTaxPaise: 0,
+      grandTotalPaise: 10000,
+    });
+    const capped = priceQuote(
+      quote({
+        coupon: coupon({
+          kind: "FREE_SHIPPING",
+          value: 0,
+          maxDiscountPaise: 59,
+        }),
+        shipping: { chargePaise: 100, tax: exclusive },
+      }),
+    );
+    expect(capped.totals).toMatchObject({
+      shippingCouponDiscountPaise: 59,
+      shippingBasePaise: 50,
+      shippingTaxPaise: 9,
+    });
+  });
+  it("records no free-shipping effect when delivery is already free", () => {
+    expect(
+      priceQuote(
+        quote({
+          coupon: coupon({ kind: "FREE_SHIPPING", value: 0 }),
+          shipping: {
+            chargePaise: 118,
+            freeAtGoodsPayablePaise: 10000,
+            tax: inclusive,
+          },
+        }),
+      ).totals.shippingCouponDiscountPaise,
+    ).toBe(0);
+  });
   it("rounds half up using rational intermediates", () => {
     expect(roundHalfUp(BigInt(1), BigInt(2))).toBe(BigInt(1));
     expect(roundHalfUp(BigInt(49), BigInt(100))).toBe(BigInt(0));
