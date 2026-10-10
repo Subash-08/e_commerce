@@ -27,8 +27,57 @@ export interface OrderProvider {
 }
 
 export function razorpayOrders(): OrderProvider {
-  const config = paymentTestConfig();
-  async function request(path: string, body?: object): Promise<unknown> {
+  function parse(raw: unknown) {
+    const result = providerOrder.safeParse(raw);
+    if (!result.success) throw new Error("PAYMENT_PROVIDER_INVALID_RESPONSE");
+    return result.data;
+  }
+  return {
+    async create(input) {
+      return parse(
+        await providerRequest("orders", {
+          amount: input.amountPaise,
+          currency: "INR",
+          receipt: input.receipt,
+          partial_payment: false,
+          notes: {
+            commerceOperation: input.operationId,
+            commerceOrder: input.orderId,
+          },
+        }),
+      );
+    },
+    async lookup(receipt) {
+      // The provider documents a contains filter. Require exact equality locally.
+      // A full result page is inconclusive, never evidence of uniqueness.
+      const raw = await providerRequest(
+        "orders?" + new URLSearchParams({ receipt, count: "100", skip: "0" }),
+      );
+      const page = z
+        .object({ items: z.array(z.unknown()).max(100) })
+        .safeParse(raw);
+      if (!page.success || page.data.items.length === 100)
+        throw new Error("PAYMENT_LOOKUP_INCONCLUSIVE");
+      return page.data.items
+        .filter(
+          (v): v is Record<string, unknown> =>
+            !!v &&
+            typeof v === "object" &&
+            "receipt" in v &&
+            v.receipt === receipt,
+        )
+        .map(parse);
+    },
+    async fetch(id) {
+      if (!/^order_[A-Za-z0-9]+$/.test(id))
+        throw new Error("PAYMENT_BINDING_INVALID");
+      return parse(await providerRequest("orders/" + id));
+    },
+  };
+}
+
+export async function providerRequest(path: string, body?: object): Promise<unknown> {
+    const config = paymentTestConfig();
     assertOutsideTransaction();
     try {
       const response = await fetch("https://api.razorpay.com/v1/" + path, {
@@ -53,51 +102,17 @@ export function razorpayOrders(): OrderProvider {
       throw new Error("PAYMENT_PROVIDER_UNAVAILABLE");
     }
   }
-  function parse(raw: unknown) {
-    const result = providerOrder.safeParse(raw);
-    if (!result.success) throw new Error("PAYMENT_PROVIDER_INVALID_RESPONSE");
-    return result.data;
-  }
-  return {
-    async create(input) {
-      return parse(
-        await request("orders", {
-          amount: input.amountPaise,
-          currency: "INR",
-          receipt: input.receipt,
-          partial_payment: false,
-          notes: {
-            commerceOperation: input.operationId,
-            commerceOrder: input.orderId,
-          },
-        }),
-      );
-    },
-    async lookup(receipt) {
-      // The provider documents a contains filter. Require exact equality locally.
-      // A full result page is inconclusive, never evidence of uniqueness.
-      const raw = await request(
-        "orders?" + new URLSearchParams({ receipt, count: "100", skip: "0" }),
-      );
-      const page = z
-        .object({ items: z.array(z.unknown()).max(100) })
-        .safeParse(raw);
-      if (!page.success || page.data.items.length === 100)
-        throw new Error("PAYMENT_LOOKUP_INCONCLUSIVE");
-      return page.data.items
-        .filter(
-          (v): v is Record<string, unknown> =>
-            !!v &&
-            typeof v === "object" &&
-            "receipt" in v &&
-            v.receipt === receipt,
-        )
-        .map(parse);
-    },
-    async fetch(id) {
-      if (!/^order_[A-Za-z0-9]+$/.test(id))
-        throw new Error("PAYMENT_BINDING_INVALID");
-      return parse(await request("orders/" + id));
-    },
-  };
+
+const paymentSchema = z.object({
+  id: z.string().regex(/^pay_[A-Za-z0-9]+$/), order_id: z.string().regex(/^order_[A-Za-z0-9]+$/),
+  amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER), currency: z.string().length(3),
+  status: z.enum(["created", "authorized", "captured", "failed", "refunded"]),
+  captured: z.boolean(), amount_refunded: z.number().int().nonnegative(), method: z.string().max(40),
+});
+export type VerifiedProviderPayment = z.infer<typeof paymentSchema>;
+export async function fetchProviderPayment(id: string): Promise<VerifiedProviderPayment> {
+  if (!/^pay_[A-Za-z0-9]+$/.test(id)) throw new Error("INVALID_PAYMENT_ID");
+  const parsed = paymentSchema.safeParse(await providerRequest("payments/" + id));
+  if (!parsed.success || parsed.data.id !== id) throw new Error("PAYMENT_PROVIDER_INVALID_RESPONSE");
+  return parsed.data;
 }

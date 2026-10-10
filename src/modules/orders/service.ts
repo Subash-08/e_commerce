@@ -488,6 +488,7 @@ async function acceptOrder(
           },
           items: publicQuote.items.map((item) => ({
             variantId: item.variantId,
+            trackQuantity: variants.find(v => String(v._id) === item.variantId)?.trackQuantity === true,
             quantity: item.quantity,
             name: item.name,
             title: item.title,
