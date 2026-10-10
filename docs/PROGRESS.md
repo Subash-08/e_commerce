@@ -1,5 +1,9 @@
 # Foundation progress
 
+### Payment start repair, 2026-10-10
+
+The deployed order report exposed a missing connection: acceptance left the binding NOT_STARTED, while payment start required BOUND without invoking the existing binding service. Payment start now invokes that fenced service and reloads the binding before issuing options. UNKNOWN still follows bounded receipt lookup, never blind creation. Expired windows return an explicit error without changing deadlines or releasing holds. Exposure writes and conflict rereads recheck deadline/state. Corrected the hardcoded COD heading and preserved safe server errors in the payment button. Four focused mocked orchestration regressions pass; these are not Atlas transaction or deployed payment evidence. No order or provider records were changed. Redeployment and a Test Mode walkthrough remain required.
+
 ### Phase 2B.2 local payment implementation checkpoint, 2026-10-10
 
 Implemented the Admin-only Razorpay Test Mode browser handoff: server-owned checkout issuance, callback HMAC verification against the stored provider order, fresh provider payment evidence, a payment ledger/capture foundation, durable signed-webhook intake and a worker path. Checkout options are never returned to normal customers; production APP_ENV and live keys remain rejected. The webhook endpoint reads bounded raw bytes, validates HMAC, accepts only payment.authorized/payment.captured/payment.failed, deduplicates deliveries, stores a minimal event and queues `PROCESS_WEBHOOK` in one Atlas transaction. The worker obtains fresh provider evidence before it mutates payment state. A payment after its deadline is recorded but review-blocked; Phase 2C remains responsible for expiry and late-capture recovery. The old cleanup path now refuses an order after checkout details are exposed. Added a guarded checkout UI and Admin payment queue.

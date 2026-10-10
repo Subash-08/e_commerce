@@ -6,6 +6,7 @@ import { razorpayOrders } from "./provider";
 import { rateLimit } from "../cart/security";
 import { verifyCheckoutSignature } from "./proof";
 import { observePayment } from "./capture";
+import { bindTestOrder } from "./binding";
 
 const orderNumberPattern = /^ORD-[0-9]{4}-[0-9]{6}$/;
 
@@ -25,8 +26,21 @@ export async function prepareTestCheckout(
   });
   if (!order) throw new Error("ORDER_NOT_FOUND");
   const repo = bindingRepository(database.db);
-  const binding = await repo.read(order._id);
+  let binding = await repo.read(order._id);
   const config = paymentTestConfig();
+  if (!binding) throw new Error("PAYMENT_NOT_READY");
+  if (
+    binding.mode !== "test" ||
+    binding.accountKeyHash !== config.accountKeyHash
+  )
+    throw new Error("PAYMENT_ACCOUNT_CHANGED");
+  if (binding.deadlineAt.getTime() - Date.now() < 60000)
+    throw new Error("PAYMENT_WINDOW_EXPIRED");
+  if (binding.state !== "BOUND") {
+    // Reuse the fenced service: uncertain creation is looked up, never recreated.
+    await bindTestOrder(headers, String(order._id));
+    binding = await repo.read(order._id);
+  }
   if (
     !binding ||
     binding.state !== "BOUND" ||
@@ -50,6 +64,9 @@ export async function prepareTestCheckout(
   )
     throw new Error("PAYMENT_ACTIVITY_REVIEW_REQUIRED");
 
+  if (binding.deadlineAt.getTime() - Date.now() < 60000)
+    throw new Error("PAYMENT_WINDOW_EXPIRED");
+
   // Once checkout details leave the server, the old 2B.1 test cleanup path is forbidden.
   const marked = await repo.rows.updateOne(
     {
@@ -58,6 +75,7 @@ export async function prepareTestCheckout(
       state: "BOUND",
       revision: binding.revision,
       providerOrderId: binding.providerOrderId,
+      deadlineAt: { $gt: new Date(Date.now() + 60000) },
     },
     {
       $set: { checkoutExposedAt: new Date(), updatedAt: new Date() },
@@ -68,6 +86,8 @@ export async function prepareTestCheckout(
     const current = await repo.read(order._id);
     if (
       !current?.checkoutExposedAt ||
+      current.state !== "BOUND" ||
+      current.deadlineAt.getTime() - Date.now() < 60000 ||
       current.providerOrderId !== binding.providerOrderId
     )
       throw new Error("PAYMENT_NOT_READY");

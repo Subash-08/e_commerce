@@ -37,6 +37,8 @@ declare global {
   }
 }
 
+class PaymentRequestError extends Error {}
+
 let loader: Promise<void> | undefined;
 function loadRazorpay() {
   if (window.Razorpay) return Promise.resolve();
@@ -46,7 +48,11 @@ function loadRazorpay() {
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
       script.onload = () => (window.Razorpay ? resolve() : reject(new Error()));
-      script.onerror = () => reject(new Error());
+      script.onerror = () => {
+        loader = undefined;
+        script.remove();
+        reject(new Error());
+      };
       document.head.append(script);
     });
   return loader;
@@ -64,7 +70,7 @@ export function TestPaymentButton({ orderNumber }: { orderNumber: string }) {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok)
-      throw new Error(
+      throw new PaymentRequestError(
         typeof data.message === "string"
           ? data.message
           : "Payment is still being confirmed.",
@@ -124,10 +130,12 @@ export function TestPaymentButton({ orderNumber }: { orderNumber: string }) {
         setMessage("Payment was not completed. No order status was changed.");
       });
       popup.open();
-    } catch {
+    } catch (error) {
       setState("idle");
       setMessage(
-        "Payment checkout is not ready. Refresh the order before trying again.",
+        error instanceof PaymentRequestError
+          ? error.message
+          : "Could not load secure payment. Check your connection and try again.",
       );
     }
   }

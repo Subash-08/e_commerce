@@ -55,6 +55,8 @@ export async function POST(request: Request) {
       "RATE_LIMITED",
       "ORDER_NOT_FOUND",
       "PAYMENT_NOT_READY",
+      "PAYMENT_WINDOW_EXPIRED",
+      "PAYMENT_ACCOUNT_CHANGED",
       "PAYMENT_BINDING_PENDING",
       "PAYMENT_SIGNATURE_INVALID",
       "PAYMENT_ACTIVITY_REVIEW_REQUIRED",
@@ -81,9 +83,17 @@ export async function POST(request: Request) {
       {
         code: safe,
         message:
-          safe === "PAYMENT_SIGNATURE_INVALID"
-            ? "The payment callback could not be verified. Refresh the order before retrying."
-            : "Payment status is still being confirmed. Refresh the order before trying again.",
+          safe === "PAYMENT_WINDOW_EXPIRED"
+            ? "This order's payment window has expired. Refreshing will not reopen it. Review the pending order in Admin before starting another checkout."
+            : safe === "PAYMENT_ACCOUNT_CHANGED"
+              ? "The payment account configuration has changed. Ask an administrator to review this order."
+              : safe === "PAYMENT_CONFIG_INVALID"
+                ? "Razorpay test payment configuration is incomplete. Check the deployed payment settings."
+                : safe === "RATE_LIMITED"
+                  ? "Too many payment requests. Wait a minute before trying again."
+                  : safe === "PAYMENT_SIGNATURE_INVALID"
+                    ? "The payment callback could not be verified. Refresh the order before retrying."
+                    : "Payment status is still being confirmed. Refresh the order before trying again.",
       },
       status,
     );

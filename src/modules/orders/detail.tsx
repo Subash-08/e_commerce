@@ -54,8 +54,10 @@ export function OrderDetail({
           <span>{admin ? "ADMIN ORDER" : "ORDER DETAILS"}</span>
           <h1>{order.orderNumber}</h1>
           <p>
-            Placed {order.createdAt.replace("T", " ").slice(0, 19)} UTC · Cash
-            on delivery
+            Placed {order.createdAt.replace("T", " ").slice(0, 19)} UTC ·{" "}
+            {order.paymentMethod === "COD"
+              ? "Cash on delivery"
+              : "Online payment"}
           </p>
         </div>
         <strong className={`order-state state-${order.state.toLowerCase()}`}>
