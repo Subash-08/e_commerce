@@ -12,7 +12,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "frame-src https://www.youtube-nocookie.com https://checkout.razorpay.com; object-src 'none'; base-uri 'self'",
+              "frame-src https://www.youtube-nocookie.com https://checkout.razorpay.com https://api.razorpay.com; object-src 'none'; base-uri 'self'",
           },
         ],
       },

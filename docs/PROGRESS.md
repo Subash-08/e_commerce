@@ -1,5 +1,10 @@
 # Foundation progress
 
+### Razorpay iframe CSP repair, 2026-10-10
+
+The deployed browser reported that Razorpay checkout embeds api.razorpay.com, which the frame-src allowlist blocked. Added that exact HTTPS origin alongside checkout.razorpay.com. Verified the generated header locally. Deployment and a browser payment retry remain required. The CSS preload warning is unrelated to this frame rejection.
+
+
 ### Payment start repair, 2026-10-10
 
 The deployed order report exposed a missing connection: acceptance left the binding NOT_STARTED, while payment start required BOUND without invoking the existing binding service. Payment start now invokes that fenced service and reloads the binding before issuing options. UNKNOWN still follows bounded receipt lookup, never blind creation. Expired windows return an explicit error without changing deadlines or releasing holds. Exposure writes and conflict rereads recheck deadline/state. Corrected the hardcoded COD heading and preserved safe server errors in the payment button. Four focused mocked orchestration regressions pass; these are not Atlas transaction or deployed payment evidence. No order or provider records were changed. Redeployment and a Test Mode walkthrough remain required.
