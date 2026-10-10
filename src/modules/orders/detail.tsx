@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CancelOrderButton } from "./cancel-button";
+import { TestPaymentButton } from "../payments/payment-button";
 import "./orders.css";
 
 const money = (paise: number) =>
@@ -102,6 +103,10 @@ export function OrderDetail({
             </p>
             <p>Financial status: {order.financialState}</p>
           </section>
+          {order.paymentMethod === "ONLINE" &&
+            order.financialState === "PENDING" && (
+              <TestPaymentButton orderNumber={order.orderNumber} />
+            )}
           {cancellable && (
             <section className="order-card danger">
               <h2>Need to cancel?</h2>

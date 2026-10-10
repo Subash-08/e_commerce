@@ -1,10 +1,10 @@
 # ADR 0015: Online test acceptance and Razorpay order binding
 
-Status: Phase 2B.1 implementation; verification evidence is in [PROGRESS](../PROGRESS.md).
+Status: Phase 2B.2 local implementation checkpoint; verification evidence is in [PROGRESS](../PROGRESS.md).
 
 ## Scope and authority
 
-Extend the [COD acceptance boundary](0014-cod-order-acceptance-and-jobs.md). Only active ADMIN accounts with fresh authVersion in APP_ENV development/test/staging and RAZORPAY_MODE test may use this slice. The public checkout endpoint still rejects online acceptance. Provider checkout options are not exposed. Live keys and production environments are rejected by code, independently of Admin settings. No capture, webhook, refund or online customer UI is implemented in 2B.1.
+Extend the [COD acceptance boundary](0014-cod-order-acceptance-and-jobs.md). Only active ADMIN accounts with fresh authVersion in APP_ENV development/test/staging and RAZORPAY_MODE test may use this slice. The public checkout endpoint still rejects online acceptance. Provider checkout options are exposed only to fresh Admin Test Mode sessions after server-side binding. Live keys and production environments are rejected by code, independently of Admin settings. Normal customers cannot use online payment. Refund and expiry recovery remain deferred.
 
 ## Acceptance
 
@@ -26,7 +26,7 @@ Official contracts checked 2026-10-10: [create order](https://razorpay.com/docs/
 
 ## Test cleanup
 
-The protected cleanup action accepts only this slice's testOnly online pending orders. NOT_STARTED with zero creation attempts can be cancelled under a fence. BOUND requires a fresh provider fetch proving the exact binding has status created, zero attempts, zero paid and full amount due. Provider IDs/checkout options have never been exposed by this slice. A cleanup lease fences concurrent binding, then one Atlas transaction closes the active binding, cancels the order, releases tracked reservations and HELD coupon capacity, and audits the action. It preserves cart contents and all history. It does not delete the provider order. UNKNOWN, in-flight, attempted or paid bindings cannot be cleaned. They need successful association/review first. This test-only procedure must be disabled/replaced before exposing checkout options in 2B.2; it is not a production cancellation algorithm.
+The protected cleanup action accepts only this slice's testOnly online pending orders. NOT_STARTED with zero creation attempts can be cancelled under a fence. BOUND requires a fresh provider fetch proving the exact binding has status created, zero attempts, zero paid and full amount due. Provider IDs are not returned by this cleanup route. Once the 2B.2 checkout endpoint has exposed checkout options, cleanup is rejected and the order requires review. A cleanup lease fences concurrent binding, then one Atlas transaction closes the active binding, cancels the order, releases tracked reservations and HELD coupon capacity, and audits the action. It preserves cart contents and all history. It does not delete the provider order. UNKNOWN, in-flight, attempted or paid bindings cannot be cleaned. They need successful association/review first. This test-only procedure must be disabled/replaced before exposing checkout options in 2B.2; it is not a production cancellation algorithm.
 
 ## Later gates
 
@@ -35,3 +35,11 @@ The protected cleanup action accepts only this slice's testOnly online pending o
 2C must recheck both binding and payment evidence before release; UNKNOWN is not unpaid. Late capture checks the deadline even if the expiry worker is delayed. All observations converge on one transition service. Refund-required remains a fulfillment exception under the [canonical registry](../commerce/STATE-MACHINES.md), not an order status. Production checkout remains code-gated until recovery and refund readiness.
 
 The user selected Vercel staging on 2026-10-10 instead of a local tunnel: https://e-commerce-gules-iota-16.vercel.app. Use APP_ENV=staging with the normal production-mode Next build; APP_ENV=test is reserved for the integration-test runtime. Staging still requires test-mode Razorpay keys and active ADMIN authority. Production APP_ENV and live credentials remain rejected. See the [staging setup](../operations/VERCEL-STAGING.md). The hostname is reachable, but that is not evidence of completed webhook/capture verification.
+
+## 2B.2 local implementation checkpoint
+
+The Admin Test Mode checkout starts only after the server reads the accepted online order and exact BOUND binding, fetches current provider order facts, confirms receipt/amount/INR/notes, and marks the binding as checkout-exposed. The browser receives only key ID, provider order ID, amount and expiry; no key secret or trusted result originates in the browser. Callback HMAC is computed from the stored provider order ID plus callback payment ID, not the client order ID. Fresh provider payment retrieval is the common evidence source.
+
+The Razorpay endpoint uses raw bytes, a 128 KiB cap, `x-razorpay-signature`, a dedicated webhook secret and a three-event allowlist: payment.authorized, payment.captured and payment.failed. It has no same-origin requirement. It deduplicates each delivery by provider event ID when supplied, otherwise by raw-body hash, then atomically stores a minimal event record and PROCESS_WEBHOOK outbox job. The worker fetches provider evidence before advancing the payment. HMAC/bad-body failures return 4xx; missing configuration and storage/worker failures return 5xx.
+
+The current checkpoint compiles and includes focused HMAC tests. The four reviewed payment/webhook indexes were applied to Atlas and verified. Deployed Test Mode callback, webhook delivery and scheduled worker invocation remain manual verification gates. 2C still owns expiry/reconciliation and automatic late-capture recovery.

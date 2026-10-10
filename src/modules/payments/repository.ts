@@ -22,6 +22,7 @@ export type Binding = {
   leaseToken?: string;
   leaseUntil?: Date;
   providerOrderId?: string;
+  checkoutExposedAt?: Date;
   nextCheckAt?: Date;
   lastErrorCode?: string;
   createdAt: Date;

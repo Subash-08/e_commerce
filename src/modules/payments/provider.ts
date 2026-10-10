@@ -76,43 +76,53 @@ export function razorpayOrders(): OrderProvider {
   };
 }
 
-export async function providerRequest(path: string, body?: object): Promise<unknown> {
-    const config = paymentTestConfig();
-    assertOutsideTransaction();
-    try {
-      const response = await fetch("https://api.razorpay.com/v1/" + path, {
-        method: body ? "POST" : "GET",
-        cache: "no-store",
-        redirect: "error",
-        signal: AbortSignal.timeout(10000),
-        headers: {
-          Authorization:
-            "Basic " +
-            Buffer.from(config.keyId + ":" + config.keySecret).toString(
-              "base64",
-            ),
-          "Content-Type": "application/json",
-        },
-        ...(body ? { body: JSON.stringify(body) } : {}),
-      });
-      if (!response.ok) throw new Error("PAYMENT_PROVIDER_UNAVAILABLE");
-      return await response.json();
-    } catch {
-      // Do not retain provider error bodies, credentials, URL parameters or causes.
-      throw new Error("PAYMENT_PROVIDER_UNAVAILABLE");
-    }
+export async function providerRequest(
+  path: string,
+  body?: object,
+): Promise<unknown> {
+  const config = paymentTestConfig();
+  assertOutsideTransaction();
+  try {
+    const response = await fetch("https://api.razorpay.com/v1/" + path, {
+      method: body ? "POST" : "GET",
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(10000),
+      headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(config.keyId + ":" + config.keySecret).toString("base64"),
+        "Content-Type": "application/json",
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    if (!response.ok) throw new Error("PAYMENT_PROVIDER_UNAVAILABLE");
+    return await response.json();
+  } catch {
+    // Do not retain provider error bodies, credentials, URL parameters or causes.
+    throw new Error("PAYMENT_PROVIDER_UNAVAILABLE");
   }
+}
 
 const paymentSchema = z.object({
-  id: z.string().regex(/^pay_[A-Za-z0-9]+$/), order_id: z.string().regex(/^order_[A-Za-z0-9]+$/),
-  amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER), currency: z.string().length(3),
+  id: z.string().regex(/^pay_[A-Za-z0-9]+$/),
+  order_id: z.string().regex(/^order_[A-Za-z0-9]+$/),
+  amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  currency: z.string().length(3),
   status: z.enum(["created", "authorized", "captured", "failed", "refunded"]),
-  captured: z.boolean(), amount_refunded: z.number().int().nonnegative(), method: z.string().max(40),
+  captured: z.boolean(),
+  amount_refunded: z.number().int().nonnegative(),
+  method: z.string().max(40),
 });
 export type VerifiedProviderPayment = z.infer<typeof paymentSchema>;
-export async function fetchProviderPayment(id: string): Promise<VerifiedProviderPayment> {
+export async function fetchProviderPayment(
+  id: string,
+): Promise<VerifiedProviderPayment> {
   if (!/^pay_[A-Za-z0-9]+$/.test(id)) throw new Error("INVALID_PAYMENT_ID");
-  const parsed = paymentSchema.safeParse(await providerRequest("payments/" + id));
-  if (!parsed.success || parsed.data.id !== id) throw new Error("PAYMENT_PROVIDER_INVALID_RESPONSE");
+  const parsed = paymentSchema.safeParse(
+    await providerRequest("payments/" + id),
+  );
+  if (!parsed.success || parsed.data.id !== id)
+    throw new Error("PAYMENT_PROVIDER_INVALID_RESPONSE");
   return parsed.data;
 }

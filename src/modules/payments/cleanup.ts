@@ -9,7 +9,7 @@ import { requirePaymentTestAdmin, paymentTestConfig } from "./access";
 import { bindingRepository, BINDING_LEASE_MS } from "./repository";
 import { razorpayOrders } from "./provider";
 
-// Only for this slice's test orders, whose provider checkout data is never exposed.
+// Only for pre-checkout test orders. Exposure of provider checkout data requires review.
 export async function cleanupTestOrder(headers: Headers, id: string) {
   if (!/^[a-f0-9]{24}$/.test(id)) throw new Error("ORDER_NOT_FOUND");
   const actor = await requirePaymentTestAdmin(headers);
@@ -25,8 +25,9 @@ export async function cleanupTestOrder(headers: Headers, id: string) {
   )
     throw new Error("PAYMENT_BINDING_INVALID");
   if (
-    row.state !== "BOUND" &&
-    !(row.state === "NOT_STARTED" && row.attempts === 0)
+    row.checkoutExposedAt ||
+    (row.state !== "BOUND" &&
+      !(row.state === "NOT_STARTED" && row.attempts === 0))
   )
     throw new Error("PAYMENT_CLEANUP_REQUIRES_REVIEW");
   const now = new Date();

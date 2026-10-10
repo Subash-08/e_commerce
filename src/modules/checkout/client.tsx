@@ -26,10 +26,12 @@ export function CheckoutClient({
   account,
   addresses,
   legalVersions,
+  onlineTestEnabled,
 }: {
   account: { name: string; email: string } | null;
   addresses: SavedAddressDto[];
   legalVersions: { terms: string; privacy: string };
+  onlineTestEnabled: boolean;
 }) {
   const router = useRouter();
   const defaultShipping =
@@ -97,18 +99,34 @@ export function CheckoutClient({
       cartRevision: cart?.revision ?? 0,
     };
     if (quote) {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quoteId: quote.quoteId,
-          idempotencyKey: idempotencyKey.current,
-          checkout: body,
-        }),
-      });
+      const online = body.payment === "ONLINE";
+      const response = await fetch(
+        online ? "/api/admin/payments/test-orders" : "/api/checkout",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            online
+              ? {
+                  action: "accept",
+                  command: {
+                    quoteId: quote.quoteId,
+                    idempotencyKey: idempotencyKey.current,
+                    checkout: body,
+                  },
+                }
+              : {
+                  quoteId: quote.quoteId,
+                  idempotencyKey: idempotencyKey.current,
+                  checkout: body,
+                },
+          ),
+        },
+      );
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
-      if (!account) localStorage.removeItem("commerce.guest-cart.v1");
+      if (!account && !online)
+        localStorage.removeItem("commerce.guest-cart.v1");
       router.push("/order/" + data.order.orderNumber);
       return;
     }
@@ -304,8 +322,14 @@ export function CheckoutClient({
           <section>
             <h2>Payment preference</h2>
             <label className="checkout-check">
-              <input type="radio" name="payment" value="ONLINE" disabled />{" "}
+              <input
+                type="radio"
+                name="payment"
+                value="ONLINE"
+                disabled={!onlineTestEnabled}
+              />{" "}
               Online payment
+              {onlineTestEnabled ? " (Admin test mode)" : " (coming soon)"}
             </label>
             <label className="checkout-check">
               <input type="radio" name="payment" value="COD" defaultChecked />{" "}
@@ -377,7 +401,7 @@ export function CheckoutClient({
                 ? "Placing order…"
                 : "Checking live prices…"
               : quote
-                ? "Place COD order"
+                ? "Place order"
                 : "Review live quote"}
           </button>
           <Link href="/cart">Return to cart</Link>

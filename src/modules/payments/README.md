@@ -1,20 +1,20 @@
 # Payments
 
-Pure financial transitions remain in state.ts. Phase 2B.1 adds Admin-only, non-production Razorpay test order binding. See [ADR 0015](../../../docs/adr/0015-online-order-provider-binding.md).
+[ADR 0015](../../../docs/adr/0015-online-order-provider-binding.md) defines the test-only Razorpay payment boundary. The code permits only active ADMIN accounts with `APP_ENV=development`, `test`, or `staging`, `RAZORPAY_MODE=test`, and `rzp_test_` keys. Live mode and `APP_ENV=production` are rejected in code.
 
-- access.ts: environment/configuration gate and fresh Admin authority.
-- provider.ts: bounded server HTTP calls and sanitized provider contracts.
-- repository.ts: leased, fenced binding persistence.
-- binding.ts: provider-order creation and exact-match recovery.
-- cleanup.ts: narrowly guarded unpaid test cleanup.
-- indexes.ts: additive uniqueness constraints.
+- `access.ts`: configuration and fresh Admin authority gate.
+- `provider.ts`: bounded native Razorpay HTTP adapter; fixed safe error codes.
+- `repository.ts` / `binding.ts`: leased provider-order creation and conservative recovery.
+- `checkout.ts`: server-issued Test Mode checkout options and callback verification.
+- `proof.ts`: timing-safe checkout and raw-webhook HMAC verification.
+- `webhook.ts`: signed-delivery persistence, deduplication and durable processing.
+- `capture.ts`: trusted provider-observation transition; browser amounts/status are ignored.
+- `admin.ts`: Admin payment queue projection.
 
-POST /api/admin/payments/test-orders uses same-origin requests and the signed checkout cookie. Actions:
+`POST /api/payments/verify` accepts only same-origin Admin Test Mode requests. `action=start` returns the public Razorpay key ID plus a server-bound provider order ID. `action=verify` validates the callback HMAC against the stored provider order before fetching fresh provider evidence.
 
-- accept: command contains the existing checkout quoteId, idempotencyKey and complete checkout input with payment ONLINE. Returns internal order ID/summary. Cart remains intact.
-- bind: orderId from acceptance. Returns binding state and review code, never provider checkout options. Repeat uses the existing binding; UNKNOWN only performs lookup after the cooldown.
-- cleanup: orderId. Refuses uncertain or attempted payments, preserves all order/binding history and releases only the test order's own holds.
+`POST /api/webhooks/razorpay` intentionally has no same-origin requirement. It accepts up to 128 KiB, verifies the raw body with `RAZORPAY_WEBHOOK_SECRET`, accepts only `payment.authorized`, `payment.captured`, and `payment.failed`, deduplicates the delivery, then writes a `PROCESS_WEBHOOK` job in the same Atlas transaction. A worker later fetches current provider evidence; webhook payloads never decide payment state. Invalid signatures and malformed bodies return 4xx; unavailable configuration/storage returns 5xx so Razorpay can retry.
 
-The authenticated Admin can obtain an ONLINE quote via the existing quote endpoint. This API is a development verification surface, not the customer payment UI. No Admin toggle enables live mode. Do not manually edit stock to clear a stuck hold.
+Once checkout details are issued, the narrow 2B.1 unpaid-test cleanup path refuses the order. Capture after the recorded payment deadline is stored as money evidence but marked for review; automatic late-capture recovery is Phase 2C. Normal customers cannot use online payment yet.
 
-Still deferred: payment ledger persistence, callback/HMAC and webhook handlers, capture, scheduled expiry/reconciliation, public checkout and refunds. No SDK dependency installed.
+No Razorpay SDK dependency is installed. Do not enable live mode, subscribe webhooks, or claim successful staging payment until the deployed endpoint and scheduled job runner have been manually verified.

@@ -19,17 +19,15 @@ export async function observePayment(
   const database = await getDatabase();
   return transaction(async (session, handle) => {
     const db = handle.db;
-    const binding = await db
-      .collection("paymentBindings")
-      .findOne(
-        {
-          provider: "RAZORPAY",
-          mode: "test",
-          accountKeyHash: config.accountKeyHash,
-          providerOrderId: payment.order_id,
-        },
-        { session },
-      );
+    const binding = await db.collection("paymentBindings").findOne(
+      {
+        provider: "RAZORPAY",
+        mode: "test",
+        accountKeyHash: config.accountKeyHash,
+        providerOrderId: payment.order_id,
+      },
+      { session },
+    );
     if (!binding) throw new Error("PAYMENT_BINDING_PENDING");
     const order = await db
       .collection("orders")
@@ -116,37 +114,35 @@ export async function observePayment(
       };
     }
     const finalState = advance ? state : priorState;
-    await db
-      .collection("payments")
-      .updateOne(
-        identity,
-        {
-          $setOnInsert: {
-            _id: new ObjectId(),
-            orderId: order._id,
-            createdAt: now,
-            schemaVersion: 1,
-          },
-          $set: {
-            ...version,
-            providerOrderId: payment.order_id,
-            amountPaise: payment.amount,
-            currency: payment.currency,
-            state: finalState,
-            method: payment.method,
-            verifiedAt: now,
-            updatedAt: now,
-            refundedEvidencePaise: Math.max(
-              prior?.refundedEvidencePaise ?? 0,
-              payment.amount_refunded,
-            ),
-            ...(finalState === "CAPTURED"
-              ? { capturedAt: prior?.capturedAt ?? now }
-              : {}),
-          },
+    await db.collection("payments").updateOne(
+      identity,
+      {
+        $setOnInsert: {
+          _id: new ObjectId(),
+          orderId: order._id,
+          createdAt: now,
+          schemaVersion: 1,
         },
-        { session, upsert: true },
-      );
+        $set: {
+          ...version,
+          providerOrderId: payment.order_id,
+          amountPaise: payment.amount,
+          currency: payment.currency,
+          state: finalState,
+          method: payment.method,
+          verifiedAt: now,
+          updatedAt: now,
+          refundedEvidencePaise: Math.max(
+            prior?.refundedEvidencePaise ?? 0,
+            payment.amount_refunded,
+          ),
+          ...(finalState === "CAPTURED"
+            ? { capturedAt: prior?.capturedAt ?? now }
+            : {}),
+        },
+      },
+      { session, upsert: true },
+    );
     const totals = await db
       .collection("payments")
       .aggregate(
@@ -275,60 +271,52 @@ export async function observePayment(
         exception = "REVIEW_REQUIRED";
       else {
         for (const hold of holds) {
-          const changed = await db
-            .collection("variants")
-            .updateOne(
-              {
-                _id: hold.variantId,
-                onHand: { $gte: hold.quantity },
-                reserved: { $gte: hold.quantity },
+          const changed = await db.collection("variants").updateOne(
+            {
+              _id: hold.variantId,
+              onHand: { $gte: hold.quantity },
+              reserved: { $gte: hold.quantity },
+            },
+            {
+              $inc: {
+                onHand: -hold.quantity,
+                reserved: -hold.quantity,
+                revision: 1,
               },
-              {
-                $inc: {
-                  onHand: -hold.quantity,
-                  reserved: -hold.quantity,
-                  revision: 1,
-                },
-                $set: { updatedAt: now },
-              },
-              { session },
-            );
+              $set: { updatedAt: now },
+            },
+            { session },
+          );
           if (!changed.modifiedCount)
             throw new Error("RESERVATION_INCONSISTENT");
-          await db
-            .collection("reservations")
-            .updateOne(
-              { _id: hold._id, state: "ACTIVE" },
-              {
-                $set: { state: "CONSUMED", updatedAt: now },
-                $inc: { revision: 1 },
-              },
-              { session },
-            );
+          await db.collection("reservations").updateOne(
+            { _id: hold._id, state: "ACTIVE" },
+            {
+              $set: { state: "CONSUMED", updatedAt: now },
+              $inc: { revision: 1 },
+            },
+            { session },
+          );
         }
         if (claim)
-          await db
-            .collection("couponClaims")
-            .updateOne(
-              { _id: claim._id, state: "HELD" },
-              {
-                $set: { state: "CONSUMED", updatedAt: now },
-                $inc: { revision: 1 },
-              },
-              { session },
-            );
+          await db.collection("couponClaims").updateOne(
+            { _id: claim._id, state: "HELD" },
+            {
+              $set: { state: "CONSUMED", updatedAt: now },
+              $inc: { revision: 1 },
+            },
+            { session },
+          );
         placed = true;
         if (order.authUserId) {
-          const cleared = await db
-            .collection("carts")
-            .updateOne(
-              {
-                authUserId: order.authUserId,
-                revision: order.acceptedCartRevision,
-              },
-              { $set: { items: [], updatedAt: now }, $inc: { revision: 1 } },
-              { session },
-            );
+          const cleared = await db.collection("carts").updateOne(
+            {
+              authUserId: order.authUserId,
+              revision: order.acceptedCartRevision,
+            },
+            { $set: { items: [], updatedAt: now }, $inc: { revision: 1 } },
+            { session },
+          );
           cartPreserved = cleared.modifiedCount !== 1;
         }
         for (const job of [
@@ -343,20 +331,18 @@ export async function observePayment(
             payload: { tags: ["catalog"], paths: [] },
           },
         ])
-          await db
-            .collection("jobs")
-            .insertOne(
-              {
-                ...job,
-                state: "PENDING",
-                dueAt: now,
-                attempts: 0,
-                createdAt: now,
-                updatedAt: now,
-                schemaVersion: 1,
-              },
-              { session },
-            );
+          await db.collection("jobs").insertOne(
+            {
+              ...job,
+              state: "PENDING",
+              dueAt: now,
+              attempts: 0,
+              createdAt: now,
+              updatedAt: now,
+              schemaVersion: 1,
+            },
+            { session },
+          );
       }
     }
     await db.collection("orders").updateOne(
@@ -392,30 +378,28 @@ export async function observePayment(
       priorState !== finalState ||
       exception !== order.fulfillmentException
     )
-      await db
-        .collection("auditLogs")
-        .insertOne(
-          {
-            action: "PAYMENT_OBSERVED",
-            entityType: "order",
-            entityId: String(order._id),
-            actorType: "PROVIDER",
-            actorId: "razorpay",
-            before: {
-              financialState: order.financialState,
-              state: order.state,
-            },
-            after: {
-              state: placed ? "PLACED" : order.state,
-              financialState: financial.state,
-              exception,
-            },
-            occurredAt: now,
-            createdAt: now,
-            schemaVersion: 1,
+      await db.collection("auditLogs").insertOne(
+        {
+          action: "PAYMENT_OBSERVED",
+          entityType: "order",
+          entityId: String(order._id),
+          actorType: "PROVIDER",
+          actorId: "razorpay",
+          before: {
+            financialState: order.financialState,
+            state: order.state,
           },
-          { session },
-        );
+          after: {
+            state: placed ? "PLACED" : order.state,
+            financialState: financial.state,
+            exception,
+          },
+          occurredAt: now,
+          createdAt: now,
+          schemaVersion: 1,
+        },
+        { session },
+      );
     return {
       orderNumber: order.orderNumber,
       state: placed ? "PLACED" : order.state,
