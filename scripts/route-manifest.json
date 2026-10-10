@@ -88,6 +88,7 @@
     "/api/jobs/run": ["POST"],
     "/api/health": ["GET"],
     "/api/ready": ["GET"],
-    "/api/admin/orders/[orderNumber]/cancel": ["POST"]
+    "/api/admin/orders/[orderNumber]/cancel": ["POST"],
+    "/api/admin/payments/test-orders": ["POST"]
   }
 }

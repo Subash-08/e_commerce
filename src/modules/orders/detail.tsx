@@ -11,7 +11,7 @@ type Detail = {
   orderNumber: string;
   state: string;
   financialState: string;
-  paymentMethod: "COD";
+  paymentMethod: "COD" | "ONLINE";
   totalPaise: number;
   createdAt: string;
   revision: number;
@@ -50,7 +50,7 @@ export function OrderDetail({
     <main className="order-page">
       <header className="order-hero">
         <div>
-          <span>{admin ? "ADMIN ORDER" : "ORDER CONFIRMED"}</span>
+          <span>{admin ? "ADMIN ORDER" : "ORDER DETAILS"}</span>
           <h1>{order.orderNumber}</h1>
           <p>
             Placed {order.createdAt.replace("T", " ").slice(0, 19)} UTC · Cash
@@ -95,7 +95,11 @@ export function OrderDetail({
           </section>
           <section className="order-card">
             <h2>Payment</h2>
-            <p>Cash on delivery</p>
+            <p>
+              {order.paymentMethod === "COD"
+                ? "Cash on delivery"
+                : "Online payment"}
+            </p>
             <p>Financial status: {order.financialState}</p>
           </section>
           {cancellable && (

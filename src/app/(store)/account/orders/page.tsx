@@ -16,7 +16,7 @@ export default async function Page() {
         <div>
           <span>YOUR ACCOUNT</span>
           <h1>Orders</h1>
-          <p>View current COD status and your immutable purchase summary.</p>
+          <p>View order status and your purchase summary.</p>
         </div>
       </header>
       {orders.length ? (

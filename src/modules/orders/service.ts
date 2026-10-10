@@ -1,4 +1,6 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
+import { requirePaymentTestAdmin, paymentTestConfig } from "../payments/access";
 import { ObjectId, type ClientSession, type Document } from "mongodb";
 import { getDatabase } from "../../server/db/connection";
 import { transaction } from "../../server/db/transaction";
@@ -32,7 +34,7 @@ type OrderRecord = Document & {
   customerType: "GUEST" | "ACCOUNT";
   state: string;
   financialState: string;
-  paymentMethod: "COD";
+  paymentMethod: "COD" | "ONLINE";
   revision: number;
   createdAt: Date;
   updatedAt: Date;
@@ -63,7 +65,7 @@ function summary(order: OrderRecord): OrderSummaryDto {
     orderNumber: order.orderNumber,
     state: order.state,
     financialState: order.financialState,
-    paymentMethod: "COD",
+    paymentMethod: order.paymentMethod,
     totalPaise: order.snapshots.totals.grandTotalPaise,
     currency: "INR",
     itemCount: order.snapshots.items.reduce(
@@ -114,9 +116,32 @@ export async function placeCodOrder(
   guestKey: string,
   raw: unknown,
 ) {
-  const input = placeOrderInput.parse(raw);
-  if (input.checkout.payment !== "COD")
+  if (placeOrderInput.parse(raw).checkout.payment !== "COD")
     throw new Error("ONLINE_PAYMENT_NOT_AVAILABLE");
+  return acceptOrder(headers, guestKey, raw, false);
+}
+
+export async function placeOnlineTestOrder(
+  headers: Headers,
+  guestKey: string,
+  raw: unknown,
+) {
+  paymentTestConfig();
+  await requirePaymentTestAdmin(headers);
+  if (placeOrderInput.parse(raw).checkout.payment !== "ONLINE")
+    throw new Error("INVALID_PAYMENT_METHOD");
+  return acceptOrder(headers, guestKey, raw, true);
+}
+
+async function acceptOrder(
+  headers: Headers,
+  guestKey: string,
+  raw: unknown,
+  online: boolean,
+) {
+  const input = placeOrderInput.parse(raw);
+  const paymentConfig = online ? paymentTestConfig() : null;
+  const testActor = online ? await requirePaymentTestAdmin(headers) : null;
   const database = await getDatabase();
   const buyer = await identity(headers, guestKey);
   await rateLimit(database.db, "place-order:" + buyer.ownerKeyHash, 10);
@@ -158,6 +183,19 @@ export async function placeCodOrder(
           replay: true,
         };
       }
+      if (
+        testActor &&
+        !(await handle.db.collection("profiles").findOne(
+          {
+            authUserId: testActor.authUserId,
+            role: "ADMIN",
+            status: "ACTIVE",
+            authVersion: testActor.authVersion,
+          },
+          { session, projection: { _id: 1 } },
+        ))
+      )
+        throw new Error("FORBIDDEN");
       const now = new Date();
       const quote = await handle.db
         .collection("checkoutQuotes")
@@ -166,19 +204,23 @@ export async function placeCodOrder(
           { session },
         );
       if (!quote) throw new Error("QUOTE_NOT_FOUND");
+      if (quote.acceptedOrderId) throw new Error("QUOTE_ALREADY_ACCEPTED");
       if (!(quote.expiresAt instanceof Date) || quote.expiresAt <= now)
         throw new Error("QUOTE_EXPIRED");
       if (quote.requestFingerprint !== requestFingerprint)
         throw new Error("QUOTE_CHANGED");
       const publicQuote = quote.publicQuote as CheckoutQuoteDto;
       if (
-        !publicQuote.cod.eligible ||
-        !publicQuote.paymentMethods.includes("COD")
+        !online &&
+        (!publicQuote.cod.eligible ||
+          !publicQuote.paymentMethods.includes("COD"))
       )
         throw new Error("COD_UNAVAILABLE");
+      if (online && !publicQuote.paymentMethods.includes("ONLINE"))
+        throw new Error("ONLINE_PAYMENT_NOT_AVAILABLE");
       if (
         !Number.isSafeInteger(publicQuote.totals.grandTotalPaise) ||
-        publicQuote.totals.grandTotalPaise <= 0
+        publicQuote.totals.grandTotalPaise < (online ? 100 : 1)
       )
         throw new Error("INVALID_CHECKOUT_TOTAL");
 
@@ -204,17 +246,26 @@ export async function placeCodOrder(
       if (
         !policy ||
         policy.revision !== quote.sourceRevisions.shippingPolicy ||
-        !policy.cod?.enabled
+        (!online && !policy.cod?.enabled)
       )
         throw new Error("QUOTE_CHANGED");
-      const deadlineHours = Number(policy.cod.reservationDeadlineHours);
+      const deadlineHours = Number(policy.cod?.reservationDeadlineHours);
+      const deadlineSeconds = Number(policy.onlinePaymentDeadlineSeconds);
       if (
-        !Number.isInteger(deadlineHours) ||
-        deadlineHours < 1 ||
-        deadlineHours > 168
+        online
+          ? !Number.isInteger(deadlineSeconds) ||
+            deadlineSeconds < 900 ||
+            deadlineSeconds > 1800
+          : !Number.isInteger(deadlineHours) ||
+            deadlineHours < 1 ||
+            deadlineHours > 168
       )
         throw new Error("SHIPPING_CONFIGURATION_REQUIRED");
 
+      const deadlineAt = new Date(
+        now.getTime() +
+          (online ? deadlineSeconds * 1000 : deadlineHours * 3600000),
+      );
       const sourceVariants = new Map<string, number>(
         (
           quote.sourceRevisions.variants as Array<{
@@ -297,8 +348,8 @@ export async function placeCodOrder(
             quantity: item.quantity,
             generation: 0,
             state: "ACTIVE",
-            autoExpire: false,
-            deadlineAt: new Date(now.getTime() + deadlineHours * 3600000),
+            autoExpire: online,
+            deadlineAt,
             createdAt: now,
             updatedAt: now,
             revision: 0,
@@ -375,7 +426,7 @@ export async function placeCodOrder(
           code: coupon.code,
           discountPaise: publicQuote.coupon.discountPaise,
           generation: 0,
-          state: "CONSUMED",
+          state: online ? "HELD" : "CONSUMED",
           createdAt: now,
           updatedAt: now,
           revision: 0,
@@ -409,12 +460,19 @@ export async function placeCodOrder(
         authUserId: buyer.authUserId,
         ownerKeyHash: buyer.ownerKeyHash,
         customerType: buyer.authUserId ? "ACCOUNT" : "GUEST",
-        state: "PLACED",
+        state: online ? "PENDING_PAYMENT" : "PLACED",
         financialState: "PENDING",
         fulfillmentException: "NONE",
-        paymentMethod: "COD",
+        paymentMethod: online ? "ONLINE" : "COD",
         quoteId: input.quoteId,
-        codReviewAt: new Date(now.getTime() + deadlineHours * 3600000),
+        ...(online
+          ? {
+              paymentDeadlineAt: deadlineAt,
+              testOnly: true,
+              acceptedCartRevision: quote.cartRevision,
+              acceptedGuestLinesHash: quote.guestLinesHash,
+            }
+          : { codReviewAt: deadlineAt }),
         snapshots: {
           contact: input.checkout.contact,
           shippingAddress: input.checkout.shippingAddress,
@@ -444,8 +502,10 @@ export async function placeCodOrder(
         statusHistory: [
           {
             from: null,
-            to: "PLACED",
-            reason: "COD order accepted",
+            to: online ? "PENDING_PAYMENT" : "PLACED",
+            reason: online
+              ? "Online test order accepted"
+              : "COD order accepted",
             actorType: "CUSTOMER",
             actorId: buyer.authUserId,
             at: now,
@@ -456,9 +516,43 @@ export async function placeCodOrder(
         createdAt: now,
         updatedAt: now,
       };
+      // Serialize quote consumption even when different idempotency keys race.
+      const consumed = await handle.db
+        .collection("checkoutQuotes")
+        .updateOne(
+          { _id: quote._id, acceptedOrderId: { $exists: false } },
+          { $set: { acceptedOrderId: orderId, acceptedAt: now } },
+          { session },
+        );
+      if (!consumed.modifiedCount) throw new Error("QUOTE_ALREADY_ACCEPTED");
       await handle.db
         .collection<OrderRecord>("orders")
         .insertOne(order, { session });
+      if (online && paymentConfig)
+        await handle.db.collection("paymentBindings").insertOne(
+          {
+            orderId,
+            orderNumber,
+            provider: "RAZORPAY",
+            mode: "test",
+            accountKeyHash: paymentConfig.accountKeyHash,
+            operationId: randomUUID(),
+            generation: 0,
+            active: true,
+            receipt: orderNumber,
+            amountPaise: publicQuote.totals.grandTotalPaise,
+            currency: "INR",
+            state: "NOT_STARTED",
+            attempts: 0,
+            recoveryAttempts: 0,
+            revision: 0,
+            deadlineAt,
+            createdAt: now,
+            updatedAt: now,
+            schemaVersion: 1,
+          },
+          { session },
+        );
       for (const reservation of reservationRows)
         await handle.db
           .collection("reservations")
@@ -478,33 +572,34 @@ export async function placeCodOrder(
         },
         { session },
       );
-      await handle.db.collection("jobs").insertOne(
-        {
-          _id: new ObjectId(),
-          kind: "SEND_NOTIFICATION",
-          businessKey: "order-confirmed:" + orderId,
-          state: "PENDING",
-          dueAt: now,
-          attempts: 0,
-          payload: { notification: "ORDER_CONFIRMATION", orderId },
-          createdAt: now,
-          updatedAt: now,
-          schemaVersion: 1,
-        },
-        { session },
-      );
+      if (!online)
+        await handle.db.collection("jobs").insertOne(
+          {
+            _id: new ObjectId(),
+            kind: "SEND_NOTIFICATION",
+            businessKey: "order-confirmed:" + orderId,
+            state: "PENDING",
+            dueAt: now,
+            attempts: 0,
+            payload: { notification: "ORDER_CONFIRMATION", orderId },
+            createdAt: now,
+            updatedAt: now,
+            schemaVersion: 1,
+          },
+          { session },
+        );
       await handle.db.collection("auditLogs").insertOne(
         {
           actorType: buyer.authUserId ? "ACCOUNT" : "GUEST",
           actorId: buyer.authUserId,
-          action: "ORDER_PLACED",
+          action: online ? "ONLINE_ORDER_ACCEPTED" : "ORDER_PLACED",
           entityType: "order",
           entityId: String(orderId),
           before: null,
           after: {
             orderNumber,
-            state: "PLACED",
-            paymentMethod: "COD",
+            state: order.state,
+            paymentMethod: order.paymentMethod,
             totalPaise: publicQuote.totals.grandTotalPaise,
           },
           occurredAt: now,
@@ -513,7 +608,7 @@ export async function placeCodOrder(
         },
         { session },
       );
-      if (buyer.authUserId) {
+      if (buyer.authUserId && !online) {
         const cleared = await handle.db
           .collection("carts")
           .updateOne(
@@ -639,21 +734,29 @@ export async function cancelOwnedOrder(
   );
 }
 
-async function cancelInTransaction(
+export async function cancelInTransaction(
   db: import("mongodb").Db,
   session: ClientSession,
   orderId: ObjectId,
   expectedRevision: number,
   reason: string,
   actorId: string | null,
+  testCleanup = false,
 ) {
+  const allowedStates = testCleanup
+    ? ["PENDING_PAYMENT"]
+    : activeCancellationStates;
   const current = await db
     .collection<OrderRecord>("orders")
     .findOne({ _id: orderId }, { session });
   if (!current) throw new Error("ORDER_NOT_FOUND");
   if (current.revision !== expectedRevision)
     throw new Error("REVISION_CONFLICT");
-  if (!activeCancellationStates.includes(current.state))
+  if (!testCleanup && current.paymentMethod !== "COD")
+    throw new Error("ORDER_CANNOT_CANCEL");
+  if (testCleanup && (!current.testOnly || current.paymentMethod !== "ONLINE"))
+    throw new Error("PAYMENT_TEST_ONLY");
+  if (!allowedStates.includes(current.state))
     throw new Error("ORDER_CANNOT_CANCEL");
   const now = new Date();
   const reservations = await db
@@ -684,10 +787,13 @@ async function cancelInTransaction(
   }
   const claim = await db
     .collection("couponClaims")
-    .findOne({ orderId, state: "CONSUMED" }, { session });
+    .findOne(
+      { orderId, state: testCleanup ? "HELD" : "CONSUMED" },
+      { session },
+    );
   if (claim) {
     const changed = await db.collection("couponClaims").updateOne(
-      { _id: claim._id, state: "CONSUMED" },
+      { _id: claim._id, state: claim.state },
       {
         $set: { state: "RELEASED", updatedAt: now, releaseReason: reason },
         $inc: { revision: 1 },
@@ -718,7 +824,7 @@ async function cancelInTransaction(
     {
       _id: orderId,
       revision: expectedRevision,
-      state: { $in: activeCancellationStates },
+      state: { $in: allowedStates },
     },
     {
       $set: {
@@ -776,6 +882,8 @@ export async function listAdminOrders(headers: Headers, state?: string) {
   });
   if (!profile) throw new Error("FORBIDDEN");
   const allowed = [
+    "PENDING_PAYMENT",
+    "EXPIRED",
     "PLACED",
     "CONFIRMED",
     "PROCESSING",

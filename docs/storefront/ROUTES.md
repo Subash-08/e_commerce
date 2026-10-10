@@ -61,3 +61,5 @@ No separate attribute route is required for normal editing; inline editor calls 
 Server Actions handle first-party profile/address/catalog/content/admin mutations; each validates authorization and input anew. HTTP list is not permission to implement handlers in Stage 3. Unimplemented placeholder APIs return explicit 501/no-store, never fake success or echo secrets.
 
 404/not-found for missing published identity; error/loading UI per root and async page family; unavailable cart/product variants and pending/error payment states documented explicitly. Metadata sitemap/robots files are planned with dev/staging noindex; private routes never enter sitemap.
+
+Phase 2B.1: /api/admin/payments/test-orders supports POST accept/bind/cleanup for active Admin in development/test only. It returns no Razorpay checkout options.

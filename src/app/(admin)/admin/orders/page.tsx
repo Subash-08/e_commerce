@@ -21,14 +21,15 @@ export default async function Page({
           <span>FULFILLMENT</span>
           <h1>Orders</h1>
           <p>
-            Review COD orders, stock holds, customer delivery facts and overdue
-            follow-up.
+            Review orders, payment status, stock holds and delivery details.
           </p>
         </div>
       </header>
       <nav className="order-filters">
         {[
           "ALL",
+          "PENDING_PAYMENT",
+          "EXPIRED",
           "PLACED",
           "CONFIRMED",
           "PROCESSING",
@@ -72,7 +73,7 @@ export default async function Page({
       ) : (
         <div className="order-empty">
           <h2>No matching orders</h2>
-          <p>New accepted COD orders will appear here.</p>
+          <p>Accepted orders will appear here.</p>
         </div>
       )}
     </main>

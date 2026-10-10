@@ -1,3 +1,4 @@
+import { paymentBindingIndexes } from "../../modules/payments/indexes.ts";
 import { shippingIndexes } from "../../modules/shipping/indexes.ts";
 import { checkoutIndexes } from "../../modules/checkout/indexes.ts";
 import { orderIndexes } from "../../modules/orders/indexes.ts";
@@ -21,4 +22,5 @@ export const approvedIndexes: readonly CollectionIndexes[] = [
   ...shippingIndexes,
   ...checkoutIndexes,
   ...orderIndexes,
+  ...paymentBindingIndexes,
 ];

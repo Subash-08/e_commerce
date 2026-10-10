@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 
 const messages: Record<string, string> = {
   QUOTE_NOT_FOUND: "Create a new quote before placing the order.",
+  QUOTE_ALREADY_ACCEPTED:
+    "This quote already has an order. Open your order history or create a new quote.",
   QUOTE_EXPIRED: "Your quote expired. Review a new live quote.",
   QUOTE_CHANGED:
     "Price, availability, or store policy changed. Review a new quote.",
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
       error instanceof SyntaxError ||
       (error instanceof Error && error.name === "ZodError");
     const status =
+      code === "QUOTE_ALREADY_ACCEPTED" ||
       code === "QUOTE_CHANGED" ||
       code === "CART_CHANGED" ||
       code === "STOCK_CHANGED" ||

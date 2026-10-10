@@ -23,7 +23,7 @@ export type OrderSummaryDto = {
   orderNumber: string;
   state: string;
   financialState: string;
-  paymentMethod: "COD";
+  paymentMethod: "COD" | "ONLINE";
   totalPaise: number;
   currency: "INR";
   itemCount: number;
