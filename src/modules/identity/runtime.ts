@@ -10,12 +10,16 @@ let pending: ReturnType<typeof createIdentity> | undefined;
 export function getIdentity() {
   if (!pending)
     pending = (async () => {
-      const email = readRecoveryEmailConfig();
       const database = await getDatabase();
       const identity = await createIdentity(database, {
-        baseURL: email.appUrl,
+        // Authentication itself must not depend on a password-recovery provider.
+        // The selected provider is validated only when a reset is requested.
+        baseURL: process.env.APP_URL ?? "",
         secret: process.env.BETTER_AUTH_SECRET ?? "",
-        sendRecovery: createRecoverySender(email),
+        sendRecovery: async (message) => {
+          const email = readRecoveryEmailConfig();
+          return createRecoverySender(email)(message);
+        },
         onDeliveryFailure: () => console.error("auth.email_delivery_failed"),
       });
       try {
@@ -34,7 +38,6 @@ export function getIdentity() {
       console.error(
         "auth.initialization_failed",
         [
-          "EMAIL_CONFIG_INVALID",
           "AUTH_CONFIG_INVALID",
           "AUTH_INDEX_DRIFT",
           "DB_CONFIG_INVALID",
