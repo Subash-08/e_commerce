@@ -6,7 +6,7 @@ import { getDatabase } from "../../server/db/connection";
 
 // No Admin setting can bypass this pre-launch gate.
 export function paymentTestConfig() {
-  if (!["development", "test"].includes(process.env.APP_ENV ?? ""))
+  if (!["development", "test", "staging"].includes(process.env.APP_ENV ?? ""))
     throw new Error("PAYMENT_TEST_ONLY");
   const keyId = process.env.RAZORPAY_KEY_ID ?? "";
   const keySecret = process.env.RAZORPAY_KEY_SECRET ?? "";

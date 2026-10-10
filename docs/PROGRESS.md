@@ -1,5 +1,9 @@
 # Foundation progress
 
+### Vercel staging selected, 2026-10-10
+
+The user supplied https://e-commerce-gules-iota-16.vercel.app instead of a tunnel. Home and login return HTTP 200 without a Vercel login challenge. Added [staging setup](operations/VERCEL-STAGING.md), including environment scopes, deployed origins, serverless runtime, private credentials and the pending webhook/worker gate. The payment test gate now explicitly allows APP_ENV=staging with a production-mode Next build, while still rejecting production APP_ENV, live mode/keys and non-Admin access. Phase 2B.2 remains in progress; the public webhook route is still a placeholder. No deployment, environment edit or provider delivery verification has been performed.
+
 ### Phase 2B.1 online test acceptance and provider binding, 2026-10-10
 
 Implemented the approved backend-only payment gate on codex/razorpay-binding. The existing acceptance transaction supports Admin-only, non-production online test orders with immutable snapshots, one-time quote consumption, buyer-scoped idempotency, tracked-stock reservations, effective HELD coupon capacity and a separate initial provider binding. Online carts remain intact; accepted cart revision/guest snapshot hash support later confirmation cleanup. COD behavior remains intact. Accepted submissions replay before quote expiry/catalog revalidation; another key cannot consume the same quote.

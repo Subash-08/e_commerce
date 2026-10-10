@@ -13,6 +13,17 @@ function configure() {
   vi.stubEnv("RAZORPAY_KEY_SECRET", key);
 }
 describe("Payment provider boundary", () => {
+  it("allows staging with a production build but only test credentials", () => {
+    configure();
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ENV", "staging");
+    expect(paymentTestConfig().keyId).toBe("rzp_test_fixture");
+    vi.stubEnv("RAZORPAY_MODE", "live");
+    expect(() => paymentTestConfig()).toThrow("PAYMENT_CONFIG_INVALID");
+    vi.stubEnv("RAZORPAY_MODE", "test");
+    vi.stubEnv("RAZORPAY_KEY_ID", "rzp_live_fixture");
+    expect(() => paymentTestConfig()).toThrow("PAYMENT_CONFIG_INVALID");
+  });
   it("blocks production and live credentials", () => {
     configure();
     vi.stubEnv("APP_ENV", "production");

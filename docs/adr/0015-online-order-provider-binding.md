@@ -4,7 +4,7 @@ Status: Phase 2B.1 implementation; verification evidence is in [PROGRESS](../PRO
 
 ## Scope and authority
 
-Extend the [COD acceptance boundary](0014-cod-order-acceptance-and-jobs.md). Only active ADMIN accounts with fresh authVersion in APP_ENV development/test and RAZORPAY_MODE test may use this slice. The public checkout endpoint still rejects online acceptance. Provider checkout options are not exposed. Live keys and production environments are rejected by code, independently of Admin settings. No capture, webhook, refund or online customer UI is implemented in 2B.1.
+Extend the [COD acceptance boundary](0014-cod-order-acceptance-and-jobs.md). Only active ADMIN accounts with fresh authVersion in APP_ENV development/test/staging and RAZORPAY_MODE test may use this slice. The public checkout endpoint still rejects online acceptance. Provider checkout options are not exposed. Live keys and production environments are rejected by code, independently of Admin settings. No capture, webhook, refund or online customer UI is implemented in 2B.1.
 
 ## Acceptance
 
@@ -34,4 +34,4 @@ The protected cleanup action accepts only this slice's testOnly online pending o
 
 2C must recheck both binding and payment evidence before release; UNKNOWN is not unpaid. Late capture checks the deadline even if the expiry worker is delayed. All observations converge on one transition service. Refund-required remains a fulfillment exception under the [canonical registry](../commerce/STATE-MACHINES.md), not an order status. Production checkout remains code-gated until recovery and refund readiness.
 
-Before 2B.2, use a development HTTPS tunnel to localhost for test webhooks; the actual tunnel hostname must be supplied/configured before webhook verification. Production will use the deployed HTTPS endpoint. No tunnel has been installed or exposed by 2B.1.
+The user selected Vercel staging on 2026-10-10 instead of a local tunnel: https://e-commerce-gules-iota-16.vercel.app. Use APP_ENV=staging with the normal production-mode Next build; APP_ENV=test is reserved for the integration-test runtime. Staging still requires test-mode Razorpay keys and active ADMIN authority. Production APP_ENV and live credentials remain rejected. See the [staging setup](../operations/VERCEL-STAGING.md). The hostname is reachable, but that is not evidence of completed webhook/capture verification.
