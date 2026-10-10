@@ -2,7 +2,7 @@
 
 ### Vercel staging selected, 2026-10-10
 
-The user supplied https://e-commerce-gules-iota-16.vercel.app instead of a tunnel. Home and login return HTTP 200 without a Vercel login challenge. Added [staging setup](operations/VERCEL-STAGING.md), including environment scopes, deployed origins, serverless runtime, private credentials and the pending webhook/worker gate. The payment test gate now explicitly allows APP_ENV=staging with a production-mode Next build, while still rejecting production APP_ENV, live mode/keys and non-Admin access. Phase 2B.2 remains in progress; the public webhook route is still a placeholder. No deployment, environment edit or provider delivery verification has been performed.
+The user supplied https://e-commerce-gules-iota-16.vercel.app instead of a tunnel. Home and login return HTTP 200 without a Vercel login challenge. Added [staging setup](operations/VERCEL-STAGING.md), including environment scopes, deployed origins, serverless runtime, private credentials and the pending webhook/worker gate. The payment test gate now explicitly allows APP_ENV=staging with a production-mode Next build, while still rejecting production APP_ENV, live mode/keys and non-Admin access. Phase 2B.2 remains in progress; the public webhook route is still a placeholder. No deployment, environment edit or provider delivery verification has been performed. The four focused payment-provider checks, targeted ESLint, docs links and diff whitespace checks passed; the two changed TypeScript files were formatted after the format check flagged them. No broad integration suite was rerun for this configuration change.
 
 ### Phase 2B.1 online test acceptance and provider binding, 2026-10-10
 
